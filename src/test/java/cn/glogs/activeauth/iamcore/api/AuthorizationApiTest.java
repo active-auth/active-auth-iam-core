@@ -1,5 +1,7 @@
 package cn.glogs.activeauth.iamcore.api;
 
+import cn.glogs.activeauth.iamcore.api.payload.AuthorizationChallengingForm;
+import cn.glogs.activeauth.iamcore.api.payload.AuthorizationPolicyGrantingForm;
 import cn.glogs.activeauth.iamcore.api.payload.RestResultPacker;
 import cn.glogs.activeauth.iamcore.config.properties.Configuration;
 import cn.glogs.activeauth.iamcore.domain.AuthenticationPrincipal;
@@ -106,10 +108,10 @@ class AuthorizationApiTest {
         AuthorizationPolicy.Form createPolicyForm = new AuthorizationPolicy.Form();
         createPolicyForm.setName("testCreatePolicy");
         createPolicyForm.setPolicyType(AuthorizationPolicy.PolicyType.ALLOW);
-        createPolicyForm.setActions(List.of("bookstore:listBooks", "bookstore:getBook"));
+        createPolicyForm.setActions(List.of("bookshelf:listBooks", "bookshelf:getBook"));
         createPolicyForm.setResources(List.of(
-                String.format("bookstore://users/%s/bought-books", granterId),
-                String.format("bookstore://users/%s/in-chart-books", granterId)
+                String.format("bookshelf://users/%s/bought-books", granterId),
+                String.format("bookshelf://users/%s/in-chart-books", granterId)
         ));
 
         String createPolicyResponseContent = mvc.perform(MockMvcRequestBuilders
@@ -124,6 +126,56 @@ class AuthorizationApiTest {
 
     @Test
     @Transactional
-    void testGrantPolicy() {
+    void testGrantPolicy() throws Exception {
+        testCreatePolicy();
+
+        AuthorizationPolicyGrantingForm grantingForm = new AuthorizationPolicyGrantingForm();
+        grantingForm.setGrantee(granteePrincipal.getResourceLocator());
+        grantingForm.setPolicies(List.of(testPolicy.getResourceLocator()));
+        mvc.perform(MockMvcRequestBuilders
+                .post("/authorization-policy-grants")
+                .header(lordAuthConfiguration.getAuthorizationHeaderName(), granterSession.getToken())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(grantingForm))
+                .accept(MediaType.APPLICATION_JSON)
+        ).andExpect(MockMvcResultMatchers.status().is2xxSuccessful()).andDo(MockMvcResultHandlers.print()).andReturn();
+    }
+
+    @Test
+    @Transactional
+    void testChallengingAuthorities() throws Exception {
+        testGrantPolicy();
+        Long granterId = AuthenticationPrincipal.idFromLocator(granterPrincipal.getResourceLocator());
+        AuthorizationChallengingForm challengingForm = new AuthorizationChallengingForm();
+        challengingForm.setAction("bookshelf:listBooks");
+        challengingForm.setResources(List.of(String.format("bookshelf://users/%s/bought-books", granterId)));
+
+        // granter challenging its own resource
+        mvc.perform(MockMvcRequestBuilders
+                .post("/authorizations/challenging")
+                .header(lordAuthConfiguration.getAuthorizationHeaderName(), granterSession.getToken())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(challengingForm))
+                .accept(MediaType.APPLICATION_JSON)
+        ).andExpect(MockMvcResultMatchers.status().is2xxSuccessful()).andDo(MockMvcResultHandlers.print()).andReturn();
+
+        // grantee challenging granter's resource
+        mvc.perform(MockMvcRequestBuilders
+                .post("/authorizations/challenging")
+                .header(lordAuthConfiguration.getAuthorizationHeaderName(), granteeSession.getToken())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(challengingForm))
+                .accept(MediaType.APPLICATION_JSON)
+        ).andExpect(MockMvcResultMatchers.status().is2xxSuccessful()).andDo(MockMvcResultHandlers.print()).andReturn();
+
+        // grantee challenging a wrong resource
+        challengingForm.setResources(List.of(String.format("bookshelf://users/%s/bought-books", granterId + 2)));
+        mvc.perform(MockMvcRequestBuilders
+                .post("/authorizations/challenging")
+                .header(lordAuthConfiguration.getAuthorizationHeaderName(), granteeSession.getToken())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(challengingForm))
+                .accept(MediaType.APPLICATION_JSON)
+        ).andExpect(MockMvcResultMatchers.status().isForbidden()).andDo(MockMvcResultHandlers.print()).andReturn();
     }
 }
