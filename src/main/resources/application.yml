@@ -1,0 +1,10 @@
+spring:
+  jpa:
+    database-platform: org.hibernate.dialect.MySQL5InnoDBDialect
+    hibernate:
+      ddl-auto: update
+  datasource:
+    url: jdbc:mysql://${IAM_DB_HOST:localhost}:${IAM_DB_PORT:3306}/${IAM_DB_BASE:active_auth_iam_core}?characterSet=utf-8&useUnicode=true&characterEncoding=utf8
+    hikari:
+      username: ${IAM_DB_USER:root}
+      password: ${IAM_DB_PASS:root}
