@@ -28,10 +28,10 @@ class AuthenticationApiTest {
     private static final String password = "pony123456";
 
     @BeforeEach
-    public void registerBeforeEachTest() throws Exception {
+    public void setUp() throws Exception {
         AuthenticationPrincipal.CreatePrincipalForm form = new AuthenticationPrincipal.CreatePrincipalForm(username, password);
         mvc.perform(MockMvcRequestBuilders
-                .post("/authentications")
+                .post("/authentication-principals")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(form))
                 .accept(MediaType.APPLICATION_JSON)
