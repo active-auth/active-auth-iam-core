@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 import org.apache.commons.lang3.RandomStringUtils;
 
 import javax.persistence.*;
+import javax.validation.constraints.NotBlank;
 import java.util.Calendar;
 import java.util.Date;
 
@@ -69,8 +70,12 @@ public class AuthenticationSession {
     @AllArgsConstructor
     @NoArgsConstructor
     public static class CreateSessionForm {
+
+        @NotBlank
         @Schema(defaultValue = "pony")
         private String name;
+
+        @NotBlank
         @Schema(defaultValue = "P0ny_1980")
         private String secret;
     }

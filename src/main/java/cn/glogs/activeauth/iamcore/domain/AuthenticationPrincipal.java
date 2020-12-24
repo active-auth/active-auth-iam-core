@@ -9,6 +9,7 @@ import lombok.NoArgsConstructor;
 import org.apache.commons.lang3.RandomStringUtils;
 
 import javax.persistence.*;
+import javax.validation.constraints.NotBlank;
 import java.util.Date;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -101,8 +102,12 @@ public class AuthenticationPrincipal implements IamResource {
     @AllArgsConstructor
     @Schema(name = "AuthenticationPrincipal.CreatePrincipalForm")
     public static class CreatePrincipalForm {
+
+        @NotBlank
         @Schema(defaultValue = "pony")
         private String name;
+
+        @NotBlank
         @Schema(defaultValue = "P0ny_1980")
         private String password;
     }

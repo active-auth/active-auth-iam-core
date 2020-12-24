@@ -8,6 +8,7 @@ import cn.glogs.activeauth.iamcore.exception.HTTP404Exception;
 import cn.glogs.activeauth.iamcore.exception.business.NotFoundException;
 import cn.glogs.activeauth.iamcore.service.AuthenticationPrincipalService;
 import cn.glogs.activeauth.iamcore.service.AuthenticationSessionService;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
@@ -25,12 +26,12 @@ public class AuthenticationApi {
     }
 
     @PostMapping("/authentication-principals")
-    public RestResultPacker<AuthenticationPrincipal.Vo> addPrincipal(@RequestBody AuthenticationPrincipal.CreatePrincipalForm form) {
+    public RestResultPacker<AuthenticationPrincipal.Vo> addPrincipal(@RequestBody @Validated AuthenticationPrincipal.CreatePrincipalForm form) {
         return RestResultPacker.success(authenticationPrincipalService.addPrincipal(form.getName(), form.getPassword()).vo());
     }
 
     @PostMapping("/authentications/ticketing")
-    public RestResultPacker<AuthenticationSession.Vo> authenticationTicketing(@RequestBody AuthenticationSession.CreateSessionForm form) throws HTTP401Exception, HTTP404Exception {
+    public RestResultPacker<AuthenticationSession.Vo> authenticationTicketing(@RequestBody @Validated AuthenticationSession.CreateSessionForm form) throws HTTP401Exception, HTTP404Exception {
         try {
             return RestResultPacker.success(authenticationSessionService.newSession(form).vo());
         } catch (NotFoundException notFoundException) {
