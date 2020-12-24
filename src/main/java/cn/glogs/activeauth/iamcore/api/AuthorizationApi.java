@@ -41,7 +41,7 @@ public class AuthorizationApi {
 
     @SneakyThrows
     @PostMapping("/authorization-policy-grants")
-    public RestResultPacker<List<AuthorizationPolicyGrant.Vo>> grant(HttpServletRequest request, @RequestBody AuthorizationPolicyGrantingForm form) throws HTTP400Exception, HTTP403Exception, HTTP404Exception {
+    public RestResultPacker<List<AuthorizationPolicyGrant.Vo>> grant(HttpServletRequest request, @RequestBody AuthorizationPolicyGrantingForm form) {
         try {
             AuthenticationPrincipal granter = authenticationSessionService.getMeSession(request).getAuthenticationPrincipal();
             AuthenticationPrincipal grantee = authenticationPrincipalService.findPrincipalByLocator(form.getGrantee());
