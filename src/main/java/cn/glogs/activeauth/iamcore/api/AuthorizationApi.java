@@ -7,11 +7,13 @@ import cn.glogs.activeauth.iamcore.domain.AuthenticationPrincipal;
 import cn.glogs.activeauth.iamcore.domain.AuthenticationSession;
 import cn.glogs.activeauth.iamcore.domain.AuthorizationPolicy;
 import cn.glogs.activeauth.iamcore.domain.AuthorizationPolicyGrant;
+import cn.glogs.activeauth.iamcore.domain.*;
 import cn.glogs.activeauth.iamcore.exception.HTTP400Exception;
 import cn.glogs.activeauth.iamcore.exception.HTTP403Exception;
 import cn.glogs.activeauth.iamcore.exception.HTTP404Exception;
 import cn.glogs.activeauth.iamcore.exception.business.NotFoundException;
 import cn.glogs.activeauth.iamcore.exception.business.PatternException;
+import cn.glogs.activeauth.iamcore.service.AuthenticationPrincipalKeyPairService;
 import cn.glogs.activeauth.iamcore.service.AuthenticationPrincipalService;
 import cn.glogs.activeauth.iamcore.service.AuthenticationSessionService;
 import cn.glogs.activeauth.iamcore.service.AuthorizationService;
@@ -30,12 +32,15 @@ public class AuthorizationApi {
 
     private final AuthenticationPrincipalService authenticationPrincipalService;
 
+    private final AuthenticationPrincipalKeyPairService authenticationPrincipalKeyPairService;
+
     private final AuthenticationSessionService authenticationSessionService;
 
     private final AuthorizationService authorizationService;
 
-    public AuthorizationApi(AuthenticationPrincipalService authenticationPrincipalService, AuthenticationSessionService authenticationSessionService, AuthorizationService authorizationService) {
+    public AuthorizationApi(AuthenticationPrincipalService authenticationPrincipalService, AuthenticationPrincipalKeyPairService authenticationPrincipalKeyPairService, AuthenticationSessionService authenticationSessionService, AuthorizationService authorizationService) {
         this.authenticationPrincipalService = authenticationPrincipalService;
+        this.authenticationPrincipalKeyPairService = authenticationPrincipalKeyPairService;
         this.authenticationSessionService = authenticationSessionService;
         this.authorizationService = authorizationService;
     }
@@ -74,6 +79,12 @@ public class AuthorizationApi {
         } catch (AuthenticationSession.SessionNotFoundException e) {
             throw new HTTP403Exception(e);
         }
+    }
+
+    @PostMapping("/authorization-policies/current/key-pairs")
+    public RestResultPacker<AuthenticationPrincipalKeyPair.Vo> genKeyPair(HttpServletRequest request, @RequestBody AuthenticationPrincipalKeyPair.GenKeyPairForm form) throws HTTP400Exception, HTTP403Exception, AuthenticationSession.SessionRequestBadHeaderException, AuthenticationSession.SessionNotFoundException {
+        AuthenticationSession authenticationSession = authenticationSessionService.getMeSession(request);
+        return RestResultPacker.success(authenticationPrincipalKeyPairService.genKey(authenticationSession.getAuthenticationPrincipal(), form).vo());
     }
 
     @PostMapping("/authorizations/challenging")
