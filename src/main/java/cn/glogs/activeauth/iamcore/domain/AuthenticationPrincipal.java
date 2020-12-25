@@ -6,9 +6,9 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.apache.commons.lang3.RandomStringUtils;
 
 import javax.persistence.*;
+import javax.validation.constraints.NotBlank;
 import java.util.Date;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -17,7 +17,6 @@ import java.util.regex.Pattern;
 @Entity
 public class AuthenticationPrincipal implements IamResource {
 
-    private static final String INFO_SECURED = "INFORMATION IS SECURED AND HIDDEN!";
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -27,8 +26,6 @@ public class AuthenticationPrincipal implements IamResource {
     private String name;
 
     private String encryptedPassword;
-
-    private String secretKey;
 
     private Date createTime;
 
@@ -57,7 +54,6 @@ public class AuthenticationPrincipal implements IamResource {
         AuthenticationPrincipal result = new AuthenticationPrincipal();
         result.name = name;
         result.encryptedPassword = passwordHashingStrategy.getHashing().hashing(password);
-        result.secretKey = RandomStringUtils.randomAlphanumeric(32);
         result.createTime = new Date();
         return result;
     }
@@ -70,7 +66,6 @@ public class AuthenticationPrincipal implements IamResource {
         Vo vo = new Vo();
         vo.resourceLocator = this.resourceLocator();
         vo.name = name;
-        vo.secretKey = secretKey;
         vo.createTime = createTime;
         vo.canUseToken = canUseToken;
         vo.canUseSignature = canUseSignature;
@@ -84,16 +79,12 @@ public class AuthenticationPrincipal implements IamResource {
         private String resourceLocator;
         @Schema(defaultValue = "pony")
         private String name;
-        @Schema(defaultValue = "KSnFIyWeIzibwel49JrckTO7YrZ46xhA")
-        private String secretKey;
         private Date createTime;
+        @Schema(defaultValue = "false", type = "boolean")
         private boolean canUseToken;
+        @Schema(defaultValue = "false", type = "boolean")
         private boolean canUseSignature;
 
-        public Vo secureSecretKey() {
-            this.secretKey = INFO_SECURED;
-            return this;
-        }
     }
 
     @Data
@@ -101,8 +92,12 @@ public class AuthenticationPrincipal implements IamResource {
     @AllArgsConstructor
     @Schema(name = "AuthenticationPrincipal.CreatePrincipalForm")
     public static class CreatePrincipalForm {
+
+        @NotBlank
         @Schema(defaultValue = "pony")
         private String name;
+
+        @NotBlank
         @Schema(defaultValue = "P0ny_1980")
         private String password;
     }

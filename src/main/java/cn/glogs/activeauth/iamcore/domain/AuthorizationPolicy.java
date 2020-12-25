@@ -8,6 +8,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotEmpty;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -69,11 +71,19 @@ public class AuthorizationPolicy implements IamResource {
     @Data
     @Schema(name = "AuthorizationPolicy.Form")
     public static class Form {
+
+        @NotBlank
         @Schema(example = "MyPolicy22")
         private String name;
+
+        @NotBlank
         private PolicyType policyType;
+
+        @NotEmpty
         @Schema(example = "[\"bookshelf:addBooks\", \"bookshelf:listBooks\"]", type = "array")
         private List<String> actions;
+
+        @NotEmpty
         @Schema(example = "[\"bookshelf://users/31/bought-books\", \"bookshelf://users/31/shopping-cart\"]", type = "array")
         private List<String> resources;
     }
@@ -81,13 +91,23 @@ public class AuthorizationPolicy implements IamResource {
     @Data
     @Schema(name = "AuthorizationPolicy.Vo")
     public static class Vo {
+
+        @NotBlank
         @Schema(example = "MyPolicy22")
         private String name;
+
+        @NotBlank
         @Schema(example = "iam://users/77/authorization-policies/62701")
         private String resourceLocator;
+
+        @NotBlank
         private PolicyType policyType;
         @Schema(example = "[\"bookshelf:addBooks\", \"bookshelf:listBooks\"]", type = "array")
+
+        @NotEmpty
         private List<String> actions;
+
+        @NotEmpty
         @Schema(example = "[\"bookshelf://users/31/bought-books\", \"bookshelf://users/31/shopping-cart\"]", type = "array")
         private List<String> resources;
     }

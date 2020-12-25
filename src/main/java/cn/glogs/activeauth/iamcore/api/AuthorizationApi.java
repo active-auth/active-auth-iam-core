@@ -4,18 +4,21 @@ import cn.glogs.activeauth.iamcore.api.payload.AuthorizationChallengingForm;
 import cn.glogs.activeauth.iamcore.api.payload.AuthorizationPolicyGrantingForm;
 import cn.glogs.activeauth.iamcore.api.payload.RestResultPacker;
 import cn.glogs.activeauth.iamcore.domain.AuthenticationPrincipal;
-import cn.glogs.activeauth.iamcore.domain.AuthorizationPolicy;
 import cn.glogs.activeauth.iamcore.domain.AuthenticationSession;
+import cn.glogs.activeauth.iamcore.domain.AuthorizationPolicy;
 import cn.glogs.activeauth.iamcore.domain.AuthorizationPolicyGrant;
+import cn.glogs.activeauth.iamcore.domain.*;
 import cn.glogs.activeauth.iamcore.exception.HTTP400Exception;
 import cn.glogs.activeauth.iamcore.exception.HTTP403Exception;
 import cn.glogs.activeauth.iamcore.exception.HTTP404Exception;
 import cn.glogs.activeauth.iamcore.exception.business.NotFoundException;
 import cn.glogs.activeauth.iamcore.exception.business.PatternException;
+import cn.glogs.activeauth.iamcore.service.AuthenticationPrincipalKeyPairService;
 import cn.glogs.activeauth.iamcore.service.AuthenticationPrincipalService;
-import cn.glogs.activeauth.iamcore.service.AuthorizationService;
 import cn.glogs.activeauth.iamcore.service.AuthenticationSessionService;
+import cn.glogs.activeauth.iamcore.service.AuthorizationService;
 import lombok.SneakyThrows;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
@@ -41,7 +44,7 @@ public class AuthorizationApi {
 
     @SneakyThrows
     @PostMapping("/authorization-policy-grants")
-    public RestResultPacker<List<AuthorizationPolicyGrant.Vo>> grant(HttpServletRequest request, @RequestBody AuthorizationPolicyGrantingForm form) {
+    public RestResultPacker<List<AuthorizationPolicyGrant.Vo>> grant(HttpServletRequest request, @RequestBody @Validated AuthorizationPolicyGrantingForm form) {
         try {
             AuthenticationPrincipal granter = authenticationSessionService.getMeSession(request).getAuthenticationPrincipal();
             AuthenticationPrincipal grantee = authenticationPrincipalService.findPrincipalByLocator(form.getGrantee());
@@ -63,7 +66,7 @@ public class AuthorizationApi {
     }
 
     @PostMapping("/authorization-policies")
-    public RestResultPacker<AuthorizationPolicy.Vo> addPolicy(HttpServletRequest request, @RequestBody AuthorizationPolicy.Form form) throws HTTP400Exception, HTTP403Exception {
+    public RestResultPacker<AuthorizationPolicy.Vo> addPolicy(HttpServletRequest request, @RequestBody @Validated AuthorizationPolicy.Form form) throws HTTP400Exception, HTTP403Exception {
         try {
             AuthenticationSession authenticationSession = authenticationSessionService.getMeSession(request);
             AuthorizationPolicy authorizationPolicy = authorizationService.addPolicy(authenticationSession.getAuthenticationPrincipal(), form);
@@ -76,7 +79,7 @@ public class AuthorizationApi {
     }
 
     @PostMapping("/authorizations/challenging")
-    public RestResultPacker<AuthorizationChallengingForm> authorizationChallenging(HttpServletRequest request, @RequestBody AuthorizationChallengingForm form) throws HTTP400Exception, HTTP403Exception {
+    public RestResultPacker<AuthorizationChallengingForm> authorizationChallenging(HttpServletRequest request, @RequestBody @Validated AuthorizationChallengingForm form) throws HTTP400Exception, HTTP403Exception {
         try {
             AuthenticationSession currentAuthenticationSession = authenticationSessionService.getMeSession(request);
             boolean accessible = authorizationService.challenge(currentAuthenticationSession.getAuthenticationPrincipal(), form.getAction(), form.getResources());
