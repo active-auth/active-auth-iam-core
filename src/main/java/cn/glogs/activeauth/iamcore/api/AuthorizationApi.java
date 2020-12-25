@@ -32,15 +32,12 @@ public class AuthorizationApi {
 
     private final AuthenticationPrincipalService authenticationPrincipalService;
 
-    private final AuthenticationPrincipalKeyPairService authenticationPrincipalKeyPairService;
-
     private final AuthenticationSessionService authenticationSessionService;
 
     private final AuthorizationService authorizationService;
 
-    public AuthorizationApi(AuthenticationPrincipalService authenticationPrincipalService, AuthenticationPrincipalKeyPairService authenticationPrincipalKeyPairService, AuthenticationSessionService authenticationSessionService, AuthorizationService authorizationService) {
+    public AuthorizationApi(AuthenticationPrincipalService authenticationPrincipalService, AuthenticationSessionService authenticationSessionService, AuthorizationService authorizationService) {
         this.authenticationPrincipalService = authenticationPrincipalService;
-        this.authenticationPrincipalKeyPairService = authenticationPrincipalKeyPairService;
         this.authenticationSessionService = authenticationSessionService;
         this.authorizationService = authorizationService;
     }
@@ -74,18 +71,6 @@ public class AuthorizationApi {
             AuthenticationSession authenticationSession = authenticationSessionService.getMeSession(request);
             AuthorizationPolicy authorizationPolicy = authorizationService.addPolicy(authenticationSession.getAuthenticationPrincipal(), form);
             return RestResultPacker.success(authorizationPolicy.vo());
-        } catch (AuthenticationSession.SessionRequestBadHeaderException e) {
-            throw new HTTP400Exception(e);
-        } catch (AuthenticationSession.SessionNotFoundException e) {
-            throw new HTTP403Exception(e);
-        }
-    }
-
-    @PostMapping("/authorization-policies/current/key-pairs")
-    public RestResultPacker<AuthenticationPrincipalKeyPair.Vo> genKeyPair(HttpServletRequest request, @RequestBody AuthenticationPrincipalKeyPair.GenKeyPairForm form) throws HTTP400Exception, HTTP403Exception {
-        try {
-            AuthenticationSession authenticationSession = authenticationSessionService.getMeSession(request);
-            return RestResultPacker.success(authenticationPrincipalKeyPairService.genKey(authenticationSession.getAuthenticationPrincipal(), form).vo());
         } catch (AuthenticationSession.SessionRequestBadHeaderException e) {
             throw new HTTP400Exception(e);
         } catch (AuthenticationSession.SessionNotFoundException e) {

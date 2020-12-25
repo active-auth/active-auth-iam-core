@@ -2,12 +2,14 @@ package cn.glogs.activeauth.iamcore.api;
 
 import cn.glogs.activeauth.iamcore.api.payload.RestResultPacker;
 import cn.glogs.activeauth.iamcore.domain.AuthenticationPrincipal;
+import cn.glogs.activeauth.iamcore.domain.AuthenticationPrincipalKeyPair;
 import cn.glogs.activeauth.iamcore.domain.AuthenticationSession;
 import cn.glogs.activeauth.iamcore.exception.HTTP400Exception;
 import cn.glogs.activeauth.iamcore.exception.HTTP401Exception;
 import cn.glogs.activeauth.iamcore.exception.HTTP403Exception;
 import cn.glogs.activeauth.iamcore.exception.HTTP404Exception;
 import cn.glogs.activeauth.iamcore.exception.business.NotFoundException;
+import cn.glogs.activeauth.iamcore.service.AuthenticationPrincipalKeyPairService;
 import cn.glogs.activeauth.iamcore.service.AuthenticationPrincipalService;
 import cn.glogs.activeauth.iamcore.service.AuthenticationSessionService;
 import org.springframework.validation.annotation.Validated;
@@ -23,10 +25,13 @@ public class AuthenticationApi {
 
     private final AuthenticationPrincipalService authenticationPrincipalService;
 
+    private final AuthenticationPrincipalKeyPairService authenticationPrincipalKeyPairService;
+
     private final AuthenticationSessionService authenticationSessionService;
 
-    public AuthenticationApi(AuthenticationPrincipalService authenticationPrincipalService, AuthenticationSessionService authenticationSessionService) {
+    public AuthenticationApi(AuthenticationPrincipalService authenticationPrincipalService, AuthenticationPrincipalKeyPairService authenticationPrincipalKeyPairService, AuthenticationSessionService authenticationSessionService) {
         this.authenticationPrincipalService = authenticationPrincipalService;
+        this.authenticationPrincipalKeyPairService = authenticationPrincipalKeyPairService;
         this.authenticationSessionService = authenticationSessionService;
     }
 
@@ -52,6 +57,19 @@ public class AuthenticationApi {
             return RestResultPacker.success(authenticationPrincipalService.findPrincipalById(id).vo());
         } catch (NotFoundException e) {
             throw new HTTP404Exception(e);
+        }
+    }
+
+
+    @PostMapping("/authentication-principals/current/key-pairs")
+    public RestResultPacker<AuthenticationPrincipalKeyPair.Vo> genKeyPair(HttpServletRequest request, @RequestBody AuthenticationPrincipalKeyPair.GenKeyPairForm form) throws HTTP400Exception, HTTP403Exception {
+        try {
+            AuthenticationSession authenticationSession = authenticationSessionService.getMeSession(request);
+            return RestResultPacker.success(authenticationPrincipalKeyPairService.genKey(authenticationSession.getAuthenticationPrincipal(), form).vo());
+        } catch (AuthenticationSession.SessionRequestBadHeaderException e) {
+            throw new HTTP400Exception(e);
+        } catch (AuthenticationSession.SessionNotFoundException e) {
+            throw new HTTP403Exception(e);
         }
     }
 
