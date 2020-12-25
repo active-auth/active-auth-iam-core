@@ -31,10 +31,11 @@ public class AuthenticationPrincipalKeyPairServiceImpl implements Authentication
             principalKeyPair.setKeyId(UUID.randomUUID().toString());
             principalKeyPair.setDescription(form.getDescription());
             principalKeyPair.setPubKey(keyPair.getPubKey());
+            principalKeyPair.setPriKey(keyPair.getPriKey());
             principalKeyPair.setEnabled(true);
             principalKeyPair.setCreateTime(new Date());
             principalKeyPair.setPrincipal(principal);
-            authenticationPrincipalKeyPairRepository.save(principalKeyPair);
+            return authenticationPrincipalKeyPairRepository.save(principalKeyPair);
         } catch (NoSuchAlgorithmException e) {
             e.printStackTrace();
         }

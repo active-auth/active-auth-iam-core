@@ -82,9 +82,15 @@ public class AuthorizationApi {
     }
 
     @PostMapping("/authorization-policies/current/key-pairs")
-    public RestResultPacker<AuthenticationPrincipalKeyPair.Vo> genKeyPair(HttpServletRequest request, @RequestBody AuthenticationPrincipalKeyPair.GenKeyPairForm form) throws HTTP400Exception, HTTP403Exception, AuthenticationSession.SessionRequestBadHeaderException, AuthenticationSession.SessionNotFoundException {
-        AuthenticationSession authenticationSession = authenticationSessionService.getMeSession(request);
-        return RestResultPacker.success(authenticationPrincipalKeyPairService.genKey(authenticationSession.getAuthenticationPrincipal(), form).vo());
+    public RestResultPacker<AuthenticationPrincipalKeyPair.Vo> genKeyPair(HttpServletRequest request, @RequestBody AuthenticationPrincipalKeyPair.GenKeyPairForm form) throws HTTP400Exception, HTTP403Exception {
+        try {
+            AuthenticationSession authenticationSession = authenticationSessionService.getMeSession(request);
+            return RestResultPacker.success(authenticationPrincipalKeyPairService.genKey(authenticationSession.getAuthenticationPrincipal(), form).vo());
+        } catch (AuthenticationSession.SessionRequestBadHeaderException e) {
+            throw new HTTP400Exception(e);
+        } catch (AuthenticationSession.SessionNotFoundException e) {
+            throw new HTTP403Exception(e);
+        }
     }
 
     @PostMapping("/authorizations/challenging")

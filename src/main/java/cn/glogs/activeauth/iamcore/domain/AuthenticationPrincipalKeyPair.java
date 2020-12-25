@@ -2,6 +2,7 @@ package cn.glogs.activeauth.iamcore.domain;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
+import org.apache.commons.lang3.StringUtils;
 
 import javax.persistence.*;
 import java.util.Base64;
@@ -45,8 +46,10 @@ public class AuthenticationPrincipalKeyPair implements IamResource {
 
     public Vo vo() {
         Vo vo = new Vo();
+        vo.locator = resourceLocator();
         vo.keyId = keyId;
-        vo.privateKey = new String(base64Encoder.encode(priKey.getBytes()));
+        if (StringUtils.isNotBlank(priKey))
+            vo.privateKey = new String(base64Encoder.encode(priKey.getBytes()));
         vo.description = description;
         vo.enabled = enabled;
         vo.createTime = createTime;
@@ -55,6 +58,8 @@ public class AuthenticationPrincipalKeyPair implements IamResource {
 
     @Data
     public static class Vo {
+        @Schema(defaultValue = "iam://users/3/key-pairs/45")
+        private String locator;
         @Schema(defaultValue = "39125471-2164-4ae6-b41c-7a0f2f28f1ae")
         private String keyId;
         @Schema(defaultValue = "base64Encode('-----BEGIN PRIVATE KEY----- \n ****** \n -----END PRIVATE KEY-----')")
