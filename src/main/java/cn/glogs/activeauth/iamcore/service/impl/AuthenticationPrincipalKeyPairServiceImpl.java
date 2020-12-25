@@ -6,9 +6,13 @@ import cn.glogs.activeauth.iamcore.domain.keypair.KeyPair;
 import cn.glogs.activeauth.iamcore.domain.keypair.RSAKeyPair;
 import cn.glogs.activeauth.iamcore.repository.AuthenticationPrincipalKeyPairRepository;
 import cn.glogs.activeauth.iamcore.service.AuthenticationPrincipalKeyPairService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.persistence.criteria.Path;
 import java.security.NoSuchAlgorithmException;
 import java.util.Date;
 import java.util.UUID;
@@ -40,5 +44,14 @@ public class AuthenticationPrincipalKeyPairServiceImpl implements Authentication
             e.printStackTrace();
         }
         return principalKeyPair;
+    }
+
+    @Override
+    public Page<AuthenticationPrincipalKeyPair> pagingKeyPairs(AuthenticationPrincipal principal, int page, int size) {
+        PageRequest pageRequest = PageRequest.of(page, size);
+        return authenticationPrincipalKeyPairRepository.findAll((Specification<AuthenticationPrincipalKeyPair>) (root, query, criteriaBuilder) -> {
+            Path<AuthenticationPrincipal> principalField = root.get("principal");
+            return criteriaBuilder.equal(principalField, principal);
+        }, pageRequest);
     }
 }
