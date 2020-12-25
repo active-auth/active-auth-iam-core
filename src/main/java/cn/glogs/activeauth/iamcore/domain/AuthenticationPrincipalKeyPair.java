@@ -57,6 +57,7 @@ public class AuthenticationPrincipalKeyPair implements IamResource {
     }
 
     @Data
+    @Schema(name = "AuthenticationPrincipalKeyPair.Vo")
     public static class Vo {
         @Schema(defaultValue = "iam://users/3/key-pairs/45")
         private String locator;
