@@ -17,7 +17,6 @@ import java.util.regex.Pattern;
 @Entity
 public class AuthenticationPrincipal implements IamResource {
 
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -32,6 +31,9 @@ public class AuthenticationPrincipal implements IamResource {
     private boolean canUseToken;
 
     private boolean canUseSignature;
+
+    @ManyToOne
+    private AuthenticationPrincipal owner;
 
     @Override
     public String resourceLocator() {
@@ -70,6 +72,11 @@ public class AuthenticationPrincipal implements IamResource {
         vo.canUseToken = canUseToken;
         vo.canUseSignature = canUseSignature;
         return vo;
+    }
+
+    public AuthenticationPrincipal withOwner(AuthenticationPrincipal owner) {
+        this.owner = owner;
+        return this;
     }
 
     @Data

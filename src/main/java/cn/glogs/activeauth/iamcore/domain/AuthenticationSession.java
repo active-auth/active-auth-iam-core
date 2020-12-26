@@ -80,6 +80,12 @@ public class AuthenticationSession {
         private String secret;
     }
 
+    public static class SessionRequestNotAuthorizedException extends Exception {
+        public SessionRequestNotAuthorizedException(String msg) {
+            super(msg);
+        }
+    }
+
     public static class SessionRequestBadHeaderException extends Exception {
         public SessionRequestBadHeaderException(String msg) {
             super(msg);

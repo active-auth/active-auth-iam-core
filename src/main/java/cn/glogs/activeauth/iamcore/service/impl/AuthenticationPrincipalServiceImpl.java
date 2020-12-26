@@ -6,8 +6,13 @@ import cn.glogs.activeauth.iamcore.exception.business.NotFoundException;
 import cn.glogs.activeauth.iamcore.exception.business.PatternException;
 import cn.glogs.activeauth.iamcore.repository.AuthenticationPrincipalRepository;
 import cn.glogs.activeauth.iamcore.service.AuthenticationPrincipalService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import javax.persistence.criteria.Path;
 
 @Service
 public class AuthenticationPrincipalServiceImpl implements AuthenticationPrincipalService {
@@ -38,6 +43,28 @@ public class AuthenticationPrincipalServiceImpl implements AuthenticationPrincip
     @Transactional
     public AuthenticationPrincipal findPrincipalByLocator(String locator) throws PatternException, NotFoundException {
         return authenticationPrincipalRepository.findById(AuthenticationPrincipal.idFromLocator(locator)).orElseThrow(() -> new NotFoundException("Principal not found"));
+    }
 
+    @Override
+    @Transactional
+    public Page<AuthenticationPrincipal> pagingPrincipals(int page, int size) {
+        PageRequest pageRequest = PageRequest.of(page, size);
+        return authenticationPrincipalRepository.findAll(pageRequest);
+    }
+
+    @Override
+    public AuthenticationPrincipal addSubprincipal(AuthenticationPrincipal owner, String name, String password) {
+        AuthenticationPrincipal authenticationPrincipal = AuthenticationPrincipal.createPrincipal(name, password, configuration.getPasswordHashingStrategy()).withOwner(owner);
+        authenticationPrincipalRepository.save(authenticationPrincipal);
+        return authenticationPrincipal;
+    }
+
+    @Override
+    public Page<AuthenticationPrincipal> pagingSubprincipals(AuthenticationPrincipal owner, int page, int size) {
+        PageRequest pageRequest = PageRequest.of(page, size);
+        return authenticationPrincipalRepository.findAll((Specification<AuthenticationPrincipal>) (root, query, criteriaBuilder) -> {
+            Path<AuthenticationPrincipal> principalField = root.get("principal");
+            return criteriaBuilder.equal(principalField, owner);
+        }, pageRequest);
     }
 }
