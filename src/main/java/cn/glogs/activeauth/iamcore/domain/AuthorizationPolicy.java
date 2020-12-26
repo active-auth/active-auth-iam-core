@@ -61,6 +61,7 @@ public class AuthorizationPolicy implements IamResource {
 
     public Vo vo() {
         Vo vo = new Vo();
+        vo.id = id;
         vo.name = name;
         vo.policyType = policyType;
         vo.actions = actions;
@@ -92,6 +93,8 @@ public class AuthorizationPolicy implements IamResource {
     @Data
     @Schema(name = "AuthorizationPolicy.Vo")
     public static class Vo {
+
+        private Long id;
 
         @NotBlank
         @Schema(example = "MyPolicy22")

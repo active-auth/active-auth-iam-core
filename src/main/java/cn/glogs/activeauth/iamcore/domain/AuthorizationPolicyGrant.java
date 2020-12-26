@@ -38,6 +38,7 @@ public class AuthorizationPolicyGrant implements IamResource {
 
     public Vo vo() {
         Vo vo = new Vo();
+        vo.id = id;
         vo.resourceLocator = resourceLocator();
         vo.granter = granter.resourceLocator();
         vo.grantee = grantee.resourceLocator();
@@ -53,6 +54,7 @@ public class AuthorizationPolicyGrant implements IamResource {
     @NoArgsConstructor
     @Schema(name = "AuthorizationPolicyGrant.Vo")
     public static class Vo {
+        private Long id;
         @Schema(example = "iam://users/12/authorization-policy-grants/765")
         private String resourceLocator;
         @Schema(defaultValue = "iam://users/12/principal")

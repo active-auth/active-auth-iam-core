@@ -66,6 +66,7 @@ public class AuthenticationPrincipal implements IamResource {
 
     public Vo vo() {
         Vo vo = new Vo();
+        vo.id = id;
         vo.resourceLocator = this.resourceLocator();
         vo.name = name;
         vo.createTime = createTime;
@@ -82,6 +83,7 @@ public class AuthenticationPrincipal implements IamResource {
     @Data
     @Schema(name = "AuthenticationPrincipal.Vo")
     public static class Vo {
+        private Long id;
         @Schema(defaultValue = "iam://users/116/principal")
         private String resourceLocator;
         @Schema(defaultValue = "pony")
