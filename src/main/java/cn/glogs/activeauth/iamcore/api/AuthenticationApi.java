@@ -37,7 +37,7 @@ public class AuthenticationApi {
         this.authorizationService = authorizationService;
     }
 
-    @PostMapping("/authentications/ticketing")
+    @PostMapping("/principals/none/authentication-ticketings")
     public RestResultPacker<AuthenticationSession.Vo> authenticationTicketing(@RequestBody @Validated AuthenticationSession.CreateSessionForm form) throws HTTP401Exception, HTTP404Exception {
         try {
             return RestResultPacker.success(authenticationSessionService.newSession(form).vo());
@@ -48,7 +48,7 @@ public class AuthenticationApi {
         }
     }
 
-    @GetMapping("/authentication-principals")
+    @GetMapping("/principals")
     public RestResultPacker<Page<AuthenticationPrincipal.Vo>> findPrincipalById(HttpServletRequest request, int page, int size) throws HTTP401Exception, HTTP403Exception {
         try {
             AuthenticationSession authenticationSession = authenticationSessionService.getMeSession(request);
@@ -64,12 +64,12 @@ public class AuthenticationApi {
         }
     }
 
-    @PostMapping("/authentication-principals")
+    @PostMapping("/principals")
     public RestResultPacker<AuthenticationPrincipal.Vo> addPrincipal(@RequestBody @Validated AuthenticationPrincipal.CreatePrincipalForm form) {
         return RestResultPacker.success(authenticationPrincipalService.addPrincipal(form.getName(), form.getPassword()).vo());
     }
 
-    @GetMapping("/authentication-principals/current")
+    @GetMapping("/principals/current")
     public RestResultPacker<AuthenticationPrincipal.Vo> findCurrentPrincipal(HttpServletRequest request) throws HTTP401Exception, HTTP403Exception {
         try {
             AuthenticationSession authenticationSession = authenticationSessionService.getMeSession(request);
@@ -85,7 +85,7 @@ public class AuthenticationApi {
         }
     }
 
-    @PostMapping("/authentication-principals/current/key-pairs")
+    @PostMapping("/principals/current/key-pairs")
     public RestResultPacker<AuthenticationPrincipalKeyPair.Vo> genKeyPair(HttpServletRequest request, @RequestBody AuthenticationPrincipalKeyPair.GenKeyPairForm form) throws HTTP401Exception, HTTP403Exception {
         try {
             AuthenticationSession authenticationSession = authenticationSessionService.getMeSession(request);
@@ -101,7 +101,7 @@ public class AuthenticationApi {
         }
     }
 
-    @GetMapping("/authentication-principals/current/key-pairs")
+    @GetMapping("/principals/current/key-pairs")
     public RestResultPacker<Page<AuthenticationPrincipalKeyPair.Vo>> pagingKeyPairs(HttpServletRequest request, @RequestParam int page, @RequestParam int size) throws HTTP401Exception, HTTP403Exception {
         try {
             AuthenticationSession authenticationSession = authenticationSessionService.getMeSession(request);
@@ -118,7 +118,7 @@ public class AuthenticationApi {
         }
     }
 
-    @PostMapping("/authentication-principals/current/subprincipals")
+    @PostMapping("/principals/current/subprincipals")
     public RestResultPacker<AuthenticationPrincipal.Vo> addSubprincipal(HttpServletRequest request, @RequestBody AuthenticationPrincipal.CreatePrincipalForm form) throws HTTP401Exception, HTTP403Exception {
         try {
             AuthenticationSession authenticationSession = authenticationSessionService.getMeSession(request);
@@ -134,7 +134,7 @@ public class AuthenticationApi {
         }
     }
 
-    @GetMapping("/authentication-principals/current/subprincipals")
+    @GetMapping("/principals/current/subprincipals")
     public RestResultPacker<Page<AuthenticationPrincipal.Vo>> pagingSubPrincipals(HttpServletRequest request, @RequestParam int page, @RequestParam int size) throws HTTP401Exception, HTTP403Exception {
         try {
             AuthenticationSession authenticationSession = authenticationSessionService.getMeSession(request);
@@ -150,7 +150,7 @@ public class AuthenticationApi {
         }
     }
 
-    @GetMapping("/authentication-principals/{principalId}")
+    @GetMapping("/principals/{principalId}")
     public RestResultPacker<AuthenticationPrincipal.Vo> findPrincipalById(HttpServletRequest request, @PathVariable Long principalId) throws HTTP401Exception, HTTP403Exception, HTTP404Exception {
         try {
             AuthenticationSession authenticationSession = authenticationSessionService.getMeSession(request);
@@ -168,7 +168,7 @@ public class AuthenticationApi {
         }
     }
 
-    @PostMapping("/authentication-principals/{principalId}/key-pairs")
+    @PostMapping("/principals/{principalId}/key-pairs")
     public RestResultPacker<AuthenticationPrincipalKeyPair.Vo> genKeyPair(HttpServletRequest request, @PathVariable Long principalId, @RequestBody AuthenticationPrincipalKeyPair.GenKeyPairForm form) throws HTTP401Exception, HTTP403Exception, HTTP404Exception {
         try {
             AuthenticationSession authenticationSession = authenticationSessionService.getMeSession(request);
@@ -187,7 +187,7 @@ public class AuthenticationApi {
         }
     }
 
-    @GetMapping("/authentication-principals/{principalId}/key-pairs")
+    @GetMapping("/principals/{principalId}/key-pairs")
     public RestResultPacker<Page<AuthenticationPrincipalKeyPair.Vo>> pagingKeyPairs(HttpServletRequest request, @PathVariable Long principalId, @RequestParam int page, @RequestParam int size) throws HTTP401Exception, HTTP403Exception, HTTP404Exception {
         try {
             AuthenticationSession authenticationSession = authenticationSessionService.getMeSession(request);
@@ -207,7 +207,7 @@ public class AuthenticationApi {
         }
     }
 
-    @PostMapping("/authentication-principals/{principalId}/subprincipals")
+    @PostMapping("/principals/{principalId}/subprincipals")
     public RestResultPacker<AuthenticationPrincipal.Vo> addSubprincipal(HttpServletRequest request, @PathVariable Long principalId, @RequestBody AuthenticationPrincipal.CreatePrincipalForm form) throws HTTP401Exception, HTTP403Exception, HTTP404Exception {
         try {
             AuthenticationSession authenticationSession = authenticationSessionService.getMeSession(request);
@@ -226,7 +226,7 @@ public class AuthenticationApi {
         }
     }
 
-    @GetMapping("/authentication-principals/{principalId}/subprincipals")
+    @GetMapping("/principals/{principalId}/subprincipals")
     public RestResultPacker<Page<AuthenticationPrincipal.Vo>> pagingSubPrincipals(HttpServletRequest request, @PathVariable Long principalId, @RequestParam int page, @RequestParam int size) throws HTTP401Exception, HTTP403Exception, HTTP404Exception {
         try {
             AuthenticationSession authenticationSession = authenticationSessionService.getMeSession(request);
