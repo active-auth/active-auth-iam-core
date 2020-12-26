@@ -4,7 +4,6 @@ import cn.glogs.activeauth.iamcore.api.payload.RestResultPacker;
 import cn.glogs.activeauth.iamcore.domain.AuthenticationPrincipal;
 import cn.glogs.activeauth.iamcore.domain.AuthenticationPrincipalKeyPair;
 import cn.glogs.activeauth.iamcore.domain.AuthenticationSession;
-import cn.glogs.activeauth.iamcore.exception.HTTP400Exception;
 import cn.glogs.activeauth.iamcore.exception.HTTP401Exception;
 import cn.glogs.activeauth.iamcore.exception.HTTP403Exception;
 import cn.glogs.activeauth.iamcore.exception.HTTP404Exception;
@@ -38,11 +37,6 @@ public class AuthenticationApi {
         this.authorizationService = authorizationService;
     }
 
-    @PostMapping("/authentication-principals")
-    public RestResultPacker<AuthenticationPrincipal.Vo> addPrincipal(@RequestBody @Validated AuthenticationPrincipal.CreatePrincipalForm form) {
-        return RestResultPacker.success(authenticationPrincipalService.addPrincipal(form.getName(), form.getPassword()).vo());
-    }
-
     @PostMapping("/authentications/ticketing")
     public RestResultPacker<AuthenticationSession.Vo> authenticationTicketing(@RequestBody @Validated AuthenticationSession.CreateSessionForm form) throws HTTP401Exception, HTTP404Exception {
         try {
@@ -54,26 +48,29 @@ public class AuthenticationApi {
         }
     }
 
-    @GetMapping("/authentication-principals/{principalId}")
-    public RestResultPacker<AuthenticationPrincipal.Vo> findPrincipalById(HttpServletRequest request, @PathVariable Long principalId) throws HTTP400Exception, HTTP403Exception, HTTP404Exception {
+    @GetMapping("/authentication-principals")
+    public RestResultPacker<Page<AuthenticationPrincipal.Vo>> findPrincipalById(HttpServletRequest request, int page, int size) throws HTTP401Exception, HTTP403Exception {
         try {
             AuthenticationSession authenticationSession = authenticationSessionService.getMeSession(request);
-            boolean accessible = authorizationService.challenge(authenticationSession.getAuthenticationPrincipal(), "iam:GetPrincipal", List.of(String.format("iam://users/%s/principal", principalId)));
+            boolean accessible = authorizationService.challenge(authenticationSession.getAuthenticationPrincipal(), "iam:GetPrincipal", List.of("iam://users"));
             if (!accessible) {
                 throw new HTTP403Exception("Inaccessible!");
             }
-            return RestResultPacker.success(authenticationPrincipalService.findPrincipalById(principalId).vo());
-        } catch (AuthenticationSession.SessionRequestBadHeaderException e) {
-            throw new HTTP400Exception(e);
+            return RestResultPacker.success(authenticationPrincipalService.pagingPrincipals(page, size).map((AuthenticationPrincipal::vo)));
+        } catch (AuthenticationSession.SessionRequestNotAuthorizedException e) {
+            throw new HTTP401Exception(e);
         } catch (AuthenticationSession.SessionNotFoundException e) {
             throw new HTTP403Exception(e);
-        } catch (NotFoundException e) {
-            throw new HTTP404Exception(e);
         }
     }
 
+    @PostMapping("/authentication-principals")
+    public RestResultPacker<AuthenticationPrincipal.Vo> addPrincipal(@RequestBody @Validated AuthenticationPrincipal.CreatePrincipalForm form) {
+        return RestResultPacker.success(authenticationPrincipalService.addPrincipal(form.getName(), form.getPassword()).vo());
+    }
+
     @GetMapping("/authentication-principals/current")
-    public RestResultPacker<AuthenticationPrincipal.Vo> findCurrentPrincipal(HttpServletRequest request) throws HTTP400Exception, HTTP403Exception {
+    public RestResultPacker<AuthenticationPrincipal.Vo> findCurrentPrincipal(HttpServletRequest request) throws HTTP401Exception, HTTP403Exception {
         try {
             AuthenticationSession authenticationSession = authenticationSessionService.getMeSession(request);
             boolean accessible = authorizationService.challenge(authenticationSession.getAuthenticationPrincipal(), "iam:GetPrincipal", List.of(String.format("iam://users/%s/principal", authenticationSession.getAuthenticationPrincipal().getId())));
@@ -81,15 +78,31 @@ public class AuthenticationApi {
                 throw new HTTP403Exception("Inaccessible!");
             }
             return RestResultPacker.success(authenticationSession.getAuthenticationPrincipal().vo());
-        } catch (AuthenticationSession.SessionRequestBadHeaderException e) {
-            throw new HTTP400Exception(e);
+        } catch (AuthenticationSession.SessionRequestNotAuthorizedException e) {
+            throw new HTTP401Exception(e);
+        } catch (AuthenticationSession.SessionNotFoundException e) {
+            throw new HTTP403Exception(e);
+        }
+    }
+
+    @PostMapping("/authentication-principals/current/key-pairs")
+    public RestResultPacker<AuthenticationPrincipalKeyPair.Vo> genKeyPair(HttpServletRequest request, @RequestBody AuthenticationPrincipalKeyPair.GenKeyPairForm form) throws HTTP401Exception, HTTP403Exception {
+        try {
+            AuthenticationSession authenticationSession = authenticationSessionService.getMeSession(request);
+            boolean accessible = authorizationService.challenge(authenticationSession.getAuthenticationPrincipal(), "iam:GenKeyPair", List.of(String.format("iam://users/%s/key-pairs", authenticationSession.getAuthenticationPrincipal().getId())));
+            if (!accessible) {
+                throw new HTTP403Exception("Inaccessible!");
+            }
+            return RestResultPacker.success(authenticationPrincipalKeyPairService.genKey(authenticationSession.getAuthenticationPrincipal(), form).vo());
+        } catch (AuthenticationSession.SessionRequestNotAuthorizedException e) {
+            throw new HTTP401Exception(e);
         } catch (AuthenticationSession.SessionNotFoundException e) {
             throw new HTTP403Exception(e);
         }
     }
 
     @GetMapping("/authentication-principals/current/key-pairs")
-    public RestResultPacker<Page<AuthenticationPrincipalKeyPair.Vo>> pagingKeyPairs(HttpServletRequest request, @RequestParam int page, @RequestParam int size) throws HTTP400Exception, HTTP403Exception {
+    public RestResultPacker<Page<AuthenticationPrincipalKeyPair.Vo>> pagingKeyPairs(HttpServletRequest request, @RequestParam int page, @RequestParam int size) throws HTTP401Exception, HTTP403Exception {
         try {
             AuthenticationSession authenticationSession = authenticationSessionService.getMeSession(request);
             boolean accessible = authorizationService.challenge(authenticationSession.getAuthenticationPrincipal(), "iam:GetKeyPair", List.of(String.format("iam://users/%s/key-pairs", authenticationSession.getAuthenticationPrincipal().getId())));
@@ -98,15 +111,84 @@ public class AuthenticationApi {
             }
             Page<AuthenticationPrincipalKeyPair> keyPairPage = authenticationPrincipalKeyPairService.pagingKeyPairs(authenticationSession.getAuthenticationPrincipal(), page, size);
             return RestResultPacker.success(keyPairPage.map((keyPair) -> keyPair.vo().securePrivateKey()));
-        } catch (AuthenticationSession.SessionRequestBadHeaderException e) {
-            throw new HTTP400Exception(e);
+        } catch (AuthenticationSession.SessionRequestNotAuthorizedException e) {
+            throw new HTTP401Exception(e);
         } catch (AuthenticationSession.SessionNotFoundException e) {
             throw new HTTP403Exception(e);
         }
     }
 
+    @PostMapping("/authentication-principals/current/subprincipals")
+    public RestResultPacker<AuthenticationPrincipal.Vo> addSubprincipal(HttpServletRequest request, @RequestBody AuthenticationPrincipal.CreatePrincipalForm form) throws HTTP401Exception, HTTP403Exception {
+        try {
+            AuthenticationSession authenticationSession = authenticationSessionService.getMeSession(request);
+            boolean accessible = authorizationService.challenge(authenticationSession.getAuthenticationPrincipal(), "iam:AddSubPrincipal", List.of(String.format("iam://users/%s/subprincipals", authenticationSession.getAuthenticationPrincipal().getId())));
+            if (!accessible) {
+                throw new HTTP403Exception("Inaccessible!");
+            }
+            return RestResultPacker.success(authenticationPrincipalService.addSubprincipal(authenticationSession.getAuthenticationPrincipal(), form.getName(), form.getPassword()).vo());
+        } catch (AuthenticationSession.SessionRequestNotAuthorizedException e) {
+            throw new HTTP401Exception(e);
+        } catch (AuthenticationSession.SessionNotFoundException e) {
+            throw new HTTP403Exception(e);
+        }
+    }
+
+    @GetMapping("/authentication-principals/current/subprincipals")
+    public RestResultPacker<Page<AuthenticationPrincipal.Vo>> pagingSubPrincipals(HttpServletRequest request, @RequestParam int page, @RequestParam int size) throws HTTP401Exception, HTTP403Exception {
+        try {
+            AuthenticationSession authenticationSession = authenticationSessionService.getMeSession(request);
+            boolean accessible = authorizationService.challenge(authenticationSession.getAuthenticationPrincipal(), "iam:GetSubPrincipal", List.of(String.format("iam://users/%s/subprincipals", authenticationSession.getAuthenticationPrincipal().getId())));
+            if (!accessible) {
+                throw new HTTP403Exception("Inaccessible!");
+            }
+            return RestResultPacker.success(authenticationPrincipalService.pagingSubprincipals(authenticationSession.getAuthenticationPrincipal(), page, size).map((AuthenticationPrincipal::vo)));
+        } catch (AuthenticationSession.SessionRequestNotAuthorizedException e) {
+            throw new HTTP401Exception(e);
+        } catch (AuthenticationSession.SessionNotFoundException e) {
+            throw new HTTP403Exception(e);
+        }
+    }
+
+    @GetMapping("/authentication-principals/{principalId}")
+    public RestResultPacker<AuthenticationPrincipal.Vo> findPrincipalById(HttpServletRequest request, @PathVariable Long principalId) throws HTTP401Exception, HTTP403Exception, HTTP404Exception {
+        try {
+            AuthenticationSession authenticationSession = authenticationSessionService.getMeSession(request);
+            boolean accessible = authorizationService.challenge(authenticationSession.getAuthenticationPrincipal(), "iam:GetPrincipal", List.of(String.format("iam://users/%s/principal", principalId)));
+            if (!accessible) {
+                throw new HTTP403Exception("Inaccessible!");
+            }
+            return RestResultPacker.success(authenticationPrincipalService.findPrincipalById(principalId).vo());
+        } catch (AuthenticationSession.SessionRequestNotAuthorizedException e) {
+            throw new HTTP401Exception(e);
+        } catch (AuthenticationSession.SessionNotFoundException e) {
+            throw new HTTP403Exception(e);
+        } catch (NotFoundException e) {
+            throw new HTTP404Exception(e);
+        }
+    }
+
+    @PostMapping("/authentication-principals/{principalId}/key-pairs")
+    public RestResultPacker<AuthenticationPrincipalKeyPair.Vo> genKeyPair(HttpServletRequest request, @PathVariable Long principalId, @RequestBody AuthenticationPrincipalKeyPair.GenKeyPairForm form) throws HTTP401Exception, HTTP403Exception, HTTP404Exception {
+        try {
+            AuthenticationSession authenticationSession = authenticationSessionService.getMeSession(request);
+            boolean accessible = authorizationService.challenge(authenticationSession.getAuthenticationPrincipal(), "iam:GenKeyPair", List.of(String.format("iam://users/%s/key-pairs", principalId)));
+            if (!accessible) {
+                throw new HTTP403Exception("Inaccessible!");
+            }
+            AuthenticationPrincipal principal = authenticationPrincipalService.findPrincipalById(principalId);
+            return RestResultPacker.success(authenticationPrincipalKeyPairService.genKey(principal, form).vo());
+        } catch (AuthenticationSession.SessionRequestNotAuthorizedException e) {
+            throw new HTTP401Exception(e);
+        } catch (AuthenticationSession.SessionNotFoundException e) {
+            throw new HTTP403Exception(e);
+        } catch (NotFoundException e) {
+            throw new HTTP404Exception(e);
+        }
+    }
+
     @GetMapping("/authentication-principals/{principalId}/key-pairs")
-    public RestResultPacker<Page<AuthenticationPrincipalKeyPair.Vo>> pagingKeyPairs(HttpServletRequest request, @PathVariable Long principalId, @RequestParam int page, @RequestParam int size) throws HTTP400Exception, HTTP403Exception, HTTP404Exception {
+    public RestResultPacker<Page<AuthenticationPrincipalKeyPair.Vo>> pagingKeyPairs(HttpServletRequest request, @PathVariable Long principalId, @RequestParam int page, @RequestParam int size) throws HTTP401Exception, HTTP403Exception, HTTP404Exception {
         try {
             AuthenticationSession authenticationSession = authenticationSessionService.getMeSession(request);
             boolean accessible = authorizationService.challenge(authenticationSession.getAuthenticationPrincipal(), "iam:GetKeyPair", List.of(String.format("iam://users/%s/key-pairs", principalId)));
@@ -116,8 +198,8 @@ public class AuthenticationApi {
             AuthenticationPrincipal principal = authenticationPrincipalService.findPrincipalById(principalId);
             Page<AuthenticationPrincipalKeyPair> keyPairPage = authenticationPrincipalKeyPairService.pagingKeyPairs(principal, page, size);
             return RestResultPacker.success(keyPairPage.map((keyPair) -> keyPair.vo().securePrivateKey()));
-        } catch (AuthenticationSession.SessionRequestBadHeaderException e) {
-            throw new HTTP400Exception(e);
+        } catch (AuthenticationSession.SessionRequestNotAuthorizedException e) {
+            throw new HTTP401Exception(e);
         } catch (AuthenticationSession.SessionNotFoundException e) {
             throw new HTTP403Exception(e);
         } catch (NotFoundException e) {
@@ -125,34 +207,37 @@ public class AuthenticationApi {
         }
     }
 
-    @PostMapping("/authentication-principals/current/key-pairs")
-    public RestResultPacker<AuthenticationPrincipalKeyPair.Vo> genKeyPair(HttpServletRequest request, @RequestBody AuthenticationPrincipalKeyPair.GenKeyPairForm form) throws HTTP400Exception, HTTP403Exception {
+    @PostMapping("/authentication-principals/{principalId}/subprincipals")
+    public RestResultPacker<AuthenticationPrincipal.Vo> addSubprincipal(HttpServletRequest request, @PathVariable Long principalId, @RequestBody AuthenticationPrincipal.CreatePrincipalForm form) throws HTTP401Exception, HTTP403Exception, HTTP404Exception {
         try {
             AuthenticationSession authenticationSession = authenticationSessionService.getMeSession(request);
-            boolean accessible = authorizationService.challenge(authenticationSession.getAuthenticationPrincipal(), "iam:GenKeyPair", List.of(String.format("iam://users/%s/key-pairs", authenticationSession.getAuthenticationPrincipal().getId())));
+            AuthenticationPrincipal authenticationPrincipal = authenticationPrincipalService.findPrincipalById(principalId);
+            boolean accessible = authorizationService.challenge(authenticationSession.getAuthenticationPrincipal(), "iam:AddSubPrincipal", List.of(String.format("iam://users/%s/subprincipals", principalId)));
             if (!accessible) {
                 throw new HTTP403Exception("Inaccessible!");
             }
-            return RestResultPacker.success(authenticationPrincipalKeyPairService.genKey(authenticationSession.getAuthenticationPrincipal(), form).vo());
-        } catch (AuthenticationSession.SessionRequestBadHeaderException e) {
-            throw new HTTP400Exception(e);
+            return RestResultPacker.success(authenticationPrincipalService.addSubprincipal(authenticationPrincipal, form.getName(), form.getPassword()).vo());
+        } catch (AuthenticationSession.SessionRequestNotAuthorizedException e) {
+            throw new HTTP401Exception(e);
         } catch (AuthenticationSession.SessionNotFoundException e) {
             throw new HTTP403Exception(e);
+        } catch (NotFoundException e) {
+            throw new HTTP404Exception(e);
         }
     }
 
-    @PostMapping("/authentication-principals/{principalId}/key-pairs")
-    public RestResultPacker<AuthenticationPrincipalKeyPair.Vo> genKeyPair(HttpServletRequest request, @PathVariable Long principalId, @RequestBody AuthenticationPrincipalKeyPair.GenKeyPairForm form) throws HTTP400Exception, HTTP403Exception, HTTP404Exception {
+    @GetMapping("/authentication-principals/{principalId}/subprincipals")
+    public RestResultPacker<Page<AuthenticationPrincipal.Vo>> pagingSubPrincipals(HttpServletRequest request, @PathVariable Long principalId, @RequestParam int page, @RequestParam int size) throws HTTP401Exception, HTTP403Exception, HTTP404Exception {
         try {
             AuthenticationSession authenticationSession = authenticationSessionService.getMeSession(request);
-            boolean accessible = authorizationService.challenge(authenticationSession.getAuthenticationPrincipal(), "iam:GenKeyPair", List.of(String.format("iam://users/%s/key-pairs", principalId)));
+            AuthenticationPrincipal authenticationPrincipal = authenticationPrincipalService.findPrincipalById(principalId);
+            boolean accessible = authorizationService.challenge(authenticationSession.getAuthenticationPrincipal(), "iam:GetSubPrincipal", List.of(String.format("iam://users/%s/subprincipals", principalId)));
             if (!accessible) {
                 throw new HTTP403Exception("Inaccessible!");
             }
-            AuthenticationPrincipal principal = authenticationPrincipalService.findPrincipalById(principalId);
-            return RestResultPacker.success(authenticationPrincipalKeyPairService.genKey(principal, form).vo());
-        } catch (AuthenticationSession.SessionRequestBadHeaderException e) {
-            throw new HTTP400Exception(e);
+            return RestResultPacker.success(authenticationPrincipalService.pagingSubprincipals(authenticationPrincipal, page, size).map((AuthenticationPrincipal::vo)));
+        } catch (AuthenticationSession.SessionRequestNotAuthorizedException e) {
+            throw new HTTP401Exception(e);
         } catch (AuthenticationSession.SessionNotFoundException e) {
             throw new HTTP403Exception(e);
         } catch (NotFoundException e) {

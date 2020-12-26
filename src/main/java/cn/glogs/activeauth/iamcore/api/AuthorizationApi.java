@@ -9,6 +9,7 @@ import cn.glogs.activeauth.iamcore.domain.AuthorizationPolicy;
 import cn.glogs.activeauth.iamcore.domain.AuthorizationPolicyGrant;
 import cn.glogs.activeauth.iamcore.domain.*;
 import cn.glogs.activeauth.iamcore.exception.HTTP400Exception;
+import cn.glogs.activeauth.iamcore.exception.HTTP401Exception;
 import cn.glogs.activeauth.iamcore.exception.HTTP403Exception;
 import cn.glogs.activeauth.iamcore.exception.HTTP404Exception;
 import cn.glogs.activeauth.iamcore.exception.business.NotFoundException;
@@ -42,9 +43,8 @@ public class AuthorizationApi {
         this.authorizationService = authorizationService;
     }
 
-    @SneakyThrows
     @PostMapping("/authorization-policy-grants")
-    public RestResultPacker<List<AuthorizationPolicyGrant.Vo>> grant(HttpServletRequest request, @RequestBody @Validated AuthorizationPolicyGrantingForm form) {
+    public RestResultPacker<List<AuthorizationPolicyGrant.Vo>> grant(HttpServletRequest request, @RequestBody @Validated AuthorizationPolicyGrantingForm form) throws HTTP400Exception, HTTP401Exception, HTTP403Exception, HTTP404Exception {
         try {
             AuthenticationPrincipal granter = authenticationSessionService.getMeSession(request).getAuthenticationPrincipal();
             AuthenticationPrincipal grantee = authenticationPrincipalService.findPrincipalByLocator(form.getGrantee());
@@ -56,8 +56,10 @@ public class AuthorizationApi {
             List<AuthorizationPolicyGrant.Vo> results = new ArrayList<>();
             policyGrants.forEach(policyGrant -> results.add(policyGrant.vo()));
             return RestResultPacker.success(results);
-        } catch (AuthenticationSession.SessionRequestBadHeaderException | PatternException e) {
+        } catch (PatternException e) {
             throw new HTTP400Exception(e);
+        } catch (AuthenticationSession.SessionRequestNotAuthorizedException e) {
+            throw new HTTP401Exception(e);
         } catch (AuthenticationSession.SessionNotFoundException e) {
             throw new HTTP403Exception(e);
         } catch (NotFoundException e) {
@@ -66,28 +68,28 @@ public class AuthorizationApi {
     }
 
     @PostMapping("/authorization-policies")
-    public RestResultPacker<AuthorizationPolicy.Vo> addPolicy(HttpServletRequest request, @RequestBody @Validated AuthorizationPolicy.Form form) throws HTTP400Exception, HTTP403Exception {
+    public RestResultPacker<AuthorizationPolicy.Vo> addPolicy(HttpServletRequest request, @RequestBody @Validated AuthorizationPolicy.Form form) throws HTTP401Exception, HTTP403Exception {
         try {
             AuthenticationSession authenticationSession = authenticationSessionService.getMeSession(request);
             AuthorizationPolicy authorizationPolicy = authorizationService.addPolicy(authenticationSession.getAuthenticationPrincipal(), form);
             return RestResultPacker.success(authorizationPolicy.vo());
-        } catch (AuthenticationSession.SessionRequestBadHeaderException e) {
-            throw new HTTP400Exception(e);
+        } catch (AuthenticationSession.SessionRequestNotAuthorizedException e) {
+            throw new HTTP401Exception(e);
         } catch (AuthenticationSession.SessionNotFoundException e) {
             throw new HTTP403Exception(e);
         }
     }
 
     @PostMapping("/authorizations/challenging")
-    public RestResultPacker<AuthorizationChallengingForm> authorizationChallenging(HttpServletRequest request, @RequestBody @Validated AuthorizationChallengingForm form) throws HTTP400Exception, HTTP403Exception {
+    public RestResultPacker<AuthorizationChallengingForm> authorizationChallenging(HttpServletRequest request, @RequestBody @Validated AuthorizationChallengingForm form) throws HTTP401Exception, HTTP403Exception {
         try {
             AuthenticationSession currentAuthenticationSession = authenticationSessionService.getMeSession(request);
             boolean accessible = authorizationService.challenge(currentAuthenticationSession.getAuthenticationPrincipal(), form.getAction(), form.getResources());
             if (!accessible) {
                 throw new HTTP403Exception("Inaccessible!");
             }
-        } catch (AuthenticationSession.SessionRequestBadHeaderException e) {
-            throw new HTTP400Exception(e);
+        } catch (AuthenticationSession.SessionRequestNotAuthorizedException e) {
+            throw new HTTP401Exception(e);
         } catch (AuthenticationSession.SessionNotFoundException e) {
             throw new HTTP403Exception(e);
         }

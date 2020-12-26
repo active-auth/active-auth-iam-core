@@ -47,11 +47,11 @@ public class AuthenticationPrincipalKeyPairServiceImpl implements Authentication
     }
 
     @Override
-    public Page<AuthenticationPrincipalKeyPair> pagingKeyPairs(AuthenticationPrincipal principal, int page, int size) {
+    public Page<AuthenticationPrincipalKeyPair> pagingKeyPairs(AuthenticationPrincipal owner, int page, int size) {
         PageRequest pageRequest = PageRequest.of(page, size);
         return authenticationPrincipalKeyPairRepository.findAll((Specification<AuthenticationPrincipalKeyPair>) (root, query, criteriaBuilder) -> {
             Path<AuthenticationPrincipal> principalField = root.get("principal");
-            return criteriaBuilder.equal(principalField, principal);
+            return criteriaBuilder.equal(principalField, owner);
         }, pageRequest);
     }
 }

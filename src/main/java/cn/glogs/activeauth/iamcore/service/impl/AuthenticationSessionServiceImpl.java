@@ -46,7 +46,7 @@ public class AuthenticationSessionServiceImpl implements AuthenticationSessionSe
     @Override
     @Transactional
     public AuthenticationSession newSession(AuthenticationSession.CreateSessionForm form) throws NotFoundException, AuthenticationPrincipal.PasswordNotMatchException {
-        AuthenticationPrincipal authenticationPrincipal = authenticationPrincipalRepository.findByName(form.getName()).orElseThrow(() -> new NotFoundException("没有找到用户。"));
+        AuthenticationPrincipal authenticationPrincipal = authenticationPrincipalRepository.findByName(form.getName()).orElseThrow(() -> new NotFoundException("Principal Not Found."));
         if (!authenticationPrincipal.passwordVerify(form.getSecret(), passwordHashingStrategy))
             throw new AuthenticationPrincipal.PasswordNotMatchException("密码不匹配。");
         AuthenticationSession authenticationSession = AuthenticationSession.newSession(expireSeconds, fullTokenPrefix, authenticationPrincipal);
@@ -56,8 +56,8 @@ public class AuthenticationSessionServiceImpl implements AuthenticationSessionSe
 
     @Override
     @Transactional
-    public AuthenticationSession getMeSession(HttpServletRequest request) throws AuthenticationSession.SessionRequestBadHeaderException, AuthenticationSession.SessionNotFoundException {
-        String authorizationHeaderValue = Optional.ofNullable(request.getHeader(lordAuthConfiguration.getAuthorizationHeaderName())).orElseThrow(() -> new AuthenticationSession.SessionRequestBadHeaderException("认证头部不符合要求。"));
-        return authenticationSessionRepository.findByToken(authorizationHeaderValue).orElseThrow(() -> new AuthenticationSession.SessionNotFoundException("会话未找到。"));
+    public AuthenticationSession getMeSession(HttpServletRequest request) throws AuthenticationSession.SessionRequestNotAuthorizedException, AuthenticationSession.SessionNotFoundException {
+        String authorizationHeaderValue = Optional.ofNullable(request.getHeader(lordAuthConfiguration.getAuthorizationHeaderName())).orElseThrow(() -> new AuthenticationSession.SessionRequestNotAuthorizedException("Unauthorized."));
+        return authenticationSessionRepository.findByToken(authorizationHeaderValue).orElseThrow(() -> new AuthenticationSession.SessionNotFoundException("Request Not Allowed."));
     }
 }
