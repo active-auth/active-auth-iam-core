@@ -31,7 +31,7 @@ class AuthenticationApiTest {
     public void setUp() throws Exception {
         AuthenticationPrincipal.CreatePrincipalForm form = new AuthenticationPrincipal.CreatePrincipalForm(username, password);
         mvc.perform(MockMvcRequestBuilders
-                .post("/authentication-principals")
+                .post("/principals")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(form))
                 .accept(MediaType.APPLICATION_JSON)
@@ -48,7 +48,7 @@ class AuthenticationApiTest {
     void testLogin() throws Exception {
         AuthenticationSession.CreateSessionForm form = new AuthenticationSession.CreateSessionForm(username, password);
         mvc.perform(MockMvcRequestBuilders
-                .post("/authentications/ticketing")
+                .post("/principals/none/authentication-ticketings")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(form))
                 .accept(MediaType.APPLICATION_JSON)

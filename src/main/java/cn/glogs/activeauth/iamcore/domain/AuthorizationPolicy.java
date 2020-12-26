@@ -10,6 +10,7 @@ import lombok.NoArgsConstructor;
 import javax.persistence.*;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.NotNull;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -60,6 +61,7 @@ public class AuthorizationPolicy implements IamResource {
 
     public Vo vo() {
         Vo vo = new Vo();
+        vo.id = id;
         vo.name = name;
         vo.policyType = policyType;
         vo.actions = actions;
@@ -76,7 +78,7 @@ public class AuthorizationPolicy implements IamResource {
         @Schema(example = "MyPolicy22")
         private String name;
 
-        @NotBlank
+        @NotNull
         private PolicyType policyType;
 
         @NotEmpty
@@ -91,6 +93,8 @@ public class AuthorizationPolicy implements IamResource {
     @Data
     @Schema(name = "AuthorizationPolicy.Vo")
     public static class Vo {
+
+        private Long id;
 
         @NotBlank
         @Schema(example = "MyPolicy22")

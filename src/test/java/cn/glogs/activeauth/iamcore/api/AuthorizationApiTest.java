@@ -1,6 +1,6 @@
 package cn.glogs.activeauth.iamcore.api;
 
-import cn.glogs.activeauth.iamcore.api.payload.AuthorizationChallengingForm;
+import cn.glogs.activeauth.iamcore.api.payload.AuthorizationChallengeForm;
 import cn.glogs.activeauth.iamcore.api.payload.AuthorizationPolicyGrantingForm;
 import cn.glogs.activeauth.iamcore.api.payload.RestResultPacker;
 import cn.glogs.activeauth.iamcore.config.properties.Configuration;
@@ -61,7 +61,7 @@ class AuthorizationApiTest {
         // Granter Register
         AuthenticationPrincipal.CreatePrincipalForm granterRegisterForm = new AuthenticationPrincipal.CreatePrincipalForm(granterUsername, granterPassword);
         String granterRegisterResponseContent = mvc.perform(MockMvcRequestBuilders
-                .post("/authentication-principals")
+                .post("/principals")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(granterRegisterForm))
                 .accept(MediaType.APPLICATION_JSON)
@@ -71,7 +71,7 @@ class AuthorizationApiTest {
         // Grantee Register
         AuthenticationPrincipal.CreatePrincipalForm granteeRegisterForm = new AuthenticationPrincipal.CreatePrincipalForm(granteeUsername, granteePassword);
         String granteeRegisterResponseContent = mvc.perform(MockMvcRequestBuilders
-                .post("/authentication-principals")
+                .post("/principals")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(granteeRegisterForm))
                 .accept(MediaType.APPLICATION_JSON)
@@ -82,7 +82,7 @@ class AuthorizationApiTest {
         // Granter Login
         AuthenticationSession.CreateSessionForm granterLoginForm = new AuthenticationSession.CreateSessionForm(granterUsername, granterPassword);
         String granterLoginResponseContent = mvc.perform(MockMvcRequestBuilders
-                .post("/authentications/ticketing")
+                .post("/principals/none/authentication-ticketings")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(granterLoginForm))
                 .accept(MediaType.APPLICATION_JSON)
@@ -92,7 +92,7 @@ class AuthorizationApiTest {
         // Grantee Login
         AuthenticationSession.CreateSessionForm granteeLoginForm = new AuthenticationSession.CreateSessionForm(granteeUsername, granteePassword);
         String granteeLoginResponseContent = mvc.perform(MockMvcRequestBuilders
-                .post("/authentications/ticketing")
+                .post("/principals/none/authentication-ticketings")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(granteeLoginForm))
                 .accept(MediaType.APPLICATION_JSON)
@@ -115,7 +115,7 @@ class AuthorizationApiTest {
         ));
 
         String createPolicyResponseContent = mvc.perform(MockMvcRequestBuilders
-                .post("/authorization-policies")
+                .post("/principals/current/policies")
                 .header(lordAuthConfiguration.getAuthorizationHeaderName(), granterSession.getToken())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(createPolicyForm))
@@ -133,7 +133,7 @@ class AuthorizationApiTest {
         grantingForm.setGrantee(granteePrincipal.getResourceLocator());
         grantingForm.setPolicies(List.of(testPolicy.getResourceLocator()));
         mvc.perform(MockMvcRequestBuilders
-                .post("/authorization-policy-grants")
+                .post("/principals/current/grants")
                 .header(lordAuthConfiguration.getAuthorizationHeaderName(), granterSession.getToken())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(grantingForm))
@@ -146,13 +146,13 @@ class AuthorizationApiTest {
     void testChallengingAuthorities() throws Exception {
         testGrantPolicy();
         Long granterId = AuthenticationPrincipal.idFromLocator(granterPrincipal.getResourceLocator());
-        AuthorizationChallengingForm challengingForm = new AuthorizationChallengingForm();
+        AuthorizationChallengeForm challengingForm = new AuthorizationChallengeForm();
         challengingForm.setAction("bookshelf:listBooks");
         challengingForm.setResources(List.of(String.format("bookshelf://users/%s/bought-books", granterId)));
 
         // granter challenging its own resource
         mvc.perform(MockMvcRequestBuilders
-                .post("/authorizations/challenging")
+                .post("/principals/current/authorization-challengings")
                 .header(lordAuthConfiguration.getAuthorizationHeaderName(), granterSession.getToken())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(challengingForm))
@@ -161,7 +161,7 @@ class AuthorizationApiTest {
 
         // grantee challenging granter's resource
         mvc.perform(MockMvcRequestBuilders
-                .post("/authorizations/challenging")
+                .post("/principals/current/authorization-challengings")
                 .header(lordAuthConfiguration.getAuthorizationHeaderName(), granteeSession.getToken())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(challengingForm))
@@ -171,7 +171,7 @@ class AuthorizationApiTest {
         // grantee challenging a wrong resource
         challengingForm.setResources(List.of(String.format("bookshelf://users/%s/bought-books", granterId + 2)));
         mvc.perform(MockMvcRequestBuilders
-                .post("/authorizations/challenging")
+                .post("/principals/current/authorization-challengings")
                 .header(lordAuthConfiguration.getAuthorizationHeaderName(), granteeSession.getToken())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(challengingForm))
