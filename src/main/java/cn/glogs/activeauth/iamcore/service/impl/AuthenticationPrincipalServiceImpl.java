@@ -41,12 +41,6 @@ public class AuthenticationPrincipalServiceImpl implements AuthenticationPrincip
 
     @Override
     @Transactional
-    public AuthenticationPrincipal findPrincipalByLocator(String locator) throws PatternException, NotFoundException {
-        return authenticationPrincipalRepository.findById(AuthenticationPrincipal.idFromLocator(locator)).orElseThrow(() -> new NotFoundException("Principal not found"));
-    }
-
-    @Override
-    @Transactional
     public Page<AuthenticationPrincipal> pagingPrincipals(int page, int size) {
         PageRequest pageRequest = PageRequest.of(page, size);
         return authenticationPrincipalRepository.findAll(pageRequest);

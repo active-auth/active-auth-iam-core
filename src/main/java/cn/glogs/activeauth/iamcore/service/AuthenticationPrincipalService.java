@@ -11,8 +11,6 @@ public interface AuthenticationPrincipalService {
 
     AuthenticationPrincipal findPrincipalById(Long id) throws NotFoundException;
 
-    AuthenticationPrincipal findPrincipalByLocator(String locator) throws PatternException, NotFoundException;
-
     Page<AuthenticationPrincipal> pagingPrincipals(int page, int size);
 
     AuthenticationPrincipal addSubprincipal(AuthenticationPrincipal owner, String name, String password);

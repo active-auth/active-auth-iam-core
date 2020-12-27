@@ -10,6 +10,7 @@ import cn.glogs.activeauth.iamcore.repository.AuthorizationPolicyGrantRepository
 import cn.glogs.activeauth.iamcore.repository.AuthorizationPolicyGrantRowRepository;
 import cn.glogs.activeauth.iamcore.repository.AuthorizationPolicyRepository;
 import cn.glogs.activeauth.iamcore.service.AuthorizationService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,6 +22,7 @@ import static cn.glogs.activeauth.iamcore.domain.AuthorizationPolicy.PolicyType.
 
 
 @Service
+@Slf4j
 public class AuthorizationServiceImpl implements AuthorizationService {
 
     private final AuthorizationPolicyGrantRowRepository authorizationPolicyGrantRowRepository;
@@ -55,10 +57,12 @@ public class AuthorizationServiceImpl implements AuthorizationService {
             // TODO: 支持通配符 * 匹配
             for (String notMyResource : notMyResources) {
                 if (!allowedResource.contains(notMyResource) || deniedResource.contains(notMyResource)) {
+                    log.info("[Auth Challenging: Denied] challenger = {}, action = {}, resources = {}", challenger.resourceLocator(), action, Arrays.deepToString(resources));
                     return false;
                 }
             }
         }
+        log.info("[Auth Challenging: Allowed] challenger = {}, action = {}, resources = {}", challenger.resourceLocator(), action, Arrays.deepToString(resources));
         return true;
     }
 }
