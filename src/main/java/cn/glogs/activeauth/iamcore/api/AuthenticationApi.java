@@ -52,7 +52,7 @@ public class AuthenticationApi {
     public RestResultPacker<Page<AuthenticationPrincipal.Vo>> findPrincipalById(HttpServletRequest request, int page, int size) throws HTTP401Exception, HTTP403Exception {
         try {
             AuthenticationSession authenticationSession = authenticationSessionService.getMeSession(request);
-            boolean accessible = authorizationService.challenge(authenticationSession.getAuthenticationPrincipal(), "iam:GetPrincipal", List.of("iam://users"));
+            boolean accessible = authorizationService.challenge(authenticationSession.getAuthenticationPrincipal(), "iam:GetPrincipal", "iam://users");
             if (!accessible) {
                 throw new HTTP403Exception("Inaccessible!");
             }
@@ -73,7 +73,7 @@ public class AuthenticationApi {
     public RestResultPacker<AuthenticationPrincipal.Vo> findCurrentPrincipal(HttpServletRequest request) throws HTTP401Exception, HTTP403Exception {
         try {
             AuthenticationSession authenticationSession = authenticationSessionService.getMeSession(request);
-            boolean accessible = authorizationService.challenge(authenticationSession.getAuthenticationPrincipal(), "iam:GetPrincipal", List.of(String.format("iam://users/%s/principal", authenticationSession.getAuthenticationPrincipal().getId())));
+            boolean accessible = authorizationService.challenge(authenticationSession.getAuthenticationPrincipal(), "iam:GetPrincipal", String.format("iam://users/%s/principal", authenticationSession.getAuthenticationPrincipal().getId()));
             if (!accessible) {
                 throw new HTTP403Exception("Inaccessible!");
             }
@@ -89,7 +89,7 @@ public class AuthenticationApi {
     public RestResultPacker<AuthenticationPrincipalKeyPair.Vo> genKeyPair(HttpServletRequest request, @RequestBody AuthenticationPrincipalKeyPair.GenKeyPairForm form) throws HTTP401Exception, HTTP403Exception {
         try {
             AuthenticationSession authenticationSession = authenticationSessionService.getMeSession(request);
-            boolean accessible = authorizationService.challenge(authenticationSession.getAuthenticationPrincipal(), "iam:GenKeyPair", List.of(String.format("iam://users/%s/key-pairs", authenticationSession.getAuthenticationPrincipal().getId())));
+            boolean accessible = authorizationService.challenge(authenticationSession.getAuthenticationPrincipal(), "iam:GenKeyPair", String.format("iam://users/%s/key-pairs", authenticationSession.getAuthenticationPrincipal().getId()));
             if (!accessible) {
                 throw new HTTP403Exception("Inaccessible!");
             }
@@ -105,7 +105,7 @@ public class AuthenticationApi {
     public RestResultPacker<Page<AuthenticationPrincipalKeyPair.Vo>> pagingKeyPairs(HttpServletRequest request, @RequestParam int page, @RequestParam int size) throws HTTP401Exception, HTTP403Exception {
         try {
             AuthenticationSession authenticationSession = authenticationSessionService.getMeSession(request);
-            boolean accessible = authorizationService.challenge(authenticationSession.getAuthenticationPrincipal(), "iam:GetKeyPair", List.of(String.format("iam://users/%s/key-pairs", authenticationSession.getAuthenticationPrincipal().getId())));
+            boolean accessible = authorizationService.challenge(authenticationSession.getAuthenticationPrincipal(), "iam:GetKeyPair", String.format("iam://users/%s/key-pairs", authenticationSession.getAuthenticationPrincipal().getId()));
             if (!accessible) {
                 throw new HTTP403Exception("Inaccessible!");
             }
@@ -122,7 +122,7 @@ public class AuthenticationApi {
     public RestResultPacker<AuthenticationPrincipal.Vo> addSubprincipal(HttpServletRequest request, @RequestBody AuthenticationPrincipal.CreatePrincipalForm form) throws HTTP401Exception, HTTP403Exception {
         try {
             AuthenticationSession authenticationSession = authenticationSessionService.getMeSession(request);
-            boolean accessible = authorizationService.challenge(authenticationSession.getAuthenticationPrincipal(), "iam:AddSubPrincipal", List.of(String.format("iam://users/%s/subprincipals", authenticationSession.getAuthenticationPrincipal().getId())));
+            boolean accessible = authorizationService.challenge(authenticationSession.getAuthenticationPrincipal(), "iam:AddSubPrincipal", String.format("iam://users/%s/subprincipals", authenticationSession.getAuthenticationPrincipal().getId()));
             if (!accessible) {
                 throw new HTTP403Exception("Inaccessible!");
             }
@@ -138,7 +138,7 @@ public class AuthenticationApi {
     public RestResultPacker<Page<AuthenticationPrincipal.Vo>> pagingSubPrincipals(HttpServletRequest request, @RequestParam int page, @RequestParam int size) throws HTTP401Exception, HTTP403Exception {
         try {
             AuthenticationSession authenticationSession = authenticationSessionService.getMeSession(request);
-            boolean accessible = authorizationService.challenge(authenticationSession.getAuthenticationPrincipal(), "iam:GetSubPrincipal", List.of(String.format("iam://users/%s/subprincipals", authenticationSession.getAuthenticationPrincipal().getId())));
+            boolean accessible = authorizationService.challenge(authenticationSession.getAuthenticationPrincipal(), "iam:GetSubPrincipal", String.format("iam://users/%s/subprincipals", authenticationSession.getAuthenticationPrincipal().getId()));
             if (!accessible) {
                 throw new HTTP403Exception("Inaccessible!");
             }
@@ -154,7 +154,7 @@ public class AuthenticationApi {
     public RestResultPacker<AuthenticationPrincipal.Vo> findPrincipalById(HttpServletRequest request, @PathVariable Long principalId) throws HTTP401Exception, HTTP403Exception, HTTP404Exception {
         try {
             AuthenticationSession authenticationSession = authenticationSessionService.getMeSession(request);
-            boolean accessible = authorizationService.challenge(authenticationSession.getAuthenticationPrincipal(), "iam:GetPrincipal", List.of(String.format("iam://users/%s/principal", principalId)));
+            boolean accessible = authorizationService.challenge(authenticationSession.getAuthenticationPrincipal(), "iam:GetPrincipal", String.format("iam://users/%s/principal", principalId));
             if (!accessible) {
                 throw new HTTP403Exception("Inaccessible!");
             }
@@ -172,7 +172,7 @@ public class AuthenticationApi {
     public RestResultPacker<AuthenticationPrincipalKeyPair.Vo> genKeyPair(HttpServletRequest request, @PathVariable Long principalId, @RequestBody AuthenticationPrincipalKeyPair.GenKeyPairForm form) throws HTTP401Exception, HTTP403Exception, HTTP404Exception {
         try {
             AuthenticationSession authenticationSession = authenticationSessionService.getMeSession(request);
-            boolean accessible = authorizationService.challenge(authenticationSession.getAuthenticationPrincipal(), "iam:GenKeyPair", List.of(String.format("iam://users/%s/key-pairs", principalId)));
+            boolean accessible = authorizationService.challenge(authenticationSession.getAuthenticationPrincipal(), "iam:GenKeyPair", String.format("iam://users/%s/key-pairs", principalId));
             if (!accessible) {
                 throw new HTTP403Exception("Inaccessible!");
             }
@@ -191,7 +191,7 @@ public class AuthenticationApi {
     public RestResultPacker<Page<AuthenticationPrincipalKeyPair.Vo>> pagingKeyPairs(HttpServletRequest request, @PathVariable Long principalId, @RequestParam int page, @RequestParam int size) throws HTTP401Exception, HTTP403Exception, HTTP404Exception {
         try {
             AuthenticationSession authenticationSession = authenticationSessionService.getMeSession(request);
-            boolean accessible = authorizationService.challenge(authenticationSession.getAuthenticationPrincipal(), "iam:GetKeyPair", List.of(String.format("iam://users/%s/key-pairs", principalId)));
+            boolean accessible = authorizationService.challenge(authenticationSession.getAuthenticationPrincipal(), "iam:GetKeyPair", String.format("iam://users/%s/key-pairs", principalId));
             if (!accessible) {
                 throw new HTTP403Exception("Inaccessible!");
             }
@@ -212,7 +212,7 @@ public class AuthenticationApi {
         try {
             AuthenticationSession authenticationSession = authenticationSessionService.getMeSession(request);
             AuthenticationPrincipal authenticationPrincipal = authenticationPrincipalService.findPrincipalById(principalId);
-            boolean accessible = authorizationService.challenge(authenticationSession.getAuthenticationPrincipal(), "iam:AddSubPrincipal", List.of(String.format("iam://users/%s/subprincipals", principalId)));
+            boolean accessible = authorizationService.challenge(authenticationSession.getAuthenticationPrincipal(), "iam:AddSubPrincipal", String.format("iam://users/%s/subprincipals", principalId));
             if (!accessible) {
                 throw new HTTP403Exception("Inaccessible!");
             }
@@ -231,7 +231,7 @@ public class AuthenticationApi {
         try {
             AuthenticationSession authenticationSession = authenticationSessionService.getMeSession(request);
             AuthenticationPrincipal authenticationPrincipal = authenticationPrincipalService.findPrincipalById(principalId);
-            boolean accessible = authorizationService.challenge(authenticationSession.getAuthenticationPrincipal(), "iam:GetSubPrincipal", List.of(String.format("iam://users/%s/subprincipals", principalId)));
+            boolean accessible = authorizationService.challenge(authenticationSession.getAuthenticationPrincipal(), "iam:GetSubPrincipal", String.format("iam://users/%s/subprincipals", principalId));
             if (!accessible) {
                 throw new HTTP403Exception("Inaccessible!");
             }
