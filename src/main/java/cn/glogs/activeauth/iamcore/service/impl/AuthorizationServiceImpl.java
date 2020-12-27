@@ -10,6 +10,7 @@ import cn.glogs.activeauth.iamcore.repository.AuthorizationPolicyGrantRepository
 import cn.glogs.activeauth.iamcore.repository.AuthorizationPolicyGrantRowRepository;
 import cn.glogs.activeauth.iamcore.repository.AuthorizationPolicyRepository;
 import cn.glogs.activeauth.iamcore.service.AuthorizationService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,80 +22,28 @@ import static cn.glogs.activeauth.iamcore.domain.AuthorizationPolicy.PolicyType.
 
 
 @Service
+@Slf4j
 public class AuthorizationServiceImpl implements AuthorizationService {
 
-    private final AuthorizationPolicyRepository authorizationPolicyRepository;
-    private final AuthorizationPolicyGrantRepository authorizationPolicyGrantRepository;
     private final AuthorizationPolicyGrantRowRepository authorizationPolicyGrantRowRepository;
 
-    public AuthorizationServiceImpl(AuthorizationPolicyRepository authorizationPolicyRepository, AuthorizationPolicyGrantRepository authorizationPolicyGrantRepository, AuthorizationPolicyGrantRowRepository authorizationPolicyGrantRowRepository) {
-        this.authorizationPolicyRepository = authorizationPolicyRepository;
-        this.authorizationPolicyGrantRepository = authorizationPolicyGrantRepository;
+    public AuthorizationServiceImpl(AuthorizationPolicyGrantRowRepository authorizationPolicyGrantRowRepository) {
         this.authorizationPolicyGrantRowRepository = authorizationPolicyGrantRowRepository;
     }
 
     @Override
     @Transactional
-    public AuthorizationPolicy addPolicy(AuthenticationPrincipal owner, AuthorizationPolicy.Form form) {
-        AuthorizationPolicy policyToBeSaved = new AuthorizationPolicy();
-
-        policyToBeSaved.setOwner(owner);
-        policyToBeSaved.setName(form.getName());
-        policyToBeSaved.setPolicyType(form.getPolicyType());
-        policyToBeSaved.setActions(form.getActions());
-        policyToBeSaved.setResources(form.getResources());
-
-        return authorizationPolicyRepository.save(policyToBeSaved);
-    }
-
-    @Override
-    @Transactional
-    public AuthorizationPolicy getPolicyByLocator(String locator) throws PatternException, NotFoundException {
-        Long id = AuthorizationPolicy.idFromLocator(locator);
-        return authorizationPolicyRepository.findById(id).orElseThrow(() -> new NotFoundException("Policy not found."));
-    }
-
-    @Override
-    @Transactional
-    public List<AuthorizationPolicyGrant> grantPolicies(AuthenticationPrincipal granter, AuthenticationPrincipal grantee, List<AuthorizationPolicy> policies) {
-        List<AuthorizationPolicyGrant> savedGrants = new ArrayList<>();
-        policies.forEach(policy -> {
-            AuthorizationPolicyGrant toBeSavedGrant = new AuthorizationPolicyGrant();
-            toBeSavedGrant.setGranter(granter);
-            toBeSavedGrant.setGrantee(grantee);
-            toBeSavedGrant.setPolicy(policy);
-            toBeSavedGrant.setRevoked(false);
-            toBeSavedGrant.setCreatedAt(new Date());
-            AuthorizationPolicyGrant savedGrant = authorizationPolicyGrantRepository.save(toBeSavedGrant);
-            savedGrants.add(savedGrant);
-            List<AuthorizationPolicyGrantRow> toBeSavedGrantRows = cartesianProduct(granter, grantee, policy, policy.getActions(), policy.getResources());
-            authorizationPolicyGrantRowRepository.saveAll(toBeSavedGrantRows);
-        });
-        return savedGrants;
-    }
-
-    private List<AuthorizationPolicyGrantRow> cartesianProduct(
-            AuthenticationPrincipal granter, AuthenticationPrincipal grantee,
-            AuthorizationPolicy policy,
-            List<String> actions,
-            List<String> resources
-    ) {
-        return actions.stream().flatMap(action -> resources.stream().map(resource -> new AuthorizationPolicyGrantRow(null, granter, grantee, policy, policy.getPolicyType(), action, resource, false))).collect(Collectors.toUnmodifiableList());
-    }
-
-    @Override
-    @Transactional
-    public boolean challenge(AuthenticationPrincipal challenger, String action, List<String> resources) {
+    public boolean challenge(AuthenticationPrincipal challenger, String action, String... resources) {
         Set<String> allowedResource = new HashSet<>();
         Set<String> deniedResource = new HashSet<>();
 
         List<String> notMyResources = new ArrayList<>();
-        resources.forEach(resource -> {
+        for (String resource : resources) {
             String pattern = String.format("^.+://users/%s/.*$", challenger.getId());
             if (!Pattern.matches(pattern, resource)) {
                 notMyResources.add(resource);
             }
-        });
+        }
 
         if (notMyResources.size() > 0) {
             List<AuthorizationPolicyGrantRow> rows = authorizationPolicyGrantRowRepository.findAllByGranteeAndPolicyAction(challenger, action);
@@ -108,10 +57,12 @@ public class AuthorizationServiceImpl implements AuthorizationService {
             // TODO: 支持通配符 * 匹配
             for (String notMyResource : notMyResources) {
                 if (!allowedResource.contains(notMyResource) || deniedResource.contains(notMyResource)) {
+                    log.info("[Auth Challenging: Denied] challenger = {}, action = {}, resources = {}", challenger.resourceLocator(), action, Arrays.deepToString(resources));
                     return false;
                 }
             }
         }
+        log.info("[Auth Challenging: Allowed] challenger = {}, action = {}, resources = {}", challenger.resourceLocator(), action, Arrays.deepToString(resources));
         return true;
     }
 }

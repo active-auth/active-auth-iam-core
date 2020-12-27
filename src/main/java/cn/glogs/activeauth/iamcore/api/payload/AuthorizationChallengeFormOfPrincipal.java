@@ -8,7 +8,10 @@ import javax.validation.constraints.NotEmpty;
 import java.util.List;
 
 @Data
-public class AuthorizationChallengeForm {
+public class AuthorizationChallengeFormOfPrincipal {
+    @NotBlank
+    @Schema(example = "iam://users/7/principals")
+    private String principal;
     @NotBlank
     @Schema(example = "bookshelf:listBooks")
     private String action;

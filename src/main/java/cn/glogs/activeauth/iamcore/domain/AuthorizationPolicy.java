@@ -40,19 +40,27 @@ public class AuthorizationPolicy implements IamResource {
 
     @Override
     public String resourceLocator() {
-        return String.format("iam://users/%s/authorization-policies/%s", owner.getId(), id);
+        return String.format("iam://users/%s/policies/%s", owner.getId(), id);
     }
 
-    public static Long idFromLocator(String locator) throws PatternException {
-        String pattern = "^iam://users/\\d+/authorization-policies/(\\d+)/?$";
+    private static Long numberFromLocator(String locator, int position) throws PatternException {
+        String pattern = "^iam://users/(\\d+)/policies/(\\d+)/?$";
         Pattern r = Pattern.compile(pattern);
         Matcher m = r.matcher(locator);
         if (m.find()) {
-            String principalIdStr = m.group(1);
+            String principalIdStr = m.group(position);
             return Long.valueOf(principalIdStr);
         } else {
-            throw new PatternException("Principal locator regex not matching for ^iam://users/\\d+/authorization-policies/(\\d+)/?$");
+            throw new PatternException("Principal locator regex not matching for ^iam://users/\\d+/policies/(\\d+)/?$");
         }
+    }
+
+    public static Long idFromLocator(String locator) throws PatternException {
+        return numberFromLocator(locator, 2);
+    }
+
+    public static Long ownerIdFromLocator(String locator) throws PatternException {
+        return numberFromLocator(locator, 1);
     }
 
     public enum PolicyType {

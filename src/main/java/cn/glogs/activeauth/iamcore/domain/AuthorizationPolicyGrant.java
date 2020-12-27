@@ -33,7 +33,7 @@ public class AuthorizationPolicyGrant implements IamResource {
 
     @Override
     public String resourceLocator() {
-        return String.format("iam://users/%s/authorization-policy-grants/%s", granter.getId(), id);
+        return String.format("iam://users/%s/grants/%s", granter.getId(), id);
     }
 
     public Vo vo() {
@@ -55,7 +55,7 @@ public class AuthorizationPolicyGrant implements IamResource {
     @Schema(name = "AuthorizationPolicyGrant.Vo")
     public static class Vo {
         private Long id;
-        @Schema(example = "iam://users/12/authorization-policy-grants/765")
+        @Schema(example = "iam://users/12/grants/765")
         private String resourceLocator;
         @Schema(defaultValue = "iam://users/12/principal")
         private String granter;
