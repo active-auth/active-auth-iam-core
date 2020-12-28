@@ -1,7 +1,9 @@
 package cn.glogs.activeauth.iamcore.domain;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 
 import javax.persistence.*;
@@ -80,6 +82,8 @@ public class AuthenticationPrincipalKeyPair implements IamResource {
 
     @Data
     @Schema(name = "AuthenticationPrincipalKeyPair.GenKeyPairForm")
+    @AllArgsConstructor
+    @NoArgsConstructor
     public static class GenKeyPairForm {
         @Schema(defaultValue = "My Private Key.")
         private String description;

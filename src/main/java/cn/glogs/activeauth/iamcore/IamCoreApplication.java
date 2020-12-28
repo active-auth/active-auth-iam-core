@@ -6,7 +6,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 
 @SpringBootApplication
-@EnableConfigurationProperties({Configuration.class, Configuration.LordAuthConfiguration.class})
+@EnableConfigurationProperties({Configuration.class})
 public class IamCoreApplication {
 
     public static void main(String[] args) {

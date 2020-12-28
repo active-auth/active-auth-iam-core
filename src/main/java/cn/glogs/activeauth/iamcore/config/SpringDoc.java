@@ -15,10 +15,10 @@ public class SpringDoc {
     
     private static final String API_KEY = "apiKey";
 
-    private final cn.glogs.activeauth.iamcore.config.properties.Configuration.LordAuthConfiguration lordAuthConfiguration;
+    private final cn.glogs.activeauth.iamcore.config.properties.Configuration configuration;
 
-    public SpringDoc(cn.glogs.activeauth.iamcore.config.properties.Configuration.LordAuthConfiguration lordAuthConfiguration) {
-        this.lordAuthConfiguration = lordAuthConfiguration;
+    public SpringDoc(cn.glogs.activeauth.iamcore.config.properties.Configuration configuration) {
+        this.configuration = configuration;
     }
 
     @Bean
@@ -32,7 +32,7 @@ public class SpringDoc {
 
     public SecurityScheme apiKeySecuritySchema() {
         return new SecurityScheme()
-                .name(lordAuthConfiguration.getAuthorizationHeaderName()) // authorisation-token Constants.AUTHORISATION_TOKEN
+                .name(configuration.getAuthorizationHeaderName()) // authorisation-token Constants.AUTHORISATION_TOKEN
                 .description("HTTP header for token on any of your request.")
                 .in(SecurityScheme.In.HEADER)
                 .type(SecurityScheme.Type.APIKEY);

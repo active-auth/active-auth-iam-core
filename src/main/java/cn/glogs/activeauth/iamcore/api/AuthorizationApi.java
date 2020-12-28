@@ -39,20 +39,20 @@ public class AuthorizationApi {
     }
 
     @PostMapping("/principals/current/policies")
-    public RestResultPacker<AuthorizationPolicy.Vo> addPolicy(HttpServletRequest request, @RequestBody @Validated AuthorizationPolicy.Form form) throws HTTP401Exception, HTTP403Exception {
+    public RestResultPacker<AuthorizationPolicy.Vo> addPolicy(HttpServletRequest request, @RequestBody @Validated AuthorizationPolicy.Form form) throws HTTP400Exception, HTTP401Exception, HTTP403Exception {
         AuthCheckingContext authCheckingContext = authCheckingHelper.myResources(request, AuthCheckingStatement.checks("iam:AddPolicy", "iam://users/%s/policies"));
         AuthorizationPolicy authorizationPolicy = authorizationPolicyService.addPolicy(authCheckingContext.getResourceOwner(), form);
         return RestResultPacker.success(authorizationPolicy.vo());
     }
 
     @GetMapping("/principals/current/policies")
-    public RestResultPacker<Page<AuthorizationPolicy.Vo>> pagingPolicies(HttpServletRequest request, @RequestParam int page, @RequestParam int size) throws HTTP401Exception, HTTP403Exception {
+    public RestResultPacker<Page<AuthorizationPolicy.Vo>> pagingPolicies(HttpServletRequest request, @RequestParam int page, @RequestParam int size) throws HTTP400Exception, HTTP401Exception, HTTP403Exception {
         AuthCheckingContext authCheckingContext = authCheckingHelper.myResources(request, AuthCheckingStatement.checks("iam:GetPolicy", "iam://users/%s/policies"));
         return RestResultPacker.success(authorizationPolicyService.pagingPolicies(authCheckingContext.getResourceOwner(), page, size).map(AuthorizationPolicy::vo));
     }
 
     @DeleteMapping("/principals/current/policies/{policyId}")
-    public RestResultPacker<AuthorizationPolicy.Vo> deletePolicy(HttpServletRequest request, @PathVariable Long policyId) throws HTTP401Exception, HTTP403Exception, HTTP404Exception {
+    public RestResultPacker<AuthorizationPolicy.Vo> deletePolicy(HttpServletRequest request, @PathVariable Long policyId) throws HTTP400Exception, HTTP401Exception, HTTP403Exception, HTTP404Exception {
         authCheckingHelper.myResources(request, AuthCheckingStatement.checks("iam:GetPolicy", "iam://users/%s/policies/" + policyId).and("iam:DeletePolicy", "iam://users/%s/policies" + policyId));
         try {
             AuthorizationPolicy policy = authorizationPolicyService.getPolicyById(policyId);
@@ -97,14 +97,14 @@ public class AuthorizationApi {
     }
 
     @GetMapping("/principals/current/grants")
-    public RestResultPacker<Page<AuthorizationPolicyGrant.Vo>> pagingGrantsOut(HttpServletRequest request, @RequestParam int page, @RequestParam int size) throws HTTP401Exception, HTTP403Exception {
+    public RestResultPacker<Page<AuthorizationPolicyGrant.Vo>> pagingGrantsOut(HttpServletRequest request, @RequestParam int page, @RequestParam int size) throws HTTP400Exception, HTTP401Exception, HTTP403Exception {
         AuthCheckingContext authCheckingContext = authCheckingHelper.myResources(request, AuthCheckingStatement.checks("iam:GetGrant", "iam://users/%s/grants"));
         Page<AuthorizationPolicyGrant> grantsPage = authorizationPolicyGrantService.pagingGrantsFrom(authCheckingContext.getCurrentSession().getAuthenticationPrincipal(), page, size);
         return RestResultPacker.success(grantsPage.map(AuthorizationPolicyGrant::vo));
     }
 
     @DeleteMapping("/principals/current/grants/{grantId}")
-    public RestResultPacker<AuthorizationPolicyGrant.Vo> deleteGrantsOut(HttpServletRequest request, @PathVariable Long grantId) throws HTTP401Exception, HTTP403Exception, HTTP404Exception {
+    public RestResultPacker<AuthorizationPolicyGrant.Vo> deleteGrantsOut(HttpServletRequest request, @PathVariable Long grantId) throws HTTP400Exception, HTTP401Exception, HTTP403Exception, HTTP404Exception {
         authCheckingHelper.myResources(request, AuthCheckingStatement.checks("iam:GetGrant", "iam://users/%s/grants/" + grantId).and("iam:DeleteGrant", "iam://users/%s/grants/" + grantId));
         authorizationPolicyGrantService.deleteGrant(grantId);
         AuthorizationPolicyGrant grant = authorizationPolicyGrantService.getGrantById(grantId);
@@ -112,14 +112,14 @@ public class AuthorizationApi {
     }
 
     @GetMapping("/principals/current/grants-in")
-    public RestResultPacker<Page<AuthorizationPolicyGrant.Vo>> pagingGrantsIn(HttpServletRequest request, @RequestParam int page, @RequestParam int size) throws HTTP401Exception, HTTP403Exception {
+    public RestResultPacker<Page<AuthorizationPolicyGrant.Vo>> pagingGrantsIn(HttpServletRequest request, @RequestParam int page, @RequestParam int size) throws HTTP400Exception, HTTP401Exception, HTTP403Exception {
         AuthCheckingContext authCheckingContext = authCheckingHelper.myResources(request, AuthCheckingStatement.checks("iam:GetGrant", "iam://users/%s/grants-in"));
         Page<AuthorizationPolicyGrant> grantsPage = authorizationPolicyGrantService.pagingGrantsTo(authCheckingContext.getCurrentSession().getAuthenticationPrincipal(), page, size);
         return RestResultPacker.success(grantsPage.map(AuthorizationPolicyGrant::vo));
     }
 
     @PostMapping("/principals/current/authorization-challengings")
-    public RestResultPacker<AuthorizationChallengeForm> authorizationChallenging(HttpServletRequest request, @RequestBody @Validated AuthorizationChallengeForm form) throws HTTP401Exception, HTTP403Exception {
+    public RestResultPacker<AuthorizationChallengeForm> authorizationChallenging(HttpServletRequest request, @RequestBody @Validated AuthorizationChallengeForm form) throws HTTP400Exception, HTTP401Exception, HTTP403Exception {
         AuthCheckingContext authCheckingContext = authCheckingHelper.myResources(request, AuthCheckingStatement.checks("iam:ChallengeAuth", "iam://users/%s/auth-challengings"));
         boolean accessible = authorizationService.challenge(authCheckingContext.getCurrentSession().getAuthenticationPrincipal(), form.getAction(), form.resourcesArray());
         if (!accessible) {

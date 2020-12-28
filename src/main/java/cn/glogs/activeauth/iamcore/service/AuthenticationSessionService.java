@@ -9,5 +9,5 @@ import javax.servlet.http.HttpServletRequest;
 public interface AuthenticationSessionService {
     AuthenticationSession newSession(AuthenticationSession.CreateSessionForm form) throws NotFoundException, AuthenticationPrincipal.PasswordNotMatchException;
 
-    AuthenticationSession getMeSession(HttpServletRequest httpServletRequest) throws AuthenticationSession.SessionRequestNotAuthorizedException, AuthenticationSession.SessionNotFoundException;
+    AuthenticationSession getMeSession(String token) throws AuthenticationSession.SessionNotFoundException, AuthenticationSession.SessionExpiredException;
 }

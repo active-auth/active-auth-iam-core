@@ -5,26 +5,24 @@ import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 @Data
-@ConfigurationProperties("cn.glogs.active-auth")
+@ConfigurationProperties("cn.glogs.active-auth.iam")
 public class Configuration {
     private PasswordHashingStrategy passwordHashingStrategy = PasswordHashingStrategy.B_CRYPT;
-    private int sessionExpiringSeconds = 600;
-    private String tokenPrefix = "Bearer";
-    private int tokenPrefixSpaceCount = 1;
+    private int tokenExpiringSeconds = 6000;
+    private int signatureExpiringSeconds = 90;
+    private String timestampHeaderName = "X-Timestamp";
+    private String authorizationHeaderName = "Authorization";
+    private String authorizationHeaderTokenValuePrefix = "Bearer";
+    private int authorizationHeaderTokenValuePrefixSpaceCount = 1;
+    private String authorizationHeaderSignatureValuePrefix = "Signature";
+    private int authorizationHeaderSignatureValuePrefixSpaceCount = 1;
+
 
     public String fullTokenPrefix() {
-        return tokenPrefix + " ".repeat(tokenPrefixSpaceCount);
+        return authorizationHeaderTokenValuePrefix + " ".repeat(authorizationHeaderTokenValuePrefixSpaceCount);
     }
 
-    @Data
-    @ConfigurationProperties("cn.glogs.active-auth.lord")
-    public static class LordAuthConfiguration {
-        private String authorizationHeaderName = "Authorization";
-        private String authorizationHeaderValuePrefix = "Bearer";
-        private int authorizationHeaderValuePrefixSpaceCount = 1;
-
-        public String fullTokenPrefix() {
-            return authorizationHeaderValuePrefix + " ".repeat(authorizationHeaderValuePrefixSpaceCount);
-        }
+    public String fullSignaturePrefix() {
+        return authorizationHeaderSignatureValuePrefix + " ".repeat(authorizationHeaderSignatureValuePrefixSpaceCount);
     }
 }
