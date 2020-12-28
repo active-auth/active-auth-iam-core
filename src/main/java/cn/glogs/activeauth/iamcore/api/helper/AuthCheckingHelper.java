@@ -57,7 +57,7 @@ public class AuthCheckingHelper {
         try {
             String authorizationHeaderName = configuration.getAuthorizationHeaderName();
             String authorizationHeaderValue = Optional.ofNullable(request.getHeader(authorizationHeaderName)).orElseThrow(() -> new AuthenticationSession.SessionRequestNotAuthorizedException("Unauthorized."));
-            if (StringUtils.startsWith(authorizationHeaderValue, configuration.getAuthorizationHeaderSignatureValuePrefix())) {
+            if (StringUtils.startsWith(authorizationHeaderValue, configuration.getAuthorizationHeaderTokenValuePrefix())) {
                 return authenticationSessionService.getMeSession(authorizationHeaderValue);
             } else if (StringUtils.startsWith(authorizationHeaderValue, configuration.getAuthorizationHeaderSignatureValuePrefix())) {
                 String timestampHeaderName = configuration.getTimestampHeaderName();
@@ -81,7 +81,7 @@ public class AuthCheckingHelper {
                     throw new HTTP401Exception("Signature not valid, maybe tampered.");
                 }
             } else {
-                throw new AuthenticationSession.SessionRequestBadHeaderException(String.format("Value of header %s does not accepted.", configuration.getAuthorizationHeaderName()));
+                throw new AuthenticationSession.SessionRequestBadHeaderException(String.format("Value format of header %s does not accepted.", configuration.getAuthorizationHeaderName()));
             }
         } catch (NoSuchAlgorithmException | SignatureException | InvalidKeySpecException | IOException e) {
             e.printStackTrace();

@@ -16,11 +16,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
-import org.springframework.test.web.servlet.result.MockMvcResultHandlers;
-import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
 
@@ -28,13 +24,9 @@ import java.util.List;
 
 @SpringBootTest
 @AutoConfigureMockMvc
-class AuthorizationApiTest {
+class AuthorizationApiTests {
 
-    @Autowired
-    private MockMvc mvc;
-
-    @Autowired
-    private Configuration configuration;
+    private final TestRequestTool testRequestTool;
 
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -68,47 +60,32 @@ class AuthorizationApiTest {
         return pack.getData();
     }
 
+    @Autowired
+    public AuthorizationApiTests(MockMvc mockMvc, Configuration configuration) {
+        this.testRequestTool = new TestRequestTool(mockMvc, configuration);
+    }
+
     @BeforeEach
     void setUp() throws Exception {
         // user-1 Register
         AuthenticationPrincipal.CreatePrincipalForm user1RegisterForm = new AuthenticationPrincipal.CreatePrincipalForm(user1Username, user1Password);
-        String user1RegisterResponseContent = mvc.perform(MockMvcRequestBuilders
-                .post("/principals")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(user1RegisterForm))
-                .accept(MediaType.APPLICATION_JSON)
-        ).andExpect(MockMvcResultMatchers.status().is2xxSuccessful()).andDo(MockMvcResultHandlers.print()).andReturn().getResponse().getContentAsString();
+        String user1RegisterResponseContent = testRequestTool.post("/principals", user1RegisterForm, null);
         this.user1Principal = getPackedReturningBody(user1RegisterResponseContent, AuthenticationPrincipal.Vo.class);
 
         // user-2 Register
         AuthenticationPrincipal.CreatePrincipalForm user2RegisterForm = new AuthenticationPrincipal.CreatePrincipalForm(user2Username, user2Password);
-        String user2RegisterResponseContent = mvc.perform(MockMvcRequestBuilders
-                .post("/principals")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(user2RegisterForm))
-                .accept(MediaType.APPLICATION_JSON)
-        ).andExpect(MockMvcResultMatchers.status().is2xxSuccessful()).andDo(MockMvcResultHandlers.print()).andReturn().getResponse().getContentAsString();
+        String user2RegisterResponseContent = testRequestTool.post("/principals", user2RegisterForm, null);
         this.user2Principal = getPackedReturningBody(user2RegisterResponseContent, AuthenticationPrincipal.Vo.class);
 
 
         // user-1 Login
         AuthenticationSession.CreateSessionForm user1LoginForm = new AuthenticationSession.CreateSessionForm(user1Username, user1Password);
-        String user1LoginResponseContent = mvc.perform(MockMvcRequestBuilders
-                .post("/principals/none/authentication-ticketings")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(user1LoginForm))
-                .accept(MediaType.APPLICATION_JSON)
-        ).andExpect(MockMvcResultMatchers.status().is2xxSuccessful()).andDo(MockMvcResultHandlers.print()).andReturn().getResponse().getContentAsString();
+        String user1LoginResponseContent = testRequestTool.post("/principals/none/authentication-ticketings", user1LoginForm, null);
         this.user1Session = getPackedReturningBody(user1LoginResponseContent, AuthenticationSession.Vo.class);
 
         // user-2 Login
         AuthenticationSession.CreateSessionForm user2LoginForm = new AuthenticationSession.CreateSessionForm(user2Username, user2Password);
-        String user2LoginResponseContent = mvc.perform(MockMvcRequestBuilders
-                .post("/principals/none/authentication-ticketings")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(user2LoginForm))
-                .accept(MediaType.APPLICATION_JSON)
-        ).andExpect(MockMvcResultMatchers.status().is2xxSuccessful()).andDo(MockMvcResultHandlers.print()).andReturn().getResponse().getContentAsString();
+        String user2LoginResponseContent = testRequestTool.post("/principals/none/authentication-ticketings", user2LoginForm, null);
         this.user2Session = getPackedReturningBody(user2LoginResponseContent, AuthenticationSession.Vo.class);
     }
 
@@ -127,13 +104,7 @@ class AuthorizationApiTest {
                 String.format("bookshelf://users/%s/in-chart-books", user1Id)
         ));
 
-        String createPolicy1ResponseContent = mvc.perform(MockMvcRequestBuilders
-                .post("/principals/current/policies")
-                .header(configuration.getAuthorizationHeaderName(), user1Session.getToken())
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(createPolicy1Form))
-                .accept(MediaType.APPLICATION_JSON)
-        ).andExpect(MockMvcResultMatchers.status().is2xxSuccessful()).andDo(MockMvcResultHandlers.print()).andReturn().getResponse().getContentAsString();
+        String createPolicy1ResponseContent = testRequestTool.post("/principals/current/policies", createPolicy1Form, user1Session.getToken());
         this.user1TestPolicy = getPackedReturningBody(createPolicy1ResponseContent, AuthorizationPolicy.Vo.class);
 
         // create policy-2 of user-2
@@ -148,13 +119,7 @@ class AuthorizationApiTest {
                 String.format("petshop://users/%s/bought-dogs", user2Id)
         ));
 
-        String createPolicy2ResponseContent = mvc.perform(MockMvcRequestBuilders
-                .post("/principals/current/policies")
-                .header(configuration.getAuthorizationHeaderName(), user2Session.getToken())
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(createPolicy2Form))
-                .accept(MediaType.APPLICATION_JSON)
-        ).andExpect(MockMvcResultMatchers.status().is2xxSuccessful()).andDo(MockMvcResultHandlers.print()).andReturn().getResponse().getContentAsString();
+        String createPolicy2ResponseContent = testRequestTool.post("/principals/current/policies", createPolicy2Form, user2Session.getToken());
         this.user2TestPolicy = getPackedReturningBody(createPolicy2ResponseContent, AuthorizationPolicy.Vo.class);
     }
 
@@ -162,31 +127,19 @@ class AuthorizationApiTest {
     @Transactional
     void testAddGrant() throws Exception {
         testCreatePolicy();
-        
+
         // test allowed grant for: user1 >- policy1 -> user2, expecting 2xx.
         AuthorizationPolicyGrantingForm grantingForm1 = new AuthorizationPolicyGrantingForm();
         grantingForm1.setGrantee(user2Principal.getResourceLocator());
         grantingForm1.setPolicies(List.of(user1TestPolicy.getResourceLocator()));
-        String createGrantResponsePolicy = mvc.perform(MockMvcRequestBuilders
-                .post("/principals/current/grants")
-                .header(configuration.getAuthorizationHeaderName(), user1Session.getToken())
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(grantingForm1))
-                .accept(MediaType.APPLICATION_JSON)
-        ).andExpect(MockMvcResultMatchers.status().is2xxSuccessful()).andDo(MockMvcResultHandlers.print()).andReturn().getResponse().getContentAsString();
+        String createGrantResponsePolicy = testRequestTool.post("/principals/current/grants", grantingForm1, user1Session.getToken());
         this.user1TestGrants = getPackedReturningList(createGrantResponsePolicy, AuthorizationPolicyGrant.Vo.class);
-        
+
         // test denied grant for: user1 >- policy2 -> user1, expecting 403.
         AuthorizationPolicyGrantingForm grantingForm2 = new AuthorizationPolicyGrantingForm();
         grantingForm2.setGrantee(user1Principal.getResourceLocator());
         grantingForm2.setPolicies(List.of(user2TestPolicy.getResourceLocator()));
-        mvc.perform(MockMvcRequestBuilders
-                .post("/principals/current/grants")
-                .header(configuration.getAuthorizationHeaderName(), user1Session.getToken())
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(grantingForm2))
-                .accept(MediaType.APPLICATION_JSON)
-        ).andExpect(MockMvcResultMatchers.status().isForbidden()).andDo(MockMvcResultHandlers.print()).andReturn().getResponse().getContentAsString();
+        testRequestTool.post("/principals/current/grants", grantingForm2, user1Session.getToken(), TestRequestTool._403);
     }
 
     @Test
@@ -196,12 +149,7 @@ class AuthorizationApiTest {
 
         Assert.isTrue(user1TestGrants.size() > 0, "not grants");
         for (AuthorizationPolicyGrant.Vo grant : user1TestGrants) {
-            mvc.perform(MockMvcRequestBuilders
-                    .delete("/principals/current/grants/" + grant.getId())
-                    .header(configuration.getAuthorizationHeaderName(), user1Session.getToken())
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .accept(MediaType.APPLICATION_JSON)
-            ).andExpect(MockMvcResultMatchers.status().is2xxSuccessful()).andDo(MockMvcResultHandlers.print());
+            testRequestTool.delete("/principals/current/grants/" + grant.getId(), user1Session.getToken());
         }
     }
 
@@ -216,31 +164,13 @@ class AuthorizationApiTest {
         challengingForm.setResources(List.of(String.format("bookshelf://users/%s/bought-books", user1Id)));
 
         // user1 challenging its own resource
-        mvc.perform(MockMvcRequestBuilders
-                .post("/principals/current/authorization-challengings")
-                .header(configuration.getAuthorizationHeaderName(), user1Session.getToken())
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(challengingForm))
-                .accept(MediaType.APPLICATION_JSON)
-        ).andExpect(MockMvcResultMatchers.status().is2xxSuccessful()).andDo(MockMvcResultHandlers.print()).andReturn();
+        testRequestTool.post("/principals/current/authorization-challengings", challengingForm, user1Session.getToken());
 
         // user2 challenging user1's resource while user1 or system not allowed
-        mvc.perform(MockMvcRequestBuilders
-                .post("/principals/current/authorization-challengings")
-                .header(configuration.getAuthorizationHeaderName(), user2Session.getToken())
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(challengingForm))
-                .accept(MediaType.APPLICATION_JSON)
-        ).andExpect(MockMvcResultMatchers.status().isForbidden()).andDo(MockMvcResultHandlers.print()).andReturn();
+        testRequestTool.post("/principals/current/authorization-challengings", challengingForm, user2Session.getToken(), TestRequestTool._403);
 
-        // user2 challenging a wrong resource
+        // user1 challenging a wrong resource
         challengingForm.setResources(List.of(String.format("bookshelf://users/%s/bought-books", user1Id + 2)));
-        mvc.perform(MockMvcRequestBuilders
-                .post("/principals/current/authorization-challengings")
-                .header(configuration.getAuthorizationHeaderName(), user2Session.getToken())
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(challengingForm))
-                .accept(MediaType.APPLICATION_JSON)
-        ).andExpect(MockMvcResultMatchers.status().isForbidden()).andDo(MockMvcResultHandlers.print()).andReturn();
+        testRequestTool.post("/principals/current/authorization-challengings", challengingForm, user1Session.getToken(), TestRequestTool._403);
     }
 }
