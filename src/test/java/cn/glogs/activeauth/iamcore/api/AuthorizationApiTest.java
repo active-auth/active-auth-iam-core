@@ -34,7 +34,7 @@ class AuthorizationApiTest {
     private MockMvc mvc;
 
     @Autowired
-    private Configuration.LordAuthConfiguration lordAuthConfiguration;
+    private Configuration configuration;
 
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -129,7 +129,7 @@ class AuthorizationApiTest {
 
         String createPolicy1ResponseContent = mvc.perform(MockMvcRequestBuilders
                 .post("/principals/current/policies")
-                .header(lordAuthConfiguration.getAuthorizationHeaderName(), user1Session.getToken())
+                .header(configuration.getAuthorizationHeaderName(), user1Session.getToken())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(createPolicy1Form))
                 .accept(MediaType.APPLICATION_JSON)
@@ -150,7 +150,7 @@ class AuthorizationApiTest {
 
         String createPolicy2ResponseContent = mvc.perform(MockMvcRequestBuilders
                 .post("/principals/current/policies")
-                .header(lordAuthConfiguration.getAuthorizationHeaderName(), user2Session.getToken())
+                .header(configuration.getAuthorizationHeaderName(), user2Session.getToken())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(createPolicy2Form))
                 .accept(MediaType.APPLICATION_JSON)
@@ -169,7 +169,7 @@ class AuthorizationApiTest {
         grantingForm1.setPolicies(List.of(user1TestPolicy.getResourceLocator()));
         String createGrantResponsePolicy = mvc.perform(MockMvcRequestBuilders
                 .post("/principals/current/grants")
-                .header(lordAuthConfiguration.getAuthorizationHeaderName(), user1Session.getToken())
+                .header(configuration.getAuthorizationHeaderName(), user1Session.getToken())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(grantingForm1))
                 .accept(MediaType.APPLICATION_JSON)
@@ -182,7 +182,7 @@ class AuthorizationApiTest {
         grantingForm2.setPolicies(List.of(user2TestPolicy.getResourceLocator()));
         mvc.perform(MockMvcRequestBuilders
                 .post("/principals/current/grants")
-                .header(lordAuthConfiguration.getAuthorizationHeaderName(), user1Session.getToken())
+                .header(configuration.getAuthorizationHeaderName(), user1Session.getToken())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(grantingForm2))
                 .accept(MediaType.APPLICATION_JSON)
@@ -198,7 +198,7 @@ class AuthorizationApiTest {
         for (AuthorizationPolicyGrant.Vo grant : user1TestGrants) {
             mvc.perform(MockMvcRequestBuilders
                     .delete("/principals/current/grants/" + grant.getId())
-                    .header(lordAuthConfiguration.getAuthorizationHeaderName(), user1Session.getToken())
+                    .header(configuration.getAuthorizationHeaderName(), user1Session.getToken())
                     .contentType(MediaType.APPLICATION_JSON)
                     .accept(MediaType.APPLICATION_JSON)
             ).andExpect(MockMvcResultMatchers.status().is2xxSuccessful()).andDo(MockMvcResultHandlers.print());
@@ -218,7 +218,7 @@ class AuthorizationApiTest {
         // user1 challenging its own resource
         mvc.perform(MockMvcRequestBuilders
                 .post("/principals/current/authorization-challengings")
-                .header(lordAuthConfiguration.getAuthorizationHeaderName(), user1Session.getToken())
+                .header(configuration.getAuthorizationHeaderName(), user1Session.getToken())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(challengingForm))
                 .accept(MediaType.APPLICATION_JSON)
@@ -227,7 +227,7 @@ class AuthorizationApiTest {
         // user2 challenging user1's resource while user1 or system not allowed
         mvc.perform(MockMvcRequestBuilders
                 .post("/principals/current/authorization-challengings")
-                .header(lordAuthConfiguration.getAuthorizationHeaderName(), user2Session.getToken())
+                .header(configuration.getAuthorizationHeaderName(), user2Session.getToken())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(challengingForm))
                 .accept(MediaType.APPLICATION_JSON)
@@ -237,7 +237,7 @@ class AuthorizationApiTest {
         challengingForm.setResources(List.of(String.format("bookshelf://users/%s/bought-books", user1Id + 2)));
         mvc.perform(MockMvcRequestBuilders
                 .post("/principals/current/authorization-challengings")
-                .header(lordAuthConfiguration.getAuthorizationHeaderName(), user2Session.getToken())
+                .header(configuration.getAuthorizationHeaderName(), user2Session.getToken())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(challengingForm))
                 .accept(MediaType.APPLICATION_JSON)

@@ -4,6 +4,7 @@ import cn.glogs.activeauth.iamcore.domain.AuthenticationPrincipal;
 import cn.glogs.activeauth.iamcore.domain.AuthenticationPrincipalKeyPair;
 import cn.glogs.activeauth.iamcore.domain.keypair.KeyPair;
 import cn.glogs.activeauth.iamcore.domain.keypair.RSAKeyPair;
+import cn.glogs.activeauth.iamcore.exception.business.NotFoundException;
 import cn.glogs.activeauth.iamcore.repository.AuthenticationPrincipalKeyPairRepository;
 import cn.glogs.activeauth.iamcore.service.AuthenticationPrincipalKeyPairService;
 import org.springframework.data.domain.Page;
@@ -53,5 +54,10 @@ public class AuthenticationPrincipalKeyPairServiceImpl implements Authentication
             Path<AuthenticationPrincipal> principalField = root.get("principal");
             return criteriaBuilder.equal(principalField, owner);
         }, pageRequest);
+    }
+
+    @Override
+    public AuthenticationPrincipalKeyPair getKeyByKeyId(String keyId) throws NotFoundException {
+        return authenticationPrincipalKeyPairRepository.findByKeyId(keyId).orElseThrow(() -> new NotFoundException("Keypair not found."));
     }
 }

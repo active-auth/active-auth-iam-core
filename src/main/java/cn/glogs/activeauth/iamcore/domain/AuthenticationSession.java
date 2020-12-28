@@ -40,6 +40,12 @@ public class AuthenticationSession {
         return result;
     }
 
+    public static AuthenticationSession fakeSession(AuthenticationPrincipal authenticationPrincipal) {
+        AuthenticationSession result = new AuthenticationSession();
+        result.authenticationPrincipal = authenticationPrincipal;
+        return result;
+    }
+
     public boolean expired() {
         Date now = new Date();
         return now.after(expiredAt);
@@ -94,6 +100,12 @@ public class AuthenticationSession {
 
     public static class SessionNotFoundException extends Exception {
         public SessionNotFoundException(String msg) {
+            super(msg);
+        }
+    }
+
+    public static class SessionExpiredException extends Exception {
+        public SessionExpiredException(String msg) {
             super(msg);
         }
     }
