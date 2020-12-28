@@ -4,6 +4,7 @@ import cn.glogs.activeauth.iamcore.config.properties.Configuration;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultMatcher;
@@ -13,6 +14,9 @@ import org.springframework.test.web.servlet.result.MockMvcResultHandlers;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
+
+import java.util.HashMap;
+import java.util.Map;
 
 
 public class TestRequestTool {
@@ -36,10 +40,10 @@ public class TestRequestTool {
     }
 
     String get(String url, String token) throws Exception {
-        return get(url, new LinkedMultiValueMap<>(), token, _2XX);
+        return get(url, new LinkedMultiValueMap<>(), new HashMap<>(), token, _2XX);
     }
 
-    String get(String url, MultiValueMap<String, String> params, String token, ResultMatcher expect) throws Exception {
+    String get(String url, MultiValueMap<String, String> params, Map<String, String> headers, String token, ResultMatcher expect) throws Exception {
         MockHttpServletRequestBuilder builder =
                 MockMvcRequestBuilders
                         .get(url).params(params)
@@ -48,18 +52,21 @@ public class TestRequestTool {
         if (StringUtils.isNotBlank(token)) {
             builder = builder.header(configuration.getAuthorizationHeaderName(), token);
         }
+        for (Map.Entry<String, String> mapEntry : headers.entrySet()) {
+            builder = builder.header(mapEntry.getKey(), mapEntry.getValue());
+        }
         return mvc.perform(builder).andExpect(expect).andDo(MockMvcResultHandlers.print()).andReturn().getResponse().getContentAsString();
     }
 
     String post(String url, Object formData, String token) throws Exception {
-        return post(url, new LinkedMultiValueMap<>(), formData, token, _2XX);
+        return post(url, new LinkedMultiValueMap<>(), new HashMap(), formData, token, _2XX);
     }
 
     String post(String url, Object formData, String token, ResultMatcher expect) throws Exception {
-        return post(url, new LinkedMultiValueMap<>(), formData, token, expect);
+        return post(url, new LinkedMultiValueMap<>(), new HashMap<>(), formData, token, expect);
     }
 
-    String post(String url, MultiValueMap<String, String> params, Object formData, String token, ResultMatcher expect) throws Exception {
+    String post(String url, MultiValueMap<String, String> params, Map<String, String> headers, Object formData, String token, ResultMatcher expect) throws Exception {
         MockHttpServletRequestBuilder builder =
                 MockMvcRequestBuilders
                         .post(url).params(params)
@@ -69,14 +76,17 @@ public class TestRequestTool {
         if (StringUtils.isNotBlank(token)) {
             builder = builder.header(configuration.getAuthorizationHeaderName(), token);
         }
+        for (Map.Entry<String, String> mapEntry : headers.entrySet()) {
+            builder = builder.header(mapEntry.getKey(), mapEntry.getValue());
+        }
         return mvc.perform(builder).andExpect(expect).andDo(MockMvcResultHandlers.print()).andReturn().getResponse().getContentAsString();
     }
 
     String delete(String url, String token) throws Exception {
-        return delete(url, new LinkedMultiValueMap<>(), token, _2XX);
+        return delete(url, new LinkedMultiValueMap<>(), new HashMap<>(), token, _2XX);
     }
 
-    String delete(String url, MultiValueMap<String, String> params, String token, ResultMatcher expect) throws Exception {
+    String delete(String url, MultiValueMap<String, String> params, Map<String, String> headers, String token, ResultMatcher expect) throws Exception {
         MockHttpServletRequestBuilder builder =
                 MockMvcRequestBuilders
                         .delete(url).params(params)
@@ -84,6 +94,9 @@ public class TestRequestTool {
                         .accept(MediaType.APPLICATION_JSON);
         if (StringUtils.isNotBlank(token)) {
             builder = builder.header(configuration.getAuthorizationHeaderName(), token);
+        }
+        for (Map.Entry<String, String> mapEntry : headers.entrySet()) {
+            builder = builder.header(mapEntry.getKey(), mapEntry.getValue());
         }
         return mvc.perform(builder).andExpect(expect).andDo(MockMvcResultHandlers.print()).andReturn().getResponse().getContentAsString();
     }
