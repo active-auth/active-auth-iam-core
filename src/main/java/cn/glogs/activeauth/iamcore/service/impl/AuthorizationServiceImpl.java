@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -31,12 +32,35 @@ public class AuthorizationServiceImpl implements AuthorizationService {
         this.authorizationPolicyGrantRowRepository = authorizationPolicyGrantRowRepository;
     }
 
+    public static List<String> wildcardedResourceLocators(String fullLocator) {
+        String resourcePattern = "^(.+://users/\\d+)/(.*)$";
+        Pattern r = Pattern.compile(resourcePattern);
+        Matcher m = r.matcher(fullLocator);
+        List<String> wildcardedResourceLocators = new ArrayList<>();
+        if (m.find()) {
+            String resourcePathPrefix = m.group(1);
+            String resourceFullPath = m.group(2);
+            String[] resourcePathStack = resourceFullPath.split("/");
+            for (int i = 0; i < resourcePathStack.length; i++) {
+                StringBuilder sBuilder = new StringBuilder();
+                sBuilder.append(resourcePathPrefix);
+                for (int j = 0; j < i; j++) {
+                    sBuilder.append("/").append(resourcePathStack[j]);
+                }
+                wildcardedResourceLocators.add(sBuilder.append("/*").toString());
+            }
+        }
+        wildcardedResourceLocators.add(fullLocator);
+        return wildcardedResourceLocators;
+    }
+
     @Override
     @Transactional
     public boolean challenge(AuthenticationPrincipal challenger, String action, String... resources) {
         Set<String> allowedResource = new HashSet<>();
         Set<String> deniedResource = new HashSet<>();
 
+        // TODO: 支持制定规则，屏蔽用户访问自己的资源
         List<String> notMyResources = new ArrayList<>();
         for (String resource : resources) {
             String pattern = String.format("^.+://users/%s/.*$", challenger.getId());
