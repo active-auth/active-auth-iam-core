@@ -13,9 +13,9 @@ class AuthorizationServiceImplTest {
 
     @Test
     void wildcardedResourceLocators() {
-        String full = "bookshop://users/769/books/scifi/liucixin/908";
+        String full = "bookshop://users/7/books/scifi/liucixin/908";
         List<String> locators = AuthorizationServiceImpl.wildcardedResourceLocators(full);
         locators.forEach(System.out::println);
-        assertEquals(locators.size(), 5);
+        assertEquals(locators.size(), 10);
     }
 }

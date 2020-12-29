@@ -33,17 +33,33 @@ public class AuthorizationServiceImpl implements AuthorizationService {
     }
 
     public static List<String> wildcardedResourceLocators(String fullLocator) {
-        String resourcePattern = "^(.+://users/\\d+)/(.*)$";
+        String resourcePattern = "^(.+)://users/(\\d+)/(.*)$";
         Pattern r = Pattern.compile(resourcePattern);
         Matcher m = r.matcher(fullLocator);
         List<String> wildcardedResourceLocators = new ArrayList<>();
         if (m.find()) {
             String resourcePathPrefix = m.group(1);
-            String resourceFullPath = m.group(2);
+            String resourceOwnerId = m.group(2);
+            String resourceFullPath = m.group(3);
+
             String[] resourcePathStack = resourceFullPath.split("/");
+
+            // any user
+            wildcardedResourceLocators.add(resourcePathPrefix + "://users/*");
+            for (int i = 1; i < resourcePathStack.length; i++) {
+                StringBuilder sBuilder = new StringBuilder();
+                sBuilder.append(resourcePathPrefix).append("://users/*");
+                for (int j = 0; j < i; j++) {
+                    sBuilder.append("/").append(resourcePathStack[j]);
+                }
+                wildcardedResourceLocators.add(sBuilder.append("/*").toString());
+            }
+            wildcardedResourceLocators.add(resourcePathPrefix + "://users/*/" + resourceFullPath);
+
+            // this user
             for (int i = 0; i < resourcePathStack.length; i++) {
                 StringBuilder sBuilder = new StringBuilder();
-                sBuilder.append(resourcePathPrefix);
+                sBuilder.append(resourcePathPrefix).append("://users/").append(resourceOwnerId);
                 for (int j = 0; j < i; j++) {
                     sBuilder.append("/").append(resourcePathStack[j]);
                 }
