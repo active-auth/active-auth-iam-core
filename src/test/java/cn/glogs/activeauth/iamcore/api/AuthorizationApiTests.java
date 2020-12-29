@@ -6,6 +6,7 @@ import cn.glogs.activeauth.iamcore.api.payload.RestResultPacker;
 import cn.glogs.activeauth.iamcore.config.properties.Configuration;
 import cn.glogs.activeauth.iamcore.domain.*;
 import cn.glogs.activeauth.iamcore.domain.sign.HttpRsaSignature;
+import cn.glogs.activeauth.iamcore.exception.business.PatternException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -175,7 +176,7 @@ class AuthorizationApiTests {
 
         Long user1Id = AuthenticationPrincipal.idFromLocator(user1Principal.getResourceLocator());
         AuthorizationChallengeForm challengingForm = new AuthorizationChallengeForm();
-        challengingForm.setAction("bookshelf:listBooks");
+        challengingForm.setAction("bookshelf:getBook");
         challengingForm.setResources(List.of(String.format("bookshelf://users/%s/bought-books", user1Id)));
 
         // user1 challenging its own resource
@@ -191,6 +192,60 @@ class AuthorizationApiTests {
 
     @Test
     @Transactional
+    void testCreatePolicyInWildcard() throws Exception {
+        // create policy-1 of user-1
+        String user1Locator = user1Principal.getResourceLocator();
+        Long user1Id = AuthenticationPrincipal.idFromLocator(user1Locator);
+        AuthorizationPolicy.Form createPolicy1Form = new AuthorizationPolicy.Form();
+        createPolicy1Form.setName("policy-1: Pony's bookshelf");
+        createPolicy1Form.setPolicyType(AuthorizationPolicy.PolicyType.ALLOW);
+        createPolicy1Form.setActions(List.of("bookshelf:getBook"));
+        createPolicy1Form.setResources(List.of(
+                String.format("bookshelf://users/%s/bought-books/*", user1Id),
+                String.format("bookshelf://users/%s/in-chart-books/*", user1Id)
+        ));
+
+        String createPolicy1ResponseContent = testRequestTool.post("/principals/current/policies", createPolicy1Form, user1Session.getToken());
+        this.user1TestPolicy = getPackedReturningBody(createPolicy1ResponseContent, AuthorizationPolicy.Vo.class);
+    }
+
+    @Test
+    @Transactional
+    void testAddGrantInWildcardingPolicies() throws Exception {
+        testCreatePolicyInWildcard();
+
+        // test allowed grant for: user1 >- policy1 -> user2, expecting 2xx.
+        AuthorizationPolicyGrantingForm grantingForm1 = new AuthorizationPolicyGrantingForm();
+        grantingForm1.setGrantee(user2Principal.getResourceLocator());
+        grantingForm1.setPolicies(List.of(user1TestPolicy.getResourceLocator()));
+        String createGrantResponsePolicy = testRequestTool.post("/principals/current/grants", grantingForm1, user1Session.getToken());
+        this.user1TestGrants = getPackedReturningList(createGrantResponsePolicy, AuthorizationPolicyGrant.Vo.class);
+    }
+
+    @Test
+    @Transactional
+    void testChallengingAuthoritiesInWildcardingPolicies() throws Exception {
+        testAddGrantInWildcardingPolicies();
+
+        Long user1Id = AuthenticationPrincipal.idFromLocator(user1Principal.getResourceLocator());
+        AuthorizationChallengeForm challengingForm = new AuthorizationChallengeForm();
+        challengingForm.setAction("bookshelf:getBook");
+
+        // user2 challenging granted subresource, expecting 2xx.
+        challengingForm.setResources(List.of(String.format("bookshelf://users/%s/bought-books/8880", user1Id)));
+        testRequestTool.post("/principals/current/authorization-challengings", challengingForm, user2Session.getToken());
+
+        // user2 challenging granted subresource - level2, expecting 2xx.
+        challengingForm.setResources(List.of(String.format("bookshelf://users/%s/bought-books/scifi/liucixin/8609", user1Id)));
+        testRequestTool.post("/principals/current/authorization-challengings", challengingForm, user2Session.getToken());
+
+        // user2 challenging subresource that is not granted, expecting 403
+        challengingForm.setResources(List.of(String.format("bookshelf://users/%s/favorite-books/721", user1Id)));
+        testRequestTool.post("/principals/current/authorization-challengings", challengingForm, user2Session.getToken(), TestRequestTool._403);
+    }
+
+    @Test
+    @Transactional
     void testChallengingAuthoritiesWithSignature() throws Exception {
         long currentTimestampSeconds = Calendar.getInstance().getTimeInMillis() / 1000;
         long timestampSeconds1HourAgo = currentTimestampSeconds - 60 * 60;
@@ -202,7 +257,7 @@ class AuthorizationApiTests {
 
         Long user1Id = AuthenticationPrincipal.idFromLocator(user1Principal.getResourceLocator());
         AuthorizationChallengeForm challengingForm = new AuthorizationChallengeForm();
-        challengingForm.setAction("bookshelf:listBooks");
+        challengingForm.setAction("bookshelf:getBook");
         challengingForm.setResources(List.of(String.format("bookshelf://users/%s/bought-books", user1Id)));
 
         String user1PrivateKey = new String(base64Decoder.decode(user1KeyPair.getPrivateKey()));

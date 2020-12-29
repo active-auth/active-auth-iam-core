@@ -77,15 +77,17 @@ public class AuthorizationServiceImpl implements AuthorizationService {
         Set<String> deniedResource = new HashSet<>();
 
         // TODO: 支持制定规则，屏蔽用户访问自己的资源
-        List<String> notMyResources = new ArrayList<>();
+        List<String> notMyResourceWildcards = new ArrayList<>();
         for (String resource : resources) {
             String pattern = String.format("^.+://users/%s/.*$", challenger.getId());
             if (!Pattern.matches(pattern, resource)) {
-                notMyResources.add(resource);
+                notMyResourceWildcards.addAll(wildcardedResourceLocators(resource));
             }
         }
 
-        if (notMyResources.size() > 0) {
+        log.info("[Auth Challenging: Wildcarding] {}.", notMyResourceWildcards);
+
+        if (notMyResourceWildcards.size() > 0) {
             List<AuthorizationPolicyGrantRow> rows = authorizationPolicyGrantRowRepository.findAllByGranteeAndPolicyAction(challenger, action);
             rows.forEach(row -> {
                 if (row.getPolicy().getPolicyType() == ALLOW) {
@@ -94,15 +96,25 @@ public class AuthorizationServiceImpl implements AuthorizationService {
                     deniedResource.add(row.getPolicyResource());
                 }
             });
-            // TODO: 支持通配符 * 匹配
-            for (String notMyResource : notMyResources) {
-                if (!allowedResource.contains(notMyResource) || deniedResource.contains(notMyResource)) {
-                    log.info("[Auth Challenging: Denied] challenger = {}, action = {}, resources = {}", challenger.resourceLocator(), action, Arrays.deepToString(resources));
+            log.info("[Auth Challenging: From DB] rows = {}, allowing = {}, denying = {}", rows, allowedResource, deniedResource);
+
+            boolean proceed = false;
+            for (String notMyResourceWildcard : notMyResourceWildcards) {
+                // DENY if one of resources is not met, before checking allowance.
+                if (deniedResource.contains(notMyResourceWildcard)) {
+                    log.info("[Auth Challenging: Denied before checking allowance] challenger = {}, action = {}, deniedResourceWildcard = {}", challenger.resourceLocator(), action, Arrays.deepToString(resources));
                     return false;
                 }
+                // ALLOW if one of resources is met, after checking denials.
+                if (allowedResource.contains(notMyResourceWildcard)) {
+                    log.info("[Auth Challenging: Allowed after checking denials proceeded] challenger = {}, action = {}, allowedResourceWildcard = {}", challenger.resourceLocator(), action, notMyResourceWildcard);
+                    proceed = true;
+                }
             }
+            log.info("[Auth Challenging: {}] challenger = {}, action = {}, resources = {}", proceed ? "Allowed" : "Denied", challenger.resourceLocator(), action, Arrays.deepToString(resources));
+            return proceed;
         }
-        log.info("[Auth Challenging: Allowed] challenger = {}, action = {}, resources = {}", challenger.resourceLocator(), action, Arrays.deepToString(resources));
+        log.info("[Auth Challenging: Allowed Default] challenger = {}, action = {}, resources = {}", challenger.resourceLocator(), action, Arrays.deepToString(resources));
         return true;
     }
 }
