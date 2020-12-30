@@ -6,7 +6,6 @@ import cn.glogs.activeauth.iamcore.api.payload.RestResultPacker;
 import cn.glogs.activeauth.iamcore.config.properties.Configuration;
 import cn.glogs.activeauth.iamcore.domain.*;
 import cn.glogs.activeauth.iamcore.domain.sign.HttpRsaSignature;
-import cn.glogs.activeauth.iamcore.exception.business.PatternException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
