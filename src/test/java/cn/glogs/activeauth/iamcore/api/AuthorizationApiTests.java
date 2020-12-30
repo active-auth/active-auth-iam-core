@@ -48,9 +48,11 @@ class AuthorizationApiTests {
     private AuthenticationPrincipalKeyPair.Vo user2KeyPair;
 
     private AuthorizationPolicy.Vo user1TestPolicy;
+    private AuthorizationPolicy.Vo user1TestPolicy_a;
+    private AuthorizationPolicy.Vo user1TestPolicy_b;
+    private AuthorizationPolicy.Vo user1TestPolicy_c;
     private AuthorizationPolicy.Vo user2TestPolicy;
-    private List<AuthorizationPolicyGrant.Vo> user1TestGrants;
-    private List<AuthorizationPolicyGrant.Vo> user2TestGrants;
+    private List<AuthorizationPolicyGrant.Vo> testGrants;
 
     @Autowired
     public AuthorizationApiTests(MockMvc mockMvc, Configuration configuration) {
@@ -149,7 +151,7 @@ class AuthorizationApiTests {
         grantingForm1.setGrantee(user2Principal.getResourceLocator());
         grantingForm1.setPolicies(List.of(user1TestPolicy.getResourceLocator()));
         String createGrantResponsePolicy = testRequestTool.post("/principals/current/grants", grantingForm1, user1Session.getToken());
-        this.user1TestGrants = getPackedReturningList(createGrantResponsePolicy, AuthorizationPolicyGrant.Vo.class);
+        this.testGrants = getPackedReturningList(createGrantResponsePolicy, AuthorizationPolicyGrant.Vo.class);
 
         // test denied grant for: user1 >- policy2 -> user1, expecting 403.
         AuthorizationPolicyGrantingForm grantingForm2 = new AuthorizationPolicyGrantingForm();
@@ -163,8 +165,8 @@ class AuthorizationApiTests {
     void testDeleteGrant() throws Exception {
         testAddGrant();
 
-        Assert.isTrue(user1TestGrants.size() > 0, "not grants");
-        for (AuthorizationPolicyGrant.Vo grant : user1TestGrants) {
+        Assert.isTrue(testGrants.size() > 0, "not grants");
+        for (AuthorizationPolicyGrant.Vo grant : testGrants) {
             testRequestTool.delete("/principals/current/grants/" + grant.getId(), user1Session.getToken());
         }
     }
@@ -193,20 +195,45 @@ class AuthorizationApiTests {
     @Test
     @Transactional
     void testCreatePolicyInWildcard() throws Exception {
-        // create policy-1 of user-1
+        // create policy-1a of user-1, ALLOW some resources.
         String user1Locator = user1Principal.getResourceLocator();
         Long user1Id = AuthenticationPrincipal.idFromLocator(user1Locator);
-        AuthorizationPolicy.Form createPolicy1Form = new AuthorizationPolicy.Form();
-        createPolicy1Form.setName("policy-1: Pony's bookshelf");
-        createPolicy1Form.setPolicyType(AuthorizationPolicy.PolicyType.ALLOW);
-        createPolicy1Form.setActions(List.of("bookshelf:getBook"));
-        createPolicy1Form.setResources(List.of(
+        AuthorizationPolicy.Form createPolicy1aForm = new AuthorizationPolicy.Form();
+        createPolicy1aForm.setName("policy-1a: Pony's bookshelf");
+        createPolicy1aForm.setPolicyType(AuthorizationPolicy.PolicyType.ALLOW);
+        createPolicy1aForm.setActions(List.of("bookshelf:getBook"));
+        createPolicy1aForm.setResources(List.of(
                 String.format("bookshelf://users/%s/bought-books/*", user1Id),
                 String.format("bookshelf://users/%s/in-chart-books/*/liucixin/*", user1Id)
         ));
 
-        String createPolicy1ResponseContent = testRequestTool.post("/principals/current/policies", createPolicy1Form, user1Session.getToken());
-        this.user1TestPolicy = getPackedReturningBody(createPolicy1ResponseContent, AuthorizationPolicy.Vo.class);
+        String createPolicy1aResponseContent = testRequestTool.post("/principals/current/policies", createPolicy1aForm, user1Session.getToken());
+        this.user1TestPolicy_a = getPackedReturningBody(createPolicy1aResponseContent, AuthorizationPolicy.Vo.class);
+
+        // create policy-1b of user-1, DENY some resources.
+        AuthorizationPolicy.Form createPolicy1bForm = new AuthorizationPolicy.Form();
+        createPolicy1bForm.setName("policy-1b: Pony's petshop denials");
+        createPolicy1bForm.setPolicyType(AuthorizationPolicy.PolicyType.DENY);
+        createPolicy1bForm.setActions(List.of("petshop:buyPet"));
+        createPolicy1bForm.setResources(List.of(
+                String.format("petshop://users/%s/dangerous-animals/*/tiger", user1Id)
+        ));
+
+        String createPolicy1bResponseContent = testRequestTool.post("/principals/current/policies", createPolicy1bForm, user1Session.getToken());
+        this.user1TestPolicy_b = getPackedReturningBody(createPolicy1bResponseContent, AuthorizationPolicy.Vo.class);
+
+        // create policy-1b of user-1, ALLOW some resources.
+        // Test case: user add a super-resourced policy by accident.
+        AuthorizationPolicy.Form createPolicy1cForm = new AuthorizationPolicy.Form();
+        createPolicy1cForm.setName("policy-1c: Pony's petshop allowance");
+        createPolicy1cForm.setPolicyType(AuthorizationPolicy.PolicyType.ALLOW);
+        createPolicy1cForm.setActions(List.of("petshop:buyPet"));
+        createPolicy1cForm.setResources(List.of(
+                String.format("petshop://users/%s/dangerous-animals/*", user1Id)
+        ));
+
+        String createPolicy1cResponseContent = testRequestTool.post("/principals/current/policies", createPolicy1cForm, user1Session.getToken());
+        this.user1TestPolicy_c = getPackedReturningBody(createPolicy1cResponseContent, AuthorizationPolicy.Vo.class);
     }
 
     @Test
@@ -214,12 +241,16 @@ class AuthorizationApiTests {
     void testAddGrantInWildcardingPolicies() throws Exception {
         testCreatePolicyInWildcard();
 
-        // test allowed grant for: user1 >- policy1 -> user2, expecting 2xx.
-        AuthorizationPolicyGrantingForm grantingForm1 = new AuthorizationPolicyGrantingForm();
-        grantingForm1.setGrantee(user2Principal.getResourceLocator());
-        grantingForm1.setPolicies(List.of(user1TestPolicy.getResourceLocator()));
-        String createGrantResponsePolicy = testRequestTool.post("/principals/current/grants", grantingForm1, user1Session.getToken());
-        this.user1TestGrants = getPackedReturningList(createGrantResponsePolicy, AuthorizationPolicyGrant.Vo.class);
+        // test allowed grant for: user1 >- policy1_a && policy1_b, && policy1_c -> user2, expecting 2xx.
+        AuthorizationPolicyGrantingForm grantingForm1a = new AuthorizationPolicyGrantingForm();
+        grantingForm1a.setGrantee(user2Principal.getResourceLocator()); // grant to user-2
+        grantingForm1a.setPolicies(List.of(
+                user1TestPolicy_a.getResourceLocator(),
+                user1TestPolicy_b.getResourceLocator(),
+                user1TestPolicy_c.getResourceLocator()
+        )); // grant policy1a policy1b policy1c
+        String createGrantResponsePolicy_a = testRequestTool.post("/principals/current/grants", grantingForm1a, user1Session.getToken());
+        this.testGrants = getPackedReturningList(createGrantResponsePolicy_a, AuthorizationPolicyGrant.Vo.class);
     }
 
     @Test
@@ -229,17 +260,34 @@ class AuthorizationApiTests {
 
         Long user1Id = AuthenticationPrincipal.idFromLocator(user1Principal.getResourceLocator());
         AuthorizationChallengeForm challengingForm = new AuthorizationChallengeForm();
-        challengingForm.setAction("bookshelf:getBook");
 
-        // user2 challenging granted subresource, expecting 2xx.
+        // User2 challenging granted denied resource, expecting 403.
+        // Granted: ALLOW  petshop:buyPet  petshop://users/{user1Id}/dangerous-animals/*/tiger
+        challengingForm.setAction("petshop:buyPet");
+        challengingForm.setResources(List.of(String.format("petshop://users/%s/dangerous-animals/asia/tiger", user1Id)));
+        testRequestTool.post("/principals/current/authorization-challengings", challengingForm, user2Session.getToken(), TestRequestTool._403);
+
+        // User2 challenging resource that DENY policy does not cover, expecting 200.
+        // Granted: ALLOW  petshop:buyPet  petshop://users/{user1Id}/dangerous-animals/*/tiger
+        challengingForm.setResources(List.of(String.format("petshop://users/%s/dangerous-animals/asia/wolf", user1Id)));
+        testRequestTool.post("/principals/current/authorization-challengings", challengingForm, user2Session.getToken());
+
+        // user2 challenging granted ALLOW subresource, expecting 2xx.
+        // Granted: ALLOW  bookshelf:getBook  bookshelf://users/%s/bought-books/*
+        //                                    bookshelf://users/%s/in-chart-books/*/liucixin/*
+        challengingForm.setAction("bookshelf:getBook");
         challengingForm.setResources(List.of(String.format("bookshelf://users/%s/bought-books/8880", user1Id)));
         testRequestTool.post("/principals/current/authorization-challengings", challengingForm, user2Session.getToken());
 
         // user2 challenging granted subresource - level2, expecting 2xx.
+        // Granted: ALLOW  bookshelf:getBook  bookshelf://users/%s/bought-books/*
+        //                                    bookshelf://users/%s/in-chart-books/*/liucixin/*
         challengingForm.setResources(List.of(String.format("bookshelf://users/%s/in-chart-books/scifi/liucixin/8609", user1Id)));
         testRequestTool.post("/principals/current/authorization-challengings", challengingForm, user2Session.getToken());
 
-        // user2 challenging subresource that is not granted, expecting 403
+        // user2 challenging subresource that is not granted, expecting 403.
+        // Granted: ALLOW  bookshelf:getBook  bookshelf://users/%s/bought-books/*
+        //                                    bookshelf://users/%s/in-chart-books/*/liucixin/*
         challengingForm.setResources(List.of(String.format("bookshelf://users/%s/favorite-books/721", user1Id)));
         testRequestTool.post("/principals/current/authorization-challengings", challengingForm, user2Session.getToken(), TestRequestTool._403);
     }

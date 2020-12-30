@@ -8,3 +8,9 @@ spring:
     hikari:
       username: ${IAM_DB_USER:root}
       password: ${IAM_DB_PASS:root}
+
+logging:
+  level:
+    cn:
+      glogs:
+        activeauth: debug
