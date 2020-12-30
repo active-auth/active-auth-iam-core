@@ -202,7 +202,7 @@ class AuthorizationApiTests {
         createPolicy1Form.setActions(List.of("bookshelf:getBook"));
         createPolicy1Form.setResources(List.of(
                 String.format("bookshelf://users/%s/bought-books/*", user1Id),
-                String.format("bookshelf://users/%s/in-chart-books/*", user1Id)
+                String.format("bookshelf://users/%s/in-chart-books/*/liucixin/*", user1Id)
         ));
 
         String createPolicy1ResponseContent = testRequestTool.post("/principals/current/policies", createPolicy1Form, user1Session.getToken());
@@ -236,7 +236,7 @@ class AuthorizationApiTests {
         testRequestTool.post("/principals/current/authorization-challengings", challengingForm, user2Session.getToken());
 
         // user2 challenging granted subresource - level2, expecting 2xx.
-        challengingForm.setResources(List.of(String.format("bookshelf://users/%s/bought-books/scifi/liucixin/8609", user1Id)));
+        challengingForm.setResources(List.of(String.format("bookshelf://users/%s/in-chart-books/scifi/liucixin/8609", user1Id)));
         testRequestTool.post("/principals/current/authorization-challengings", challengingForm, user2Session.getToken());
 
         // user2 challenging subresource that is not granted, expecting 403

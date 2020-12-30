@@ -2,17 +2,16 @@ package cn.glogs.activeauth.iamcore.service.impl;
 
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
+import java.util.regex.Pattern;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class AuthorizationServiceImplTest {
-
     @Test
-    void wildcardedResourceLocators() {
-        String full = "bookshop://users/7/books/scifi/liucixin/908";
-        List<String> locators = AuthorizationServiceImpl.wildcardedResourceLocators(full);
-        locators.forEach(System.out::println);
-        assertEquals(locators.size(), 10);
+    void wildcardReplace() {
+        String policy = "bookshop://users/7/books/*/liucixin/*";
+        String policyToCheck = "bookshop://users/7/books/scifi/liucixin/78994";
+        String policyPattern = "^" + policy.replaceAll("\\*", ".+") + "$";
+        assertTrue(Pattern.matches(policyPattern, policyToCheck));
     }
 }
