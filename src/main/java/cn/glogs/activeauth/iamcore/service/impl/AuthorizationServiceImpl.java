@@ -37,6 +37,7 @@ public class AuthorizationServiceImpl implements AuthorizationService {
         Pattern r = Pattern.compile(resourcePattern);
         Matcher m = r.matcher(fullLocator);
         List<String> wildcardedResourceLocators = new ArrayList<>();
+        wildcardedResourceLocators.add(fullLocator);
         if (m.find()) {
             String resourcePathPrefix = m.group(1);
             String resourceOwnerId = m.group(2);
@@ -44,20 +45,8 @@ public class AuthorizationServiceImpl implements AuthorizationService {
 
             String[] resourcePathStack = resourceFullPath.split("/");
 
-            // any user
-            wildcardedResourceLocators.add(resourcePathPrefix + "://users/*");
-            for (int i = 1; i < resourcePathStack.length; i++) {
-                StringBuilder sBuilder = new StringBuilder();
-                sBuilder.append(resourcePathPrefix).append("://users/*");
-                for (int j = 0; j < i; j++) {
-                    sBuilder.append("/").append(resourcePathStack[j]);
-                }
-                wildcardedResourceLocators.add(sBuilder.append("/*").toString());
-            }
-            wildcardedResourceLocators.add(resourcePathPrefix + "://users/*/" + resourceFullPath);
-
             // this user
-            for (int i = 0; i < resourcePathStack.length; i++) {
+            for (int i = resourcePathStack.length - 1; i >= 0; i--) {
                 StringBuilder sBuilder = new StringBuilder();
                 sBuilder.append(resourcePathPrefix).append("://users/").append(resourceOwnerId);
                 for (int j = 0; j < i; j++) {
@@ -65,8 +54,20 @@ public class AuthorizationServiceImpl implements AuthorizationService {
                 }
                 wildcardedResourceLocators.add(sBuilder.append("/*").toString());
             }
+
+            // any user
+            wildcardedResourceLocators.add(resourcePathPrefix + "://users/*/" + resourceFullPath);
+            for (int i = resourcePathStack.length - 1; i > 0; i--) {
+                StringBuilder sBuilder = new StringBuilder();
+                sBuilder.append(resourcePathPrefix).append("://users/*");
+                for (int j = 0; j < i; j++) {
+                    sBuilder.append("/").append(resourcePathStack[j]);
+                }
+                wildcardedResourceLocators.add(sBuilder.append("/*").toString());
+            }
+            wildcardedResourceLocators.add(resourcePathPrefix + "://users/*");
+
         }
-        wildcardedResourceLocators.add(fullLocator);
         return wildcardedResourceLocators;
     }
 
