@@ -2,24 +2,17 @@ package cn.glogs.activeauth.iamcore.service.impl;
 
 import cn.glogs.activeauth.iamcore.domain.AuthenticationPrincipal;
 import cn.glogs.activeauth.iamcore.domain.AuthorizationPolicy;
-import cn.glogs.activeauth.iamcore.domain.AuthorizationPolicyGrant;
 import cn.glogs.activeauth.iamcore.domain.AuthorizationPolicyGrantRow;
-import cn.glogs.activeauth.iamcore.exception.business.NotFoundException;
-import cn.glogs.activeauth.iamcore.exception.business.PatternException;
-import cn.glogs.activeauth.iamcore.repository.AuthorizationPolicyGrantRepository;
 import cn.glogs.activeauth.iamcore.repository.AuthorizationPolicyGrantRowRepository;
-import cn.glogs.activeauth.iamcore.repository.AuthorizationPolicyRepository;
 import cn.glogs.activeauth.iamcore.service.AuthorizationService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
-import static cn.glogs.activeauth.iamcore.domain.AuthorizationPolicy.PolicyType.ALLOW;
+import static cn.glogs.activeauth.iamcore.domain.AuthorizationPolicy.PolicyEffect.ALLOW;
 
 
 @Service
@@ -70,16 +63,16 @@ public class AuthorizationServiceImpl implements AuthorizationService {
         rows.addAll(authorizationPolicyGrantRowRepository.findAllByGranteeIdAndPolicyAction(challenger.getId(), action)); // current challenger as grantee
         rows.addAll(authorizationPolicyGrantRowRepository.findAllByGranteeIdAndPolicyAction(0L, action)); // global user as grantee
         rows.forEach(row -> {
-            AuthorizationPolicy.PolicyType policyType = row.getPolicy().getPolicyType();
+            AuthorizationPolicy.PolicyEffect policyEffect = row.getPolicy().getEffect();
             String policyRowResource = row.getPolicyResource();
             if (Pattern.matches(myResourcePattern, policyRowResource)) {
-                if (policyType == ALLOW) {
+                if (policyEffect == ALLOW) {
                     allowedMyResourcePolicies.add(policyRowResource);
                 } else {
                     deniedMyResourcePolicies.add(policyRowResource);
                 }
             } else {
-                if (policyType == ALLOW) {
+                if (policyEffect == ALLOW) {
                     allowedNotMyResourcePolicies.add(policyRowResource);
                 } else {
                     deniedNotMyResourcePolicies.add(policyRowResource);

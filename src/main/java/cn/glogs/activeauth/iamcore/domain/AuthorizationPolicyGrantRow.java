@@ -24,7 +24,7 @@ public class AuthorizationPolicyGrantRow {
     @ManyToOne(cascade = CascadeType.REMOVE)
     private AuthorizationPolicy policy;
 
-    private AuthorizationPolicy.PolicyType policyType;
+    private AuthorizationPolicy.PolicyEffect policyEffect;
 
     private String policyAction;
 
