@@ -64,7 +64,7 @@ public class AuthorizationServiceImpl implements AuthorizationService {
                 for (String deniedResourcePolicy : deniedResourcePolicies) {
                     // 有一个非己资源被禁止列表中的任意 pattern 匹配都会拒绝整个请求
                     String deniedResourceRegex = "^" + deniedResourcePolicy.replaceAll("\\*", ".+") + "$";
-                    log.info("[Auth Challenging: Checking Denials] deniedResourceRegex = {}, checkedResource = {}", deniedResourceRegex, notMyResource);
+                    log.info("[Auth Challenging: Checking Denials] deniedResourcePolicyInRegexFormat = {}, checkedResource = {}", deniedResourceRegex, notMyResource);
                     if (Pattern.matches(deniedResourceRegex, notMyResource)) {
                         log.info("[Auth Challenging: Denied due to DENY-Policy check matched] challenger = {}, action = {}, resources = {}", challenger.resourceLocator(), action, Arrays.deepToString(resources));
                         return false; // 整个校验提前 DENY 结束
@@ -74,7 +74,7 @@ public class AuthorizationServiceImpl implements AuthorizationService {
                 for (String allowedResourcePolicy : allowedResourcePolicies) {
                     // 当前资源被其中一个允许规则匹配，则当前资源被允许；没有被任一允许规则匹配则当前资源不被允许，所有资源被允许则整个请求被允许
                     String allowedResourceRegex = "^" + allowedResourcePolicy.replaceAll("\\*", ".+") + "$";
-                    log.info("[Auth Challenging: Checking Allowances] allowedResourceRegex = {}, checkedResource = {}", allowedResourceRegex, notMyResource);
+                    log.info("[Auth Challenging: Checking Allowances] allowedResourcePolicyInRegexFormat = {}, checkedResource = {}", allowedResourceRegex, notMyResource);
                     if (Pattern.matches(allowedResourceRegex, notMyResource)) {
                         currentResourceAllowed = true;
                     }
