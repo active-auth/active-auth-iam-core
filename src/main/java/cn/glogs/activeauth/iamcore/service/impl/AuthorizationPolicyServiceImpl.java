@@ -38,7 +38,7 @@ public class AuthorizationPolicyServiceImpl implements AuthorizationPolicyServic
         AuthorizationPolicy policyToBeSaved = new AuthorizationPolicy();
         policyToBeSaved.setOwner(owner);
         policyToBeSaved.setName(form.getName());
-        policyToBeSaved.setPolicyType(form.getPolicyType());
+        policyToBeSaved.setEffect(form.getEffect());
         policyToBeSaved.setActions(form.getActions());
         policyToBeSaved.setResources(form.getResources());
         return authorizationPolicyRepository.save(policyToBeSaved);

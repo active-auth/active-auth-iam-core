@@ -7,7 +7,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.List;
 
 public interface AuthorizationPolicyGrantRowRepository extends JpaRepository<AuthorizationPolicyGrantRow, Long> {
-    List<AuthorizationPolicyGrantRow> findAllByGranteeAndPolicyAction(AuthenticationPrincipal grantee, String policyAction);
+    List<AuthorizationPolicyGrantRow> findAllByGranteeIdAndPolicyAction(Long granteeId, String policyAction);
 
     List<AuthorizationPolicyGrantRow> findAllByGranterId(Long granterId);
 

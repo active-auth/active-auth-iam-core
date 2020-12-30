@@ -89,6 +89,6 @@ public class AuthorizationPolicyGrantServiceImpl implements AuthorizationPolicyG
             List<String> actions,
             List<String> resources
     ) {
-        return actions.stream().flatMap(action -> resources.stream().map(resource -> new AuthorizationPolicyGrantRow(null, granter, grantee, policy, policy.getPolicyType(), action, resource, false))).collect(Collectors.toUnmodifiableList());
+        return actions.stream().flatMap(action -> resources.stream().map(resource -> new AuthorizationPolicyGrantRow(null, granter, grantee, policy, policy.getEffect(), action, resource, false))).collect(Collectors.toUnmodifiableList());
     }
 }

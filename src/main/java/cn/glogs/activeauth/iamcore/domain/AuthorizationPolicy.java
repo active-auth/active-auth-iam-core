@@ -30,7 +30,7 @@ public class AuthorizationPolicy implements IamResource {
     @ManyToOne(cascade = CascadeType.REMOVE)
     private AuthenticationPrincipal owner;
 
-    private PolicyType policyType;
+    private PolicyEffect effect;
 
     @Convert(converter = StringListAttributeConverter.class)
     private List<String> actions;
@@ -63,7 +63,7 @@ public class AuthorizationPolicy implements IamResource {
         return numberFromLocator(locator, 1);
     }
 
-    public enum PolicyType {
+    public enum PolicyEffect {
         ALLOW, DENY;
     }
 
@@ -71,7 +71,7 @@ public class AuthorizationPolicy implements IamResource {
         Vo vo = new Vo();
         vo.id = id;
         vo.name = name;
-        vo.policyType = policyType;
+        vo.effect = effect;
         vo.actions = actions;
         vo.resources = resources;
         vo.resourceLocator = resourceLocator();
@@ -87,7 +87,7 @@ public class AuthorizationPolicy implements IamResource {
         private String name;
 
         @NotNull
-        private PolicyType policyType;
+        private AuthorizationPolicy.PolicyEffect effect;
 
         @NotEmpty
         @Schema(example = "[\"bookshelf:addBooks\", \"bookshelf:listBooks\"]", type = "array")
@@ -113,7 +113,7 @@ public class AuthorizationPolicy implements IamResource {
         private String resourceLocator;
 
         @NotBlank
-        private PolicyType policyType;
+        private AuthorizationPolicy.PolicyEffect effect;
         @Schema(example = "[\"bookshelf:addBooks\", \"bookshelf:listBooks\"]", type = "array")
 
         @NotEmpty

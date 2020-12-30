@@ -2,24 +2,17 @@ package cn.glogs.activeauth.iamcore.service.impl;
 
 import cn.glogs.activeauth.iamcore.domain.AuthenticationPrincipal;
 import cn.glogs.activeauth.iamcore.domain.AuthorizationPolicy;
-import cn.glogs.activeauth.iamcore.domain.AuthorizationPolicyGrant;
 import cn.glogs.activeauth.iamcore.domain.AuthorizationPolicyGrantRow;
-import cn.glogs.activeauth.iamcore.exception.business.NotFoundException;
-import cn.glogs.activeauth.iamcore.exception.business.PatternException;
-import cn.glogs.activeauth.iamcore.repository.AuthorizationPolicyGrantRepository;
 import cn.glogs.activeauth.iamcore.repository.AuthorizationPolicyGrantRowRepository;
-import cn.glogs.activeauth.iamcore.repository.AuthorizationPolicyRepository;
 import cn.glogs.activeauth.iamcore.service.AuthorizationService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
-import static cn.glogs.activeauth.iamcore.domain.AuthorizationPolicy.PolicyType.ALLOW;
+import static cn.glogs.activeauth.iamcore.domain.AuthorizationPolicy.PolicyEffect.ALLOW;
 
 
 @Service
@@ -32,61 +25,80 @@ public class AuthorizationServiceImpl implements AuthorizationService {
         this.authorizationPolicyGrantRowRepository = authorizationPolicyGrantRowRepository;
     }
 
+    private boolean anyMatched(String testResource, List<String> policyResources) {
+        boolean ayMatched = false;
+        for (String policyResource : policyResources) {
+            String policyResourceInRegex = "^" + policyResource.replaceAll("\\*", ".+") + "$";
+            log.info("[Auth Challenging: checking any matched] policyResourceInRegex = {}, testResource = {}", policyResourceInRegex, testResource);
+            if (Pattern.matches(policyResourceInRegex, testResource)) {
+                log.info("[Auth Challenging: checking any matched, found] policyResourceInRegex = {}, testResource = {}", policyResourceInRegex, testResource);
+                ayMatched = true;
+            }
+        }
+        return ayMatched;
+    }
+
     @Override
     @Transactional
     public boolean challenge(AuthenticationPrincipal challenger, String action, String... resources) {
-        List<String> allowedResourcePolicies = new ArrayList<>();
-        List<String> deniedResourcePolicies = new ArrayList<>();
+        List<String> allowedMyResourcePolicies = new ArrayList<>();
+        List<String> allowedNotMyResourcePolicies = new ArrayList<>();
+        List<String> deniedMyResourcePolicies = new ArrayList<>();
+        List<String> deniedNotMyResourcePolicies = new ArrayList<>();
 
-        // TODO: 支持制定规则，屏蔽用户访问自己的资源
+        String myResourcePattern = String.format("^.+://users/%s/.*$", challenger.getId());
+
+        List<String> myResources = new ArrayList<>();
         List<String> notMyResources = new ArrayList<>();
         for (String resource : resources) {
-            String pattern = String.format("^.+://users/%s/.*$", challenger.getId());
-            if (!Pattern.matches(pattern, resource)) {
+            if (Pattern.matches(myResourcePattern, resource)) {
+                myResources.add(resource);
+            } else {
                 notMyResources.add(resource);
             }
         }
+        log.info("[Auth Challenging: wildcarding] myResources = {}, notMyResources = {}.", myResources, notMyResources);
 
-        log.info("[Auth Challenging: Wildcarding] {}.", notMyResources);
-
-        if (notMyResources.size() > 0) {
-            List<AuthorizationPolicyGrantRow> rows = authorizationPolicyGrantRowRepository.findAllByGranteeAndPolicyAction(challenger, action);
-            rows.forEach(row -> {
-                if (row.getPolicy().getPolicyType() == ALLOW) {
-                    allowedResourcePolicies.add(row.getPolicyResource());
+        List<AuthorizationPolicyGrantRow> rows = new ArrayList<>();
+        rows.addAll(authorizationPolicyGrantRowRepository.findAllByGranteeIdAndPolicyAction(challenger.getId(), action)); // current challenger as grantee
+        rows.addAll(authorizationPolicyGrantRowRepository.findAllByGranteeIdAndPolicyAction(0L, action)); // global user as grantee
+        rows.forEach(row -> {
+            AuthorizationPolicy.PolicyEffect policyEffect = row.getPolicy().getEffect();
+            String policyRowResource = row.getPolicyResource();
+            if (Pattern.matches(myResourcePattern, policyRowResource)) {
+                if (policyEffect == ALLOW) {
+                    allowedMyResourcePolicies.add(policyRowResource);
                 } else {
-                    deniedResourcePolicies.add(row.getPolicyResource());
+                    deniedMyResourcePolicies.add(policyRowResource);
                 }
-            });
-            log.info("[Auth Challenging: From DB] rows = {}, allowing = {}, denying = {}", rows, allowedResourcePolicies, deniedResourcePolicies);
-
-            boolean allResourcesAllowed = true;
-            for (String notMyResource : notMyResources) {
-                for (String deniedResourcePolicy : deniedResourcePolicies) {
-                    // 有一个非己资源被禁止列表中的任意 pattern 匹配都会拒绝整个请求
-                    String deniedResourceRegex = "^" + deniedResourcePolicy.replaceAll("\\*", ".+") + "$";
-                    log.info("[Auth Challenging: Checking Denials] deniedResourcePolicyInRegexFormat = {}, checkedResource = {}", deniedResourceRegex, notMyResource);
-                    if (Pattern.matches(deniedResourceRegex, notMyResource)) {
-                        allResourcesAllowed = false;
-                    }
-                }
-                boolean currentResourceAllowed = false;
-                for (String allowedResourcePolicy : allowedResourcePolicies) {
-                    // 当前资源被其中一个允许规则匹配，则当前资源被允许；没有被任一允许规则匹配则当前资源不被允许，所有资源被允许则整个请求被允许
-                    String allowedResourceRegex = "^" + allowedResourcePolicy.replaceAll("\\*", ".+") + "$";
-                    log.info("[Auth Challenging: Checking Allowances] allowedResourcePolicyInRegexFormat = {}, checkedResource = {}", allowedResourceRegex, notMyResource);
-                    if (Pattern.matches(allowedResourceRegex, notMyResource)) {
-                        currentResourceAllowed = true;
-                    }
-                }
-                if (!currentResourceAllowed) {
-                    allResourcesAllowed = false;
+            } else {
+                if (policyEffect == ALLOW) {
+                    allowedNotMyResourcePolicies.add(policyRowResource);
+                } else {
+                    deniedNotMyResourcePolicies.add(policyRowResource);
                 }
             }
-            log.info("[Auth Challenging: {}] challenger = {}, action = {}, resources = {}", allResourcesAllowed ? "Allowed" : "Denied", challenger.resourceLocator(), action, Arrays.deepToString(resources));
-            return allResourcesAllowed;
+        });
+        log.info("[Auth Challenging: from DB] allowingMy = {}, denyingMy = {}, allowingNotMy = {}, denyingNotMy = {}, rows = {}", allowedMyResourcePolicies, deniedMyResourcePolicies, allowedNotMyResourcePolicies, deniedNotMyResourcePolicies, rows);
+
+        // Allowing owner to it's own resources unless declared Denying in policy and grants.
+        boolean myResourcesAllAllowed = true;
+        for (String myResource : myResources) {
+            log.info("[Auth Challenging: checking any policy denied] myResource = {}", myResource);
+            boolean anyPolicyDenied = anyMatched(myResource, deniedMyResourcePolicies);
+            myResourcesAllAllowed = !anyPolicyDenied;
         }
-        log.info("[Auth Challenging: Allowed Default] challenger = {}, action = {}, resources = {}", challenger.resourceLocator(), action, Arrays.deepToString(resources));
-        return true;
+
+        boolean notMyResourcesAllAllowed = notMyResources.isEmpty(); // Set true if notMyResource empty to ignore its boolean matter.
+        for (String notMyResource : notMyResources) {
+            log.info("[Auth Challenging: checking any policy denied] notMyResource = {}", notMyResource);
+            boolean anyPolicyDenied = anyMatched(notMyResource, deniedNotMyResourcePolicies);
+            log.info("[Auth Challenging: checking some policy allowed] notMyResource = {}", notMyResource);
+            boolean somePoliciesAllowed = anyMatched(notMyResource, allowedNotMyResourcePolicies);
+            notMyResourcesAllAllowed = !anyPolicyDenied && somePoliciesAllowed;
+        }
+
+        log.info("[Auth Challenging: {}] my = {}, notMy = {}, challenger = {}, action = {}, resources = {}", myResourcesAllAllowed && notMyResourcesAllAllowed ? "Allowed" : "Denied", myResourcesAllAllowed, notMyResourcesAllAllowed, challenger.resourceLocator(), action, Arrays.deepToString(resources));
+        return myResourcesAllAllowed && notMyResourcesAllAllowed;
     }
 }

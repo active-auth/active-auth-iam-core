@@ -6,7 +6,6 @@ import cn.glogs.activeauth.iamcore.api.payload.RestResultPacker;
 import cn.glogs.activeauth.iamcore.config.properties.Configuration;
 import cn.glogs.activeauth.iamcore.domain.*;
 import cn.glogs.activeauth.iamcore.domain.sign.HttpRsaSignature;
-import cn.glogs.activeauth.iamcore.exception.business.PatternException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -115,7 +114,7 @@ class AuthorizationApiTests {
         Long user1Id = AuthenticationPrincipal.idFromLocator(user1Locator);
         AuthorizationPolicy.Form createPolicy1Form = new AuthorizationPolicy.Form();
         createPolicy1Form.setName("policy-1: Pony's bookshelf");
-        createPolicy1Form.setPolicyType(AuthorizationPolicy.PolicyType.ALLOW);
+        createPolicy1Form.setEffect(AuthorizationPolicy.PolicyEffect.ALLOW);
         createPolicy1Form.setActions(List.of("bookshelf:getBook"));
         createPolicy1Form.setResources(List.of(
                 String.format("bookshelf://users/%s/bought-books", user1Id),
@@ -130,7 +129,7 @@ class AuthorizationApiTests {
         Long user2Id = AuthenticationPrincipal.idFromLocator(user2Locator);
         AuthorizationPolicy.Form createPolicy2Form = new AuthorizationPolicy.Form();
         createPolicy2Form.setName("policy-2: Jack's petshop");
-        createPolicy2Form.setPolicyType(AuthorizationPolicy.PolicyType.ALLOW);
+        createPolicy2Form.setEffect(AuthorizationPolicy.PolicyEffect.ALLOW);
         createPolicy2Form.setActions(List.of("petshop:getCat", "petshop:getDog"));
         createPolicy2Form.setResources(List.of(
                 String.format("petshop://users/%s/bought-cats", user2Id),
@@ -200,7 +199,7 @@ class AuthorizationApiTests {
         Long user1Id = AuthenticationPrincipal.idFromLocator(user1Locator);
         AuthorizationPolicy.Form createPolicy1aForm = new AuthorizationPolicy.Form();
         createPolicy1aForm.setName("policy-1a: Pony's bookshelf");
-        createPolicy1aForm.setPolicyType(AuthorizationPolicy.PolicyType.ALLOW);
+        createPolicy1aForm.setEffect(AuthorizationPolicy.PolicyEffect.ALLOW);
         createPolicy1aForm.setActions(List.of("bookshelf:getBook"));
         createPolicy1aForm.setResources(List.of(
                 String.format("bookshelf://users/%s/bought-books/*", user1Id),
@@ -213,7 +212,7 @@ class AuthorizationApiTests {
         // create policy-1b of user-1, DENY some resources.
         AuthorizationPolicy.Form createPolicy1bForm = new AuthorizationPolicy.Form();
         createPolicy1bForm.setName("policy-1b: Pony's petshop denials");
-        createPolicy1bForm.setPolicyType(AuthorizationPolicy.PolicyType.DENY);
+        createPolicy1bForm.setEffect(AuthorizationPolicy.PolicyEffect.DENY);
         createPolicy1bForm.setActions(List.of("petshop:buyPet"));
         createPolicy1bForm.setResources(List.of(
                 String.format("petshop://users/%s/dangerous-animals/*/tiger", user1Id)
@@ -226,7 +225,7 @@ class AuthorizationApiTests {
         // Test case: user add a super-resourced policy by accident.
         AuthorizationPolicy.Form createPolicy1cForm = new AuthorizationPolicy.Form();
         createPolicy1cForm.setName("policy-1c: Pony's petshop allowance");
-        createPolicy1cForm.setPolicyType(AuthorizationPolicy.PolicyType.ALLOW);
+        createPolicy1cForm.setEffect(AuthorizationPolicy.PolicyEffect.ALLOW);
         createPolicy1cForm.setActions(List.of("petshop:buyPet"));
         createPolicy1cForm.setResources(List.of(
                 String.format("petshop://users/%s/dangerous-animals/*", user1Id)
