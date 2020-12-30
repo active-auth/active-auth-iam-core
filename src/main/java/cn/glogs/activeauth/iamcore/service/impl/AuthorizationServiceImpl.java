@@ -60,14 +60,14 @@ public class AuthorizationServiceImpl implements AuthorizationService {
             });
             log.info("[Auth Challenging: From DB] rows = {}, allowing = {}, denying = {}", rows, allowedResourcePolicies, deniedResourcePolicies);
 
+            boolean allResourcesAllowed = true;
             for (String notMyResource : notMyResources) {
                 for (String deniedResourcePolicy : deniedResourcePolicies) {
                     // 有一个非己资源被禁止列表中的任意 pattern 匹配都会拒绝整个请求
                     String deniedResourceRegex = "^" + deniedResourcePolicy.replaceAll("\\*", ".+") + "$";
                     log.info("[Auth Challenging: Checking Denials] deniedResourcePolicyInRegexFormat = {}, checkedResource = {}", deniedResourceRegex, notMyResource);
                     if (Pattern.matches(deniedResourceRegex, notMyResource)) {
-                        log.info("[Auth Challenging: Denied due to DENY-Policy check matched] challenger = {}, action = {}, resources = {}", challenger.resourceLocator(), action, Arrays.deepToString(resources));
-                        return false; // 整个校验提前 DENY 结束
+                        allResourcesAllowed = false;
                     }
                 }
                 boolean currentResourceAllowed = false;
@@ -79,9 +79,12 @@ public class AuthorizationServiceImpl implements AuthorizationService {
                         currentResourceAllowed = true;
                     }
                 }
-                log.info("[Auth Challenging: {}] challenger = {}, action = {}, resources = {}", currentResourceAllowed ? "Allowed due to ALLOW-Policy check matched" : "Denied due to ALLOW-Policy check unmatched", challenger.resourceLocator(), action, Arrays.deepToString(resources));
-                return currentResourceAllowed;
+                if (!currentResourceAllowed) {
+                    allResourcesAllowed = false;
+                }
             }
+            log.info("[Auth Challenging: {}] challenger = {}, action = {}, resources = {}", allResourcesAllowed ? "Allowed" : "Denied", challenger.resourceLocator(), action, Arrays.deepToString(resources));
+            return allResourcesAllowed;
         }
         log.info("[Auth Challenging: Allowed Default] challenger = {}, action = {}, resources = {}", challenger.resourceLocator(), action, Arrays.deepToString(resources));
         return true;
