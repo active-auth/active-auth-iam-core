@@ -25,6 +25,16 @@ public class AuthorizationServiceImpl implements AuthorizationService {
         this.authorizationPolicyGrantRowRepository = authorizationPolicyGrantRowRepository;
     }
 
+    public List<String> wildcardedActions(String originalAction) {
+        List<String> result = new ArrayList<>();
+        String[] spitsOfOriginalAction = originalAction.split(":");
+        String serviceDomain = spitsOfOriginalAction[0];
+        result.add(originalAction);
+        result.add(serviceDomain + ":*");
+        result.add("*");
+        return result;
+    }
+
     private boolean anyMatched(String testResource, List<String> policyResources) {
         boolean ayMatched = false;
         for (String policyResource : policyResources) {
@@ -60,8 +70,10 @@ public class AuthorizationServiceImpl implements AuthorizationService {
         log.info("[Auth Challenging: wildcarding] myResources = {}, notMyResources = {}.", myResources, notMyResources);
 
         List<AuthorizationPolicyGrantRow> rows = new ArrayList<>();
-        rows.addAll(authorizationPolicyGrantRowRepository.findAllByGranteeIdAndPolicyAction(challenger.getId(), action)); // current challenger as grantee
-        rows.addAll(authorizationPolicyGrantRowRepository.findAllByGranteeIdAndPolicyAction(0L, action)); // global user as grantee
+        wildcardedActions(action).forEach(wildcardedAction -> {
+            rows.addAll(authorizationPolicyGrantRowRepository.findAllByGranteeIdAndPolicyAction(challenger.getId(), wildcardedAction)); // current challenger as grantee
+            rows.addAll(authorizationPolicyGrantRowRepository.findAllByGranteeIdAndPolicyAction(0L, wildcardedAction)); // global user as grantee
+        });
         rows.forEach(row -> {
             AuthorizationPolicy.PolicyEffect policyEffect = row.getPolicy().getEffect();
             String policyRowResource = row.getPolicyResource();

@@ -91,7 +91,7 @@ public class AuthorizationPolicy implements IamResource {
         private AuthorizationPolicy.PolicyEffect effect;
 
         @NotEmpty
-        @ListablePattern(regexp = "^[a-zA-Z0-9/_-]+:[a-zA-Z0-9]+$")
+        @ListablePattern(regexp = "^[a-zA-Z0-9_-]+:[a-zA-Z0-9]+$")
         @Schema(example = "[\"bookshelf:addBooks\", \"bookshelf:listBooks\"]", type = "array")
         private List<String> actions;
 
