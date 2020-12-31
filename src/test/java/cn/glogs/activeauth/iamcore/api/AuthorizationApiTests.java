@@ -178,7 +178,7 @@ class AuthorizationApiTests {
         Long user1Id = AuthenticationPrincipal.idFromLocator(user1Principal.getResourceLocator());
         AuthorizationChallengeForm challengingForm = new AuthorizationChallengeForm();
         challengingForm.setAction("bookshelf:getBook");
-        challengingForm.setResources(List.of(String.format("bookshelf://users/%s/bought-books", user1Id)));
+        challengingForm.setResources(List.of(String.format("bookshelf://users/%s/favorite-books", user1Id)));
 
         // user1 challenging its own resource
         testRequestTool.post("/principals/current/authorization-challengings", challengingForm, user1Session.getToken());
@@ -305,7 +305,7 @@ class AuthorizationApiTests {
         Long user1Id = AuthenticationPrincipal.idFromLocator(user1Principal.getResourceLocator());
         AuthorizationChallengeForm challengingForm = new AuthorizationChallengeForm();
         challengingForm.setAction("bookshelf:getBook");
-        challengingForm.setResources(List.of(String.format("bookshelf://users/%s/bought-books", user1Id)));
+        challengingForm.setResources(List.of(String.format("bookshelf://users/%s/favorite-books", user1Id)));
 
         String user1PrivateKey = new String(base64Decoder.decode(user1KeyPair.getPrivateKey()));
         String user2PrivateKey = new String(base64Decoder.decode(user2KeyPair.getPrivateKey()));

@@ -70,10 +70,9 @@ public class AuthorizationServiceImpl implements AuthorizationService {
         log.info("[Auth Challenging: wildcarding] myResources = {}, notMyResources = {}.", myResources, notMyResources);
 
         List<AuthorizationPolicyGrantRow> rows = new ArrayList<>();
-        wildcardedActions(action).forEach(wildcardedAction -> {
-            rows.addAll(authorizationPolicyGrantRowRepository.findAllByGranteeIdAndPolicyAction(challenger.getId(), wildcardedAction)); // current challenger as grantee
-            rows.addAll(authorizationPolicyGrantRowRepository.findAllByGranteeIdAndPolicyAction(0L, wildcardedAction)); // global user as grantee
-        });
+        List<String> wildcardedActions = wildcardedActions(action);
+        rows.addAll(authorizationPolicyGrantRowRepository.findAllByGranteeIdAndPolicyActionIn(challenger.getId(), wildcardedActions)); // current challenger as grantee
+        rows.addAll(authorizationPolicyGrantRowRepository.findAllByGranteeIdAndPolicyActionIn(0L, wildcardedActions)); // global user as grantee
         rows.forEach(row -> {
             AuthorizationPolicy.PolicyEffect policyEffect = row.getPolicy().getEffect();
             String policyRowResource = row.getPolicyResource();
