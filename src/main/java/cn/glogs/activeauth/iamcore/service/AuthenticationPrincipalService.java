@@ -7,13 +7,14 @@ import org.springframework.data.domain.Page;
 
 public interface AuthenticationPrincipalService {
 
-    AuthenticationPrincipal addPrincipal(String name, String password);
+    AuthenticationPrincipal createPrincipal(AuthenticationPrincipal toCreatePrincipal);
 
     AuthenticationPrincipal findPrincipalById(Long id) throws NotFoundException;
 
     Page<AuthenticationPrincipal> pagingPrincipals(int page, int size);
 
-    AuthenticationPrincipal addSubprincipal(AuthenticationPrincipal owner, String name, String password);
+    AuthenticationPrincipal createSubprincipal(AuthenticationPrincipal owner, String name, String password);
 
     Page<AuthenticationPrincipal> pagingSubprincipals(AuthenticationPrincipal owner, int page, int size);
+
 }

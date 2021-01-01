@@ -32,12 +32,18 @@ public class AuthenticationPrincipal implements IamResource {
 
     private boolean canUseSignature;
 
+    private PrincipalType principalType;
+
     @ManyToOne
     private AuthenticationPrincipal owner;
 
     @Override
     public String resourceLocator() {
         return String.format("%s://users/%s/principal", "iam", id);
+    }
+
+    public static enum PrincipalType {
+        PRINCIPAL, PRINCIPAL_GROUP, APP_DOMAIN;
     }
 
     public static Long idFromLocator(String locator) throws PatternException {
@@ -52,10 +58,11 @@ public class AuthenticationPrincipal implements IamResource {
         }
     }
 
-    public static AuthenticationPrincipal createPrincipal(String name, String password, PasswordHashingStrategy passwordHashingStrategy) {
+    public static AuthenticationPrincipal createPrincipal(String name, String password, PasswordHashingStrategy passwordHashingStrategy, PrincipalType type) {
         AuthenticationPrincipal result = new AuthenticationPrincipal();
         result.name = name;
         result.encryptedPassword = passwordHashingStrategy.getHashing().hashing(password);
+        result.principalType = type;
         result.createTime = new Date();
         return result;
     }
@@ -72,6 +79,7 @@ public class AuthenticationPrincipal implements IamResource {
         vo.createTime = createTime;
         vo.canUseToken = canUseToken;
         vo.canUseSignature = canUseSignature;
+        vo.principalType = principalType;
         return vo;
     }
 
@@ -93,14 +101,33 @@ public class AuthenticationPrincipal implements IamResource {
         private boolean canUseToken;
         @Schema(defaultValue = "false", type = "boolean")
         private boolean canUseSignature;
-
+        private PrincipalType principalType;
     }
 
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
-    @Schema(name = "AuthenticationPrincipal.CreatePrincipalForm")
-    public static class CreatePrincipalForm {
+    @Schema(name = "AuthenticationPrincipal.PrincipalForm")
+    public static class PrincipalForm {
+
+        @NotBlank
+        @Schema(defaultValue = "pony")
+        private String name;
+
+        @NotBlank
+        @Schema(defaultValue = "P0ny_1980")
+        private String password;
+
+        private boolean canUseToken;
+
+        private boolean canUseSignature;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Schema(name = "AuthenticationPrincipal.UserRegisterForm")
+    public static class UserRegisterForm {
 
         @NotBlank
         @Schema(defaultValue = "pony")
@@ -113,6 +140,12 @@ public class AuthenticationPrincipal implements IamResource {
 
     public static class PasswordNotMatchException extends Exception {
         public PasswordNotMatchException(String msg) {
+            super(msg);
+        }
+    }
+
+    public static class PrincipalTypeDoesNotAllowedToLoginException extends Exception {
+        public PrincipalTypeDoesNotAllowedToLoginException(String msg) {
             super(msg);
         }
     }

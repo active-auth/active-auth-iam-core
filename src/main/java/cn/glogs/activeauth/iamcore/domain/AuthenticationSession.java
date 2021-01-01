@@ -72,10 +72,10 @@ public class AuthenticationSession {
     }
 
     @Data
-    @Schema(name = "AuthenticationSession.CreateSessionForm")
+    @Schema(name = "AuthenticationSession.UserLoginForm")
     @AllArgsConstructor
     @NoArgsConstructor
-    public static class CreateSessionForm {
+    public static class UserLoginForm {
 
         @NotBlank
         @Schema(defaultValue = "pony")

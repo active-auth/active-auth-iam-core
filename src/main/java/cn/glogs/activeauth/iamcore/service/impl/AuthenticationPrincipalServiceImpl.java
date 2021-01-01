@@ -26,11 +26,9 @@ public class AuthenticationPrincipalServiceImpl implements AuthenticationPrincip
     }
 
     @Override
-    @Transactional
-    public AuthenticationPrincipal addPrincipal(String name, String password) {
-        AuthenticationPrincipal authenticationPrincipal = AuthenticationPrincipal.createPrincipal(name, password, configuration.getPasswordHashingStrategy());
-        authenticationPrincipalRepository.save(authenticationPrincipal);
-        return authenticationPrincipal;
+    public AuthenticationPrincipal createPrincipal(AuthenticationPrincipal toCreatePrincipal) {
+        authenticationPrincipalRepository.save(toCreatePrincipal);
+        return toCreatePrincipal;
     }
 
     @Override
@@ -47,8 +45,8 @@ public class AuthenticationPrincipalServiceImpl implements AuthenticationPrincip
     }
 
     @Override
-    public AuthenticationPrincipal addSubprincipal(AuthenticationPrincipal owner, String name, String password) {
-        AuthenticationPrincipal authenticationPrincipal = AuthenticationPrincipal.createPrincipal(name, password, configuration.getPasswordHashingStrategy()).withOwner(owner);
+    public AuthenticationPrincipal createSubprincipal(AuthenticationPrincipal owner, String name, String password) {
+        AuthenticationPrincipal authenticationPrincipal = AuthenticationPrincipal.createPrincipal(name, password, configuration.getPasswordHashingStrategy(), AuthenticationPrincipal.PrincipalType.PRINCIPAL).withOwner(owner);
         authenticationPrincipalRepository.save(authenticationPrincipal);
         return authenticationPrincipal;
     }

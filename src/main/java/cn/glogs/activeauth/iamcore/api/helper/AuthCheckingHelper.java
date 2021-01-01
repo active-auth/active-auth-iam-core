@@ -1,13 +1,12 @@
 package cn.glogs.activeauth.iamcore.api.helper;
 
-import cn.glogs.activeauth.iamcore.api.payload.AuthCheckingStatement;
 import cn.glogs.activeauth.iamcore.api.payload.AuthCheckingContext;
+import cn.glogs.activeauth.iamcore.api.payload.AuthCheckingStatement;
 import cn.glogs.activeauth.iamcore.config.properties.Configuration;
 import cn.glogs.activeauth.iamcore.domain.AuthenticationPrincipal;
 import cn.glogs.activeauth.iamcore.domain.AuthenticationPrincipalKeyPair;
 import cn.glogs.activeauth.iamcore.domain.AuthenticationSession;
-import cn.glogs.activeauth.iamcore.domain.sign.HttpRsaSignature;
-import cn.glogs.activeauth.iamcore.domain.sign.HttpSignature;
+import cn.glogs.activeauth.iamcore.domain.sign.HTTPSignatureVerifier;
 import cn.glogs.activeauth.iamcore.exception.HTTP400Exception;
 import cn.glogs.activeauth.iamcore.exception.HTTP401Exception;
 import cn.glogs.activeauth.iamcore.exception.HTTP403Exception;
@@ -58,7 +57,7 @@ public class AuthCheckingHelper {
             String authorizationHeaderName = configuration.getAuthorizationHeaderName();
             String authorizationHeaderValue = Optional.ofNullable(request.getHeader(authorizationHeaderName)).orElseThrow(() -> new AuthenticationSession.SessionRequestNotAuthorizedException("Unauthorized."));
             if (StringUtils.startsWith(authorizationHeaderValue, configuration.getAuthorizationHeaderTokenValuePrefix())) {
-                return authenticationSessionService.getMeSession(authorizationHeaderValue);
+                return authenticationSessionService.getSessionByToken(authorizationHeaderValue);
             } else if (StringUtils.startsWith(authorizationHeaderValue, configuration.getAuthorizationHeaderSignatureValuePrefix())) {
                 String timestampHeaderName = configuration.getTimestampHeaderName();
                 String timestampHeaderValue = Optional.ofNullable(request.getHeader(timestampHeaderName)).orElseThrow(() -> new AuthenticationSession.SessionRequestBadHeaderException(String.format("Need timestamp header: %s", timestampHeaderName)));
@@ -70,11 +69,11 @@ public class AuthCheckingHelper {
                     throw new HTTP401Exception(String.format("Signature expired, current timestamp: %s, requesting timestamp: %s.", currentTimestamp, requestingTimestamp));
                 }
 
-                HttpSignature signature = new HttpRsaSignature(authorizationHeaderValue);
-                AuthenticationPrincipalKeyPair key = authenticationPrincipalKeyPairService.getKeyByKeyId(signature.getSignature().getKeyId());
+                HTTPSignatureVerifier signatureVerifier = new HTTPSignatureVerifier(authorizationHeaderValue);
+                AuthenticationPrincipalKeyPair key = authenticationPrincipalKeyPairService.getKeyByKeyId(signatureVerifier.getSignature().getKeyId());
                 Map<String, String> headerMap = new HashMap<>();
                 headerMap.put(timestampHeaderName, timestampHeaderValue);
-                boolean signatureValid = signature.verifyAnyRequest(headerMap, key.getPubKey());
+                boolean signatureValid = signatureVerifier.verifyAnyRequest(headerMap, key.getPubKey());
                 if (signatureValid) {
                     return AuthenticationSession.fakeSession(key.getPrincipal());
                 } else {
