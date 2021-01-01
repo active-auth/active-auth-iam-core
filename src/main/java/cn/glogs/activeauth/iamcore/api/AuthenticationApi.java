@@ -14,6 +14,7 @@ import cn.glogs.activeauth.iamcore.exception.HTTP404Exception;
 import cn.glogs.activeauth.iamcore.exception.business.NotFoundException;
 import cn.glogs.activeauth.iamcore.service.AuthenticationPrincipalKeyPairService;
 import cn.glogs.activeauth.iamcore.service.AuthenticationPrincipalService;
+import io.swagger.v3.oas.annotations.OpenAPIDefinition;
 import org.springframework.data.domain.Page;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -79,6 +80,21 @@ public class AuthenticationApi {
         return RestResultPacker.success(authenticationPrincipalService.pagingSubprincipals(authCheckingContext.getCurrentSession().getAuthenticationPrincipal(), page, size).map((AuthenticationPrincipal::vo)));
     }
 
+    @GetMapping("/principals/current/subprincipals/{subprincipalId}")
+    public RestResultPacker<AuthenticationPrincipal.Vo> getSubprincipal(HttpServletRequest request, @PathVariable Long subprincipalId) throws HTTP403Exception, HTTP401Exception, HTTP400Exception, HTTP404Exception {
+        AuthCheckingContext authCheckingContext = authCheckingHelper.myResources(request, AuthCheckingStatement.checks("iam:GetSubPrincipal", "iam://users/%s/subprincipals/" + subprincipalId));
+        try {
+            AuthenticationPrincipal subprincipalToFind = authenticationPrincipalService.findPrincipalById(subprincipalId);
+            AuthenticationPrincipal challenger = authCheckingContext.getResourceOwner().getOwner();
+            if (subprincipalToFind.getOwner() != null && !subprincipalToFind.getOwner().getId().equals(challenger.getId())) {
+                throw new NotFoundException(String.format("Cannot find subprincipal %s of principal %s.", subprincipalId, challenger.getId()));
+            }
+            return RestResultPacker.success(subprincipalToFind.vo());
+        } catch (NotFoundException e) {
+            throw new HTTP404Exception(e);
+        }
+    }
+
     @GetMapping("/principals/{principalId}")
     public RestResultPacker<AuthenticationPrincipal.Vo> findPrincipalById(HttpServletRequest request, @PathVariable Long principalId) throws HTTP400Exception, HTTP401Exception, HTTP403Exception, HTTP404Exception {
         try {
@@ -113,5 +129,19 @@ public class AuthenticationApi {
     public RestResultPacker<Page<AuthenticationPrincipal.Vo>> pagingSubPrincipals(HttpServletRequest request, @PathVariable Long principalId, @RequestParam int page, @RequestParam int size) throws HTTP400Exception, HTTP401Exception, HTTP403Exception, HTTP404Exception {
         AuthCheckingContext authCheckingContext = authCheckingHelper.theirResources(request, AuthCheckingStatement.checks("iam:GetSubPrincipal", "iam://users/%s/subprincipals"), principalId);
         return RestResultPacker.success(authenticationPrincipalService.pagingSubprincipals(authCheckingContext.getResourceOwner(), page, size).map((AuthenticationPrincipal::vo)));
+    }
+
+    @GetMapping("/principals/{principalId}/subprincipals/{subprincipalId}")
+    public RestResultPacker<AuthenticationPrincipal.Vo> getSubprincipal(HttpServletRequest request, @PathVariable Long principalId, @PathVariable Long subprincipalId) throws HTTP403Exception, HTTP401Exception, HTTP400Exception, HTTP404Exception {
+        authCheckingHelper.theirResources(request, AuthCheckingStatement.checks("iam:GetSubPrincipal", "iam://users/%s/subprincipals/" + subprincipalId), principalId);
+        try {
+            AuthenticationPrincipal subprincipalToFind = authenticationPrincipalService.findPrincipalById(subprincipalId);
+            if (subprincipalToFind.getOwner() != null && !subprincipalToFind.getOwner().getId().equals(principalId)) {
+                throw new NotFoundException(String.format("Cannot find subprincipal %s of principal %s.", subprincipalId, principalId));
+            }
+            return RestResultPacker.success(subprincipalToFind.vo());
+        } catch (NotFoundException e) {
+            throw new HTTP404Exception(e);
+        }
     }
 }

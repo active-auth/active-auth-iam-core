@@ -77,23 +77,23 @@ class AuthorizationApiTests {
     void setUp() throws Exception {
         // user-1 Register
         AuthenticationPrincipal.UserRegisterForm user1RegisterForm = new AuthenticationPrincipal.UserRegisterForm(user1Username, user1Password);
-        String user1RegisterResponseContent = testRequestTool.post("/principals", user1RegisterForm, null);
+        String user1RegisterResponseContent = testRequestTool.post("/user-center/register", user1RegisterForm, null);
         this.user1Principal = getPackedReturningBody(user1RegisterResponseContent, AuthenticationPrincipal.Vo.class);
 
         // user-2 Register
         AuthenticationPrincipal.UserRegisterForm user2RegisterForm = new AuthenticationPrincipal.UserRegisterForm(user2Username, user2Password);
-        String user2RegisterResponseContent = testRequestTool.post("/principals", user2RegisterForm, null);
+        String user2RegisterResponseContent = testRequestTool.post("/user-center/register", user2RegisterForm, null);
         this.user2Principal = getPackedReturningBody(user2RegisterResponseContent, AuthenticationPrincipal.Vo.class);
 
 
         // user-1 Login
         AuthenticationSession.UserLoginForm user1LoginForm = new AuthenticationSession.UserLoginForm(user1Username, user1Password);
-        String user1LoginResponseContent = testRequestTool.post("/principals/none/authentication-ticketings", user1LoginForm, null);
+        String user1LoginResponseContent = testRequestTool.post("/user-center/login", user1LoginForm, null);
         this.user1Session = getPackedReturningBody(user1LoginResponseContent, AuthenticationSession.Vo.class);
 
         // user-2 Login
         AuthenticationSession.UserLoginForm user2LoginForm = new AuthenticationSession.UserLoginForm(user2Username, user2Password);
-        String user2LoginResponseContent = testRequestTool.post("/principals/none/authentication-ticketings", user2LoginForm, null);
+        String user2LoginResponseContent = testRequestTool.post("/user-center/login", user2LoginForm, null);
         this.user2Session = getPackedReturningBody(user2LoginResponseContent, AuthenticationSession.Vo.class);
 
         // user-1 create key-pairs
