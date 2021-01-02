@@ -5,16 +5,15 @@ import cn.glogs.activeauth.iamcore.api.payload.AuthCheckingStatement;
 import cn.glogs.activeauth.iamcore.api.payload.AuthCheckingContext;
 import cn.glogs.activeauth.iamcore.api.payload.RestResultPacker;
 import cn.glogs.activeauth.iamcore.domain.AuthenticationPrincipal;
-import cn.glogs.activeauth.iamcore.domain.AuthenticationPrincipalKeyPair;
+import cn.glogs.activeauth.iamcore.domain.AuthenticationPrincipalSecretKey;
 import cn.glogs.activeauth.iamcore.domain.password.PasswordHashingStrategy;
 import cn.glogs.activeauth.iamcore.exception.HTTP400Exception;
 import cn.glogs.activeauth.iamcore.exception.HTTP401Exception;
 import cn.glogs.activeauth.iamcore.exception.HTTP403Exception;
 import cn.glogs.activeauth.iamcore.exception.HTTP404Exception;
 import cn.glogs.activeauth.iamcore.exception.business.NotFoundException;
-import cn.glogs.activeauth.iamcore.service.AuthenticationPrincipalKeyPairService;
+import cn.glogs.activeauth.iamcore.service.AuthenticationPrincipalSecretKeyService;
 import cn.glogs.activeauth.iamcore.service.AuthenticationPrincipalService;
-import io.swagger.v3.oas.annotations.OpenAPIDefinition;
 import org.springframework.data.domain.Page;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -26,13 +25,13 @@ public class AuthenticationApi {
 
     private final AuthenticationPrincipalService authenticationPrincipalService;
 
-    private final AuthenticationPrincipalKeyPairService authenticationPrincipalKeyPairService;
+    private final AuthenticationPrincipalSecretKeyService authenticationPrincipalSecretKeyService;
 
     private final AuthCheckingHelper authCheckingHelper;
 
-    public AuthenticationApi(AuthenticationPrincipalService authenticationPrincipalService, AuthenticationPrincipalKeyPairService authenticationPrincipalKeyPairService, AuthCheckingHelper authCheckingHelper) {
+    public AuthenticationApi(AuthenticationPrincipalService authenticationPrincipalService, AuthenticationPrincipalSecretKeyService authenticationPrincipalSecretKeyService, AuthCheckingHelper authCheckingHelper) {
         this.authenticationPrincipalService = authenticationPrincipalService;
-        this.authenticationPrincipalKeyPairService = authenticationPrincipalKeyPairService;
+        this.authenticationPrincipalSecretKeyService = authenticationPrincipalSecretKeyService;
         this.authCheckingHelper = authCheckingHelper;
     }
 
@@ -55,16 +54,16 @@ public class AuthenticationApi {
         return RestResultPacker.success(authCheckingContext.getCurrentSession().getAuthenticationPrincipal().vo());
     }
 
-    @PostMapping("/principals/current/key-pairs")
-    public RestResultPacker<AuthenticationPrincipalKeyPair.Vo> genKeyPair(HttpServletRequest request, @RequestBody AuthenticationPrincipalKeyPair.GenKeyPairForm form) throws HTTP400Exception, HTTP401Exception, HTTP403Exception {
+    @PostMapping("/principals/current/secret-keys")
+    public RestResultPacker<AuthenticationPrincipalSecretKey.Vo> genKeyPair(HttpServletRequest request, @RequestBody AuthenticationPrincipalSecretKey.GenKeyPairForm form) throws HTTP400Exception, HTTP401Exception, HTTP403Exception {
         AuthCheckingContext authCheckingContext = authCheckingHelper.myResources(request, AuthCheckingStatement.checks("iam:GenerateKeyPair", "iam://users/%s/key-pairs"));
-        return RestResultPacker.success(authenticationPrincipalKeyPairService.genKey(authCheckingContext.getCurrentSession().getAuthenticationPrincipal(), form).vo());
+        return RestResultPacker.success(authenticationPrincipalSecretKeyService.generateKey(authCheckingContext.getCurrentSession().getAuthenticationPrincipal(), form).vo());
     }
 
-    @GetMapping("/principals/current/key-pairs")
-    public RestResultPacker<Page<AuthenticationPrincipalKeyPair.Vo>> pagingKeyPairs(HttpServletRequest request, @RequestParam int page, @RequestParam int size) throws HTTP400Exception, HTTP401Exception, HTTP403Exception {
+    @GetMapping("/principals/current/secret-keys")
+    public RestResultPacker<Page<AuthenticationPrincipalSecretKey.Vo>> pagingKeyPairs(HttpServletRequest request, @RequestParam int page, @RequestParam int size) throws HTTP400Exception, HTTP401Exception, HTTP403Exception {
         AuthCheckingContext authCheckingContext = authCheckingHelper.myResources(request, AuthCheckingStatement.checks("iam:GetKeyPair", "iam://users/%s/key-pairs"));
-        Page<AuthenticationPrincipalKeyPair> keyPairPage = authenticationPrincipalKeyPairService.pagingKeyPairs(authCheckingContext.getCurrentSession().getAuthenticationPrincipal(), page, size);
+        Page<AuthenticationPrincipalSecretKey> keyPairPage = authenticationPrincipalSecretKeyService.pagingKeysOfOwner(authCheckingContext.getCurrentSession().getAuthenticationPrincipal(), page, size);
         return RestResultPacker.success(keyPairPage.map((keyPair) -> keyPair.vo().securePrivateKey()));
     }
 
@@ -107,15 +106,15 @@ public class AuthenticationApi {
     }
 
     @PostMapping("/principals/{principalId}/key-pairs")
-    public RestResultPacker<AuthenticationPrincipalKeyPair.Vo> genKeyPair(HttpServletRequest request, @PathVariable Long principalId, @RequestBody AuthenticationPrincipalKeyPair.GenKeyPairForm form) throws HTTP400Exception, HTTP401Exception, HTTP403Exception, HTTP404Exception {
+    public RestResultPacker<AuthenticationPrincipalSecretKey.Vo> genKeyPair(HttpServletRequest request, @PathVariable Long principalId, @RequestBody AuthenticationPrincipalSecretKey.GenKeyPairForm form) throws HTTP400Exception, HTTP401Exception, HTTP403Exception, HTTP404Exception {
         AuthCheckingContext authCheckingContext = authCheckingHelper.theirResources(request, AuthCheckingStatement.checks("iam:GenerateKeyPair", "iam://users/%s/key-pairs"), principalId);
-        return RestResultPacker.success(authenticationPrincipalKeyPairService.genKey(authCheckingContext.getResourceOwner(), form).vo());
+        return RestResultPacker.success(authenticationPrincipalSecretKeyService.generateKey(authCheckingContext.getResourceOwner(), form).vo());
     }
 
     @GetMapping("/principals/{principalId}/key-pairs")
-    public RestResultPacker<Page<AuthenticationPrincipalKeyPair.Vo>> pagingKeyPairs(HttpServletRequest request, @PathVariable Long principalId, @RequestParam int page, @RequestParam int size) throws HTTP400Exception, HTTP401Exception, HTTP403Exception, HTTP404Exception {
+    public RestResultPacker<Page<AuthenticationPrincipalSecretKey.Vo>> pagingKeyPairs(HttpServletRequest request, @PathVariable Long principalId, @RequestParam int page, @RequestParam int size) throws HTTP400Exception, HTTP401Exception, HTTP403Exception, HTTP404Exception {
         AuthCheckingContext authCheckingContext = authCheckingHelper.theirResources(request, AuthCheckingStatement.checks("iam:GetKeyPair", "iam://users/%s/key-pairs"), principalId);
-        Page<AuthenticationPrincipalKeyPair> keyPairPage = authenticationPrincipalKeyPairService.pagingKeyPairs(authCheckingContext.getResourceOwner(), page, size);
+        Page<AuthenticationPrincipalSecretKey> keyPairPage = authenticationPrincipalSecretKeyService.pagingKeysOfOwner(authCheckingContext.getResourceOwner(), page, size);
         return RestResultPacker.success(keyPairPage.map((keyPair) -> keyPair.vo().securePrivateKey()));
     }
 

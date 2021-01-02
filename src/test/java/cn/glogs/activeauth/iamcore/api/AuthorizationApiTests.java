@@ -44,8 +44,8 @@ class AuthorizationApiTests {
     private AuthenticationSession.Vo user1Session;
     private AuthenticationSession.Vo user2Session;
 
-    private AuthenticationPrincipalKeyPair.Vo user1KeyPair;
-    private AuthenticationPrincipalKeyPair.Vo user2KeyPair;
+    private AuthenticationPrincipalSecretKey.Vo user1KeyPair;
+    private AuthenticationPrincipalSecretKey.Vo user2KeyPair;
 
     private AuthorizationPolicy.Vo user1TestPolicy;
     private AuthorizationPolicy.Vo user1TestPolicy_a;
@@ -97,14 +97,14 @@ class AuthorizationApiTests {
         this.user2Session = getPackedReturningBody(user2LoginResponseContent, AuthenticationSession.Vo.class);
 
         // user-1 create key-pairs
-        AuthenticationPrincipalKeyPair.GenKeyPairForm user1GenKeyPairForm = new AuthenticationPrincipalKeyPair.GenKeyPairForm("keypair of user1");
+        AuthenticationPrincipalSecretKey.GenKeyPairForm user1GenKeyPairForm = new AuthenticationPrincipalSecretKey.GenKeyPairForm("keypair of user1");
         String user1GenKeyPairResponseContent = testRequestTool.post("/principals/current/key-pairs", user1GenKeyPairForm, user1Session.getToken());
-        this.user1KeyPair = getPackedReturningBody(user1GenKeyPairResponseContent, AuthenticationPrincipalKeyPair.Vo.class);
+        this.user1KeyPair = getPackedReturningBody(user1GenKeyPairResponseContent, AuthenticationPrincipalSecretKey.Vo.class);
 
         // user-2 create key-pairs
-        AuthenticationPrincipalKeyPair.GenKeyPairForm user2GenKeyPairForm = new AuthenticationPrincipalKeyPair.GenKeyPairForm("keypair of user2");
+        AuthenticationPrincipalSecretKey.GenKeyPairForm user2GenKeyPairForm = new AuthenticationPrincipalSecretKey.GenKeyPairForm("keypair of user2");
         String user2GenKeyPairResponseContent = testRequestTool.post("/principals/current/key-pairs", user2GenKeyPairForm, user2Session.getToken());
-        this.user2KeyPair = getPackedReturningBody(user2GenKeyPairResponseContent, AuthenticationPrincipalKeyPair.Vo.class);
+        this.user2KeyPair = getPackedReturningBody(user2GenKeyPairResponseContent, AuthenticationPrincipalSecretKey.Vo.class);
     }
 
     @Test
@@ -311,8 +311,8 @@ class AuthorizationApiTests {
         String user1PrivateKey = new String(base64Decoder.decode(user1KeyPair.getPrivateKey()));
         String user2PrivateKey = new String(base64Decoder.decode(user2KeyPair.getPrivateKey()));
 
-        String user1Signature = HTTPSignatureSigner.signRequest(Algorithm.RSA_SHA256, user1KeyPair.getKeyId(), headers, user1PrivateKey).toString();
-        String user2Signature = HTTPSignatureSigner.signRequest(Algorithm.RSA_SHA256, user2KeyPair.getKeyId(), headers, user2PrivateKey).toString();
+        String user1Signature = HTTPSignatureSigner.signRequest(Algorithm.RSA_SHA256, user1KeyPair.getKeyCode(), headers, user1PrivateKey).toString();
+        String user2Signature = HTTPSignatureSigner.signRequest(Algorithm.RSA_SHA256, user2KeyPair.getKeyCode(), headers, user2PrivateKey).toString();
 
         // user1 challenging its own resource, expecting 2xx.
         testRequestTool.post("/principals/current/authorization-challengings", new LinkedMultiValueMap<>(), headers, challengingForm, user1Signature, TestRequestTool._2XX);
@@ -326,7 +326,7 @@ class AuthorizationApiTests {
 
         // user1 challenging its own resource with an expired timestamp, expecting 401.
         headers.put(timestampHeaderName, Long.toString(timestampSeconds1HourAgo));
-        user1Signature = HTTPSignatureSigner.signRequest(Algorithm.RSA_SHA256, user1KeyPair.getKeyId(), headers, user1PrivateKey).toString();
+        user1Signature = HTTPSignatureSigner.signRequest(Algorithm.RSA_SHA256, user1KeyPair.getKeyCode(), headers, user1PrivateKey).toString();
         testRequestTool.post("/principals/current/authorization-challengings", new LinkedMultiValueMap<>(), headers, challengingForm, user1Signature, TestRequestTool._401);
     }
 }

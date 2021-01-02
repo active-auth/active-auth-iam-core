@@ -17,4 +17,9 @@ public interface AuthenticationPrincipalService {
 
     Page<AuthenticationPrincipal> pagingSubprincipals(AuthenticationPrincipal owner, int page, int size);
 
+    AuthenticationPrincipal createPrincipalGroup(AuthenticationPrincipal owner, AuthenticationPrincipal principalGroup);
+
+    Page<AuthenticationPrincipal> pagingPrincipalGroups(AuthenticationPrincipal owner, int page, int size);
+
+    Page<AuthenticationPrincipal> pagingAppDomains(AuthenticationPrincipal owner, int page, int size);
 }

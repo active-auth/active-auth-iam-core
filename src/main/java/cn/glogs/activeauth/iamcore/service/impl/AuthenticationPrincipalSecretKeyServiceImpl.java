@@ -1,12 +1,12 @@
 package cn.glogs.activeauth.iamcore.service.impl;
 
 import cn.glogs.activeauth.iamcore.domain.AuthenticationPrincipal;
-import cn.glogs.activeauth.iamcore.domain.AuthenticationPrincipalKeyPair;
+import cn.glogs.activeauth.iamcore.domain.AuthenticationPrincipalSecretKey;
 import cn.glogs.activeauth.iamcore.domain.keypair.KeyPair;
 import cn.glogs.activeauth.iamcore.domain.keypair.RSAKeyPair;
 import cn.glogs.activeauth.iamcore.exception.business.NotFoundException;
 import cn.glogs.activeauth.iamcore.repository.AuthenticationPrincipalKeyPairRepository;
-import cn.glogs.activeauth.iamcore.service.AuthenticationPrincipalKeyPairService;
+import cn.glogs.activeauth.iamcore.service.AuthenticationPrincipalSecretKeyService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.domain.Specification;
@@ -19,21 +19,37 @@ import java.util.Date;
 import java.util.UUID;
 
 @Service
-public class AuthenticationPrincipalKeyPairServiceImpl implements AuthenticationPrincipalKeyPairService {
+public class AuthenticationPrincipalSecretKeyServiceImpl implements AuthenticationPrincipalSecretKeyService {
 
     private final AuthenticationPrincipalKeyPairRepository authenticationPrincipalKeyPairRepository;
 
-    public AuthenticationPrincipalKeyPairServiceImpl(AuthenticationPrincipalKeyPairRepository authenticationPrincipalKeyPairRepository) {
+    public AuthenticationPrincipalSecretKeyServiceImpl(AuthenticationPrincipalKeyPairRepository authenticationPrincipalKeyPairRepository) {
         this.authenticationPrincipalKeyPairRepository = authenticationPrincipalKeyPairRepository;
     }
 
     @Override
+    public AuthenticationPrincipalSecretKey deleteKeyById(Long keyId) throws NotFoundException {
+        AuthenticationPrincipalSecretKey toDelete = authenticationPrincipalKeyPairRepository.findById(keyId).orElseThrow(() -> new NotFoundException("Keypair not found."));
+        authenticationPrincipalKeyPairRepository.delete(toDelete);
+        return toDelete;
+    }
+
+    @Override
+    public Page<AuthenticationPrincipalSecretKey> pagingKeysOfOwner(AuthenticationPrincipal owner, int page, int size) {
+        PageRequest pageRequest = PageRequest.of(page, size);
+        return authenticationPrincipalKeyPairRepository.findAll((Specification<AuthenticationPrincipalSecretKey>) (root, query, criteriaBuilder) -> {
+            Path<AuthenticationPrincipal> principalField = root.get("principal");
+            return criteriaBuilder.equal(principalField, owner);
+        }, pageRequest);
+    }
+
+    @Override
     @Transactional
-    public AuthenticationPrincipalKeyPair genKey(AuthenticationPrincipal principal, AuthenticationPrincipalKeyPair.GenKeyPairForm form) {
-        AuthenticationPrincipalKeyPair principalKeyPair = new AuthenticationPrincipalKeyPair();
+    public AuthenticationPrincipalSecretKey generateKey(AuthenticationPrincipal principal, AuthenticationPrincipalSecretKey.GenKeyPairForm form) {
+        AuthenticationPrincipalSecretKey principalKeyPair = new AuthenticationPrincipalSecretKey();
         try {
             KeyPair keyPair = RSAKeyPair.generateKeyPair();
-            principalKeyPair.setKeyId(UUID.randomUUID().toString());
+            principalKeyPair.setKeyCode(UUID.randomUUID().toString());
             principalKeyPair.setDescription(form.getDescription());
             principalKeyPair.setPubKey(keyPair.getPubKey());
             principalKeyPair.setPriKey(keyPair.getPriKey());
@@ -48,16 +64,7 @@ public class AuthenticationPrincipalKeyPairServiceImpl implements Authentication
     }
 
     @Override
-    public Page<AuthenticationPrincipalKeyPair> pagingKeyPairs(AuthenticationPrincipal owner, int page, int size) {
-        PageRequest pageRequest = PageRequest.of(page, size);
-        return authenticationPrincipalKeyPairRepository.findAll((Specification<AuthenticationPrincipalKeyPair>) (root, query, criteriaBuilder) -> {
-            Path<AuthenticationPrincipal> principalField = root.get("principal");
-            return criteriaBuilder.equal(principalField, owner);
-        }, pageRequest);
-    }
-
-    @Override
-    public AuthenticationPrincipalKeyPair getKeyByKeyId(String keyId) throws NotFoundException {
+    public AuthenticationPrincipalSecretKey getKeyByKeyId(String keyId) throws NotFoundException {
         return authenticationPrincipalKeyPairRepository.findByKeyId(keyId).orElseThrow(() -> new NotFoundException("Keypair not found."));
     }
 }
