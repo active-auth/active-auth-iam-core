@@ -18,11 +18,11 @@ import java.util.Map;
 
 @Data
 @AllArgsConstructor
-public class HTTPSignatureVerifier {
+public class HTTPSignatureRsaSha256Verifier {
 
     private final Signature signature;
 
-    public HTTPSignatureVerifier(String signature) {
+    public HTTPSignatureRsaSha256Verifier(String signature) {
         this(Signature.fromString(signature));
     }
 

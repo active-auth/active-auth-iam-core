@@ -54,13 +54,13 @@ public class AuthenticationApi {
         return RestResultPacker.success(authCheckingContext.getCurrentSession().getAuthenticationPrincipal().vo());
     }
 
-    @PostMapping("/principals/current/secret-keys")
+    @PostMapping("/principals/current/secret-keys/rsa-sha256-key-pairs")
     public RestResultPacker<AuthenticationPrincipalSecretKey.Vo> genKeyPair(HttpServletRequest request, @RequestBody AuthenticationPrincipalSecretKey.GenKeyPairForm form) throws HTTP400Exception, HTTP401Exception, HTTP403Exception {
         AuthCheckingContext authCheckingContext = authCheckingHelper.myResources(request, AuthCheckingStatement.checks("iam:GenerateKeyPair", "iam://users/%s/key-pairs"));
         return RestResultPacker.success(authenticationPrincipalSecretKeyService.generateKey(authCheckingContext.getCurrentSession().getAuthenticationPrincipal(), form).vo());
     }
 
-    @GetMapping("/principals/current/secret-keys")
+    @GetMapping("/principals/current/secret-keys/rsa-sha256-key-pairs")
     public RestResultPacker<Page<AuthenticationPrincipalSecretKey.Vo>> pagingKeyPairs(HttpServletRequest request, @RequestParam int page, @RequestParam int size) throws HTTP400Exception, HTTP401Exception, HTTP403Exception {
         AuthCheckingContext authCheckingContext = authCheckingHelper.myResources(request, AuthCheckingStatement.checks("iam:GetKeyPair", "iam://users/%s/key-pairs"));
         Page<AuthenticationPrincipalSecretKey> keyPairPage = authenticationPrincipalSecretKeyService.pagingKeysOfOwner(authCheckingContext.getCurrentSession().getAuthenticationPrincipal(), page, size);

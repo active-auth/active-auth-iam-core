@@ -18,18 +18,18 @@ import java.util.Map;
 
 @Getter
 @AllArgsConstructor
-public class HTTPSignatureSigner {
+public class HTTPSignatureRsaSha256Signer {
 
-    public static Signature signRequest(Algorithm algorithm, String keyId, Map<String, String> toSignedHeaders, String secretKey) throws IOException, InvalidKeySpecException {
-        return signRequest(algorithm, keyId, "ANY", "/any/request/fake-uri", toSignedHeaders, secretKey, false);
+    public static Signature signRequest(String keyId, Map<String, String> toSignedHeaders, String secretKey) throws IOException, InvalidKeySpecException {
+        return signRequest(keyId, "ANY", "/any/request/fake-uri", toSignedHeaders, secretKey, false);
     }
 
-    public static Signature signRequest(Algorithm algorithm, String keyId, String method, String uri, Map<String, String> toSignedHeaders, String secretKey, boolean withRequestTarget) throws IOException, InvalidKeySpecException {
+    public static Signature signRequest(String keyId, String method, String uri, Map<String, String> toSignedHeaders, String secretKey, boolean withRequestTarget) throws IOException, InvalidKeySpecException {
         List<String> toSignedHeaderNames = new ArrayList<>(toSignedHeaders.keySet());
         if (withRequestTarget) {
             toSignedHeaderNames.add("(request-target)"); // Adding "(request-target)" to signing Method-URI
         }
-        Signature signature = new Signature(keyId, algorithm, null, toSignedHeaderNames);
+        Signature signature = new Signature(keyId, Algorithm.RSA_SHA256, null, toSignedHeaderNames);
         InputStream privateKeyInputStream = new ByteArrayInputStream(secretKey.getBytes(StandardCharsets.UTF_8));
         Key key = PEM.readPrivateKey(privateKeyInputStream);
         Signer signer = new Signer(key, signature);

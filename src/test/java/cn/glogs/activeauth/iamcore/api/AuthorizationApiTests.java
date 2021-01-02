@@ -5,7 +5,7 @@ import cn.glogs.activeauth.iamcore.api.payload.AuthorizationPolicyGrantingForm;
 import cn.glogs.activeauth.iamcore.api.payload.RestResultPacker;
 import cn.glogs.activeauth.iamcore.config.properties.Configuration;
 import cn.glogs.activeauth.iamcore.domain.*;
-import cn.glogs.activeauth.iamcore.domain.sign.HTTPSignatureSigner;
+import cn.glogs.activeauth.iamcore.domain.sign.HTTPSignatureRsaSha256Signer;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -311,8 +311,8 @@ class AuthorizationApiTests {
         String user1PrivateKey = new String(base64Decoder.decode(user1KeyPair.getPrivateKey()));
         String user2PrivateKey = new String(base64Decoder.decode(user2KeyPair.getPrivateKey()));
 
-        String user1Signature = HTTPSignatureSigner.signRequest(Algorithm.RSA_SHA256, user1KeyPair.getKeyCode(), headers, user1PrivateKey).toString();
-        String user2Signature = HTTPSignatureSigner.signRequest(Algorithm.RSA_SHA256, user2KeyPair.getKeyCode(), headers, user2PrivateKey).toString();
+        String user1Signature = HTTPSignatureRsaSha256Signer.signRequest(user1KeyPair.getKeyCode(), headers, user1PrivateKey).toString();
+        String user2Signature = HTTPSignatureRsaSha256Signer.signRequest(user2KeyPair.getKeyCode(), headers, user2PrivateKey).toString();
 
         // user1 challenging its own resource, expecting 2xx.
         testRequestTool.post("/principals/current/authorization-challengings", new LinkedMultiValueMap<>(), headers, challengingForm, user1Signature, TestRequestTool._2XX);
@@ -326,7 +326,7 @@ class AuthorizationApiTests {
 
         // user1 challenging its own resource with an expired timestamp, expecting 401.
         headers.put(timestampHeaderName, Long.toString(timestampSeconds1HourAgo));
-        user1Signature = HTTPSignatureSigner.signRequest(Algorithm.RSA_SHA256, user1KeyPair.getKeyCode(), headers, user1PrivateKey).toString();
+        user1Signature = HTTPSignatureRsaSha256Signer.signRequest(user1KeyPair.getKeyCode(), headers, user1PrivateKey).toString();
         testRequestTool.post("/principals/current/authorization-challengings", new LinkedMultiValueMap<>(), headers, challengingForm, user1Signature, TestRequestTool._401);
     }
 }

@@ -6,7 +6,7 @@ import cn.glogs.activeauth.iamcore.config.properties.Configuration;
 import cn.glogs.activeauth.iamcore.domain.AuthenticationPrincipal;
 import cn.glogs.activeauth.iamcore.domain.AuthenticationPrincipalSecretKey;
 import cn.glogs.activeauth.iamcore.domain.AuthenticationSession;
-import cn.glogs.activeauth.iamcore.domain.sign.HTTPSignatureVerifier;
+import cn.glogs.activeauth.iamcore.domain.sign.HTTPSignatureRsaSha256Verifier;
 import cn.glogs.activeauth.iamcore.exception.HTTP400Exception;
 import cn.glogs.activeauth.iamcore.exception.HTTP401Exception;
 import cn.glogs.activeauth.iamcore.exception.HTTP403Exception;
@@ -69,7 +69,7 @@ public class AuthCheckingHelper {
                     throw new HTTP401Exception(String.format("Signature expired, current timestamp: %s, requesting timestamp: %s.", currentTimestamp, requestingTimestamp));
                 }
 
-                HTTPSignatureVerifier signatureVerifier = new HTTPSignatureVerifier(authorizationHeaderValue);
+                HTTPSignatureRsaSha256Verifier signatureVerifier = new HTTPSignatureRsaSha256Verifier(authorizationHeaderValue);
                 AuthenticationPrincipalSecretKey key = authenticationPrincipalSecretKeyService.getKeyByKeyId(signatureVerifier.getSignature().getKeyId());
                 Map<String, String> headerMap = new HashMap<>();
                 headerMap.put(timestampHeaderName, timestampHeaderValue);
