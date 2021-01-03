@@ -52,11 +52,16 @@ public class AuthorizationApi {
     }
 
     @DeleteMapping("/principals/current/policies/{policyId}")
-    public RestResultPacker<AuthorizationPolicy.Vo> deletePolicy(HttpServletRequest request, @PathVariable Long policyId) throws HTTP400Exception, HTTP401Exception, HTTP403Exception, HTTP404Exception {
-        authCheckingHelper.myResources(request, AuthCheckingStatement.checks("iam:GetPolicy", "iam://users/%s/policies/" + policyId).and("iam:DeletePolicy", "iam://users/%s/policies" + policyId));
+    public RestResultPacker<String> deletePolicy(HttpServletRequest request, @PathVariable Long policyId) throws HTTP400Exception, HTTP401Exception, HTTP403Exception, HTTP404Exception {
+        AuthCheckingContext authCheckingContext = authCheckingHelper.myResources(request, AuthCheckingStatement.checks("iam:DeletePolicy", "iam://users/%s/policies/" + policyId).and("iam:DeletePolicy", "iam://users/%s/policies" + policyId));
         try {
             AuthorizationPolicy policy = authorizationPolicyService.getPolicyById(policyId);
-            return RestResultPacker.success(policy.vo());
+            if (authCheckingContext.belongToCurrentSession(policy.getOwner())) {
+                authorizationPolicyService.deletePolicy(policyId);
+                return RestResultPacker.success("Deleted!");
+            } else {
+                throw new NotFoundException("Cannot find policy " + policyId + " of current owner.");
+            }
         } catch (NotFoundException e) {
             throw new HTTP404Exception(e);
         }
@@ -105,10 +110,18 @@ public class AuthorizationApi {
 
     @DeleteMapping("/principals/current/grants/{grantId}")
     public RestResultPacker<AuthorizationPolicyGrant.Vo> deleteGrantsOut(HttpServletRequest request, @PathVariable Long grantId) throws HTTP400Exception, HTTP401Exception, HTTP403Exception, HTTP404Exception {
-        authCheckingHelper.myResources(request, AuthCheckingStatement.checks("iam:GetGrant", "iam://users/%s/grants/" + grantId).and("iam:DeleteGrant", "iam://users/%s/grants/" + grantId));
-        authorizationPolicyGrantService.deleteGrant(grantId);
-        AuthorizationPolicyGrant grant = authorizationPolicyGrantService.getGrantById(grantId);
-        return RestResultPacker.success(grant.vo());
+        AuthCheckingContext authCheckingContext = authCheckingHelper.myResources(request, AuthCheckingStatement.checks("iam:DeleteGrant", "iam://users/%s/grants/" + grantId).and("iam:DeleteGrant", "iam://users/%s/grants/" + grantId));
+        try {
+            AuthorizationPolicyGrant grant = authorizationPolicyGrantService.getGrantById(grantId);
+            if (authCheckingContext.belongToCurrentSession(grant.getGranter())) {
+                authorizationPolicyGrantService.deleteGrant(grantId);
+                return RestResultPacker.success(grant.vo());
+            } else {
+                throw new NotFoundException("Cannot find grant " + grantId + " of current owner.");
+            }
+        } catch (NotFoundException e) {
+            throw new HTTP404Exception(e);
+        }
     }
 
     @GetMapping("/principals/current/grants-in")
