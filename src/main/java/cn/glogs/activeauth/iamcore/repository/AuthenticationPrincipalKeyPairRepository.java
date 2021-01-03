@@ -7,5 +7,5 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import java.util.Optional;
 
 public interface AuthenticationPrincipalKeyPairRepository extends JpaRepository<AuthenticationPrincipalSecretKey, Long>, JpaSpecificationExecutor<AuthenticationPrincipalSecretKey> {
-    Optional<AuthenticationPrincipalSecretKey> findByKeyId(String keyId);
+    Optional<AuthenticationPrincipalSecretKey> findByKeyCode(String keyCode);
 }

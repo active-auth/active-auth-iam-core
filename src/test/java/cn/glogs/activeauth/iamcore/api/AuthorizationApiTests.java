@@ -98,12 +98,12 @@ class AuthorizationApiTests {
 
         // user-1 create key-pairs
         AuthenticationPrincipalSecretKey.GenKeyPairForm user1GenKeyPairForm = new AuthenticationPrincipalSecretKey.GenKeyPairForm("keypair of user1");
-        String user1GenKeyPairResponseContent = testRequestTool.post("/principals/current/key-pairs", user1GenKeyPairForm, user1Session.getToken());
+        String user1GenKeyPairResponseContent = testRequestTool.post("/principals/current/secret-keys/rsa-sha256-key-pairs", user1GenKeyPairForm, user1Session.getToken());
         this.user1KeyPair = getPackedReturningBody(user1GenKeyPairResponseContent, AuthenticationPrincipalSecretKey.Vo.class);
 
         // user-2 create key-pairs
         AuthenticationPrincipalSecretKey.GenKeyPairForm user2GenKeyPairForm = new AuthenticationPrincipalSecretKey.GenKeyPairForm("keypair of user2");
-        String user2GenKeyPairResponseContent = testRequestTool.post("/principals/current/key-pairs", user2GenKeyPairForm, user2Session.getToken());
+        String user2GenKeyPairResponseContent = testRequestTool.post("/principals/current/secret-keys/rsa-sha256-key-pairs", user2GenKeyPairForm, user2Session.getToken());
         this.user2KeyPair = getPackedReturningBody(user2GenKeyPairResponseContent, AuthenticationPrincipalSecretKey.Vo.class);
     }
 

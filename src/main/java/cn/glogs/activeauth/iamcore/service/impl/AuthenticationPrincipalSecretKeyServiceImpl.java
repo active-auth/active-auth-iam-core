@@ -65,6 +65,6 @@ public class AuthenticationPrincipalSecretKeyServiceImpl implements Authenticati
 
     @Override
     public AuthenticationPrincipalSecretKey getKeyByKeyId(String keyId) throws NotFoundException {
-        return authenticationPrincipalKeyPairRepository.findByKeyId(keyId).orElseThrow(() -> new NotFoundException("Keypair not found."));
+        return authenticationPrincipalKeyPairRepository.findByKeyCode(keyId).orElseThrow(() -> new NotFoundException("Keypair not found."));
     }
 }
