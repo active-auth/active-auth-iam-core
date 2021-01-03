@@ -12,7 +12,7 @@ import java.util.Date;
 
 @Data
 @Entity
-public class AuthenticationPrincipalKeyPair implements IamResource {
+public class AuthenticationPrincipalSecretKey implements IamResource {
 
     private static final Base64.Encoder base64Encoder = Base64.getEncoder();
 
@@ -26,7 +26,7 @@ public class AuthenticationPrincipalKeyPair implements IamResource {
     private AuthenticationPrincipal principal;
 
     @Column(unique = true)
-    private String keyId;
+    private String keyCode;
 
 
     private String description;
@@ -50,7 +50,7 @@ public class AuthenticationPrincipalKeyPair implements IamResource {
         Vo vo = new Vo();
         vo.id = id;
         vo.locator = resourceLocator();
-        vo.keyId = keyId;
+        vo.keyCode = keyCode;
         if (StringUtils.isNotBlank(priKey))
             vo.privateKey = new String(base64Encoder.encode(priKey.getBytes()));
         vo.description = description;
@@ -66,7 +66,7 @@ public class AuthenticationPrincipalKeyPair implements IamResource {
         @Schema(defaultValue = "iam://users/3/key-pairs/45")
         private String locator;
         @Schema(defaultValue = "39125471-2164-4ae6-b41c-7a0f2f28f1ae")
-        private String keyId;
+        private String keyCode;
         @Schema(defaultValue = "base64Encode('-----BEGIN PRIVATE KEY----- \n ****** \n -----END PRIVATE KEY-----')")
         private String privateKey;
         @Schema(defaultValue = "My Private Key.")

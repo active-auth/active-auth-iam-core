@@ -3,6 +3,7 @@ package cn.glogs.activeauth.iamcore.domain.sign;
 import cn.glogs.activeauth.iamcore.domain.keypair.RSAKeyPair;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.tomitribe.auth.signatures.Signature;
 
 import java.util.Date;
 import java.util.HashMap;
@@ -17,7 +18,7 @@ class RSAKeyPairTest {
         Map<String, String> headers = new HashMap<>();
         headers.put("X-Timestamp", String.valueOf(new Date().getTime() / 1000));
 
-        HttpRsaSignature httpRsaSignature = new HttpRsaSignature("bookstore", headers, rsaKeyPair.getPriKey());
-        Assertions.assertTrue(httpRsaSignature.verifyAnyRequest(headers, rsaKeyPair.getPubKey()));
+        Signature signature = HTTPSignatureRsaSha256Signer.signRequest("bookstore", headers, rsaKeyPair.getPriKey());
+        Assertions.assertTrue(new HTTPSignatureRsaSha256Verifier(signature).verifyAnyRequest(headers, rsaKeyPair.getPubKey()));
     }
 }

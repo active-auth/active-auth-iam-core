@@ -12,9 +12,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.servlet.http.HttpServletRequest;
-import java.util.Optional;
-
 @Service
 @Slf4j
 public class AuthenticationSessionServiceImpl implements AuthenticationSessionService {
@@ -45,10 +42,13 @@ public class AuthenticationSessionServiceImpl implements AuthenticationSessionSe
 
     @Override
     @Transactional
-    public AuthenticationSession newSession(AuthenticationSession.CreateSessionForm form) throws NotFoundException, AuthenticationPrincipal.PasswordNotMatchException {
+    public AuthenticationSession login(AuthenticationSession.UserLoginForm form) throws NotFoundException, AuthenticationPrincipal.PasswordNotMatchException, AuthenticationPrincipal.PrincipalTypeDoesNotAllowedToLoginException {
         AuthenticationPrincipal authenticationPrincipal = authenticationPrincipalRepository.findByName(form.getName()).orElseThrow(() -> new NotFoundException("Principal Not Found."));
+        if (authenticationPrincipal.getPrincipalType() != AuthenticationPrincipal.PrincipalType.PRINCIPAL) {
+            throw new AuthenticationPrincipal.PrincipalTypeDoesNotAllowedToLoginException("Principal does not allowed to login!");
+        }
         if (!authenticationPrincipal.passwordVerify(form.getSecret(), passwordHashingStrategy))
-            throw new AuthenticationPrincipal.PasswordNotMatchException("密码不匹配。");
+            throw new AuthenticationPrincipal.PasswordNotMatchException("Name and password not match!");
         AuthenticationSession authenticationSession = AuthenticationSession.newSession(tokenExpiringSeconds, fullTokenPrefix, authenticationPrincipal);
         authenticationSessionRepository.save(authenticationSession);
         return authenticationSession;
@@ -56,7 +56,7 @@ public class AuthenticationSessionServiceImpl implements AuthenticationSessionSe
 
     @Override
     @Transactional
-    public AuthenticationSession getMeSession(String token) throws AuthenticationSession.SessionNotFoundException, AuthenticationSession.SessionExpiredException {
+    public AuthenticationSession getSessionByToken(String token) throws AuthenticationSession.SessionNotFoundException, AuthenticationSession.SessionExpiredException {
         AuthenticationSession authenticationSession = authenticationSessionRepository.findByToken(token).orElseThrow(() -> new AuthenticationSession.SessionNotFoundException("Token not allowed."));
         if (authenticationSession.expired()) {
             throw new AuthenticationSession.SessionExpiredException("Token expired.");

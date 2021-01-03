@@ -27,8 +27,8 @@ class AuthenticationApiTests {
 
     @BeforeEach
     public void setUp() throws Exception {
-        AuthenticationPrincipal.CreatePrincipalForm form = new AuthenticationPrincipal.CreatePrincipalForm(username, password);
-        testRequestTool.post("/principals", form, null);
+        AuthenticationPrincipal.UserRegisterForm form = new AuthenticationPrincipal.UserRegisterForm(username, password);
+        testRequestTool.post("/user-center/register", form, null);
     }
 
     @Test
@@ -39,7 +39,7 @@ class AuthenticationApiTests {
     @Test
     @Transactional
     void testLogin() throws Exception {
-        AuthenticationSession.CreateSessionForm form = new AuthenticationSession.CreateSessionForm(username, password);
-        testRequestTool.post("/principals/none/authentication-ticketings", form, null);
+        AuthenticationSession.UserLoginForm form = new AuthenticationSession.UserLoginForm(username, password);
+        testRequestTool.post("/user-center/login", form, null);
     }
 }

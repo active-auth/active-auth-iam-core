@@ -10,4 +10,19 @@ import lombok.Data;
 public class AuthCheckingContext {
     private AuthenticationSession currentSession;
     private AuthenticationPrincipal resourceOwner;
+
+    public boolean belongToResourceOwner(AuthenticationPrincipal ownerFromResourceData) {
+        return resourceOwner != null
+                && resourceOwner.getId() != null
+                && ownerFromResourceData.getId() != null
+                && resourceOwner.getId().equals(ownerFromResourceData.getId());
+    }
+
+    public boolean belongToCurrentSession(AuthenticationPrincipal ownerFromResourceData) {
+        return currentSession != null
+                && currentSession.getAuthenticationPrincipal() != null
+                && currentSession.getAuthenticationPrincipal().getId() != null
+                && ownerFromResourceData.getId() != null
+                && currentSession.getAuthenticationPrincipal().getId().equals(ownerFromResourceData.getId());
+    }
 }

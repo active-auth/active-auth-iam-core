@@ -26,11 +26,9 @@ public class AuthenticationPrincipalServiceImpl implements AuthenticationPrincip
     }
 
     @Override
-    @Transactional
-    public AuthenticationPrincipal addPrincipal(String name, String password) {
-        AuthenticationPrincipal authenticationPrincipal = AuthenticationPrincipal.createPrincipal(name, password, configuration.getPasswordHashingStrategy());
-        authenticationPrincipalRepository.save(authenticationPrincipal);
-        return authenticationPrincipal;
+    public AuthenticationPrincipal createPrincipal(AuthenticationPrincipal toCreatePrincipal) {
+        authenticationPrincipalRepository.save(toCreatePrincipal);
+        return toCreatePrincipal;
     }
 
     @Override
@@ -47,8 +45,8 @@ public class AuthenticationPrincipalServiceImpl implements AuthenticationPrincip
     }
 
     @Override
-    public AuthenticationPrincipal addSubprincipal(AuthenticationPrincipal owner, String name, String password) {
-        AuthenticationPrincipal authenticationPrincipal = AuthenticationPrincipal.createPrincipal(name, password, configuration.getPasswordHashingStrategy()).withOwner(owner);
+    public AuthenticationPrincipal createSubprincipal(AuthenticationPrincipal owner, String name, String password) {
+        AuthenticationPrincipal authenticationPrincipal = AuthenticationPrincipal.createPrincipal(name, password, configuration.getPasswordHashingStrategy(), AuthenticationPrincipal.PrincipalType.PRINCIPAL).withOwner(owner);
         authenticationPrincipalRepository.save(authenticationPrincipal);
         return authenticationPrincipal;
     }
@@ -57,8 +55,44 @@ public class AuthenticationPrincipalServiceImpl implements AuthenticationPrincip
     public Page<AuthenticationPrincipal> pagingSubprincipals(AuthenticationPrincipal owner, int page, int size) {
         PageRequest pageRequest = PageRequest.of(page, size);
         return authenticationPrincipalRepository.findAll((Specification<AuthenticationPrincipal>) (root, query, criteriaBuilder) -> {
-            Path<AuthenticationPrincipal> principalField = root.get("principal");
-            return criteriaBuilder.equal(principalField, owner);
+            Path<AuthenticationPrincipal> principalField = root.get("owner");
+            Path<AuthenticationPrincipal.PrincipalType> principalTypeField = root.get("principalType");
+            return criteriaBuilder.and(
+                    criteriaBuilder.equal(principalField, owner),
+                    criteriaBuilder.equal(principalTypeField, AuthenticationPrincipal.PrincipalType.PRINCIPAL)
+            );
+        }, pageRequest);
+    }
+
+    @Override
+    public AuthenticationPrincipal createPrincipalGroup(AuthenticationPrincipal owner, AuthenticationPrincipal principalGroup) {
+        principalGroup.setOwner(owner);
+        return null;
+    }
+
+    @Override
+    public Page<AuthenticationPrincipal> pagingPrincipalGroups(AuthenticationPrincipal owner, int page, int size) {
+        PageRequest pageRequest = PageRequest.of(page, size);
+        return authenticationPrincipalRepository.findAll((Specification<AuthenticationPrincipal>) (root, query, criteriaBuilder) -> {
+            Path<AuthenticationPrincipal> principalField = root.get("owner");
+            Path<AuthenticationPrincipal.PrincipalType> principalTypeField = root.get("principalType");
+            return criteriaBuilder.and(
+                    criteriaBuilder.equal(principalField, owner),
+                    criteriaBuilder.equal(principalTypeField, AuthenticationPrincipal.PrincipalType.PRINCIPAL_GROUP)
+            );
+        }, pageRequest);
+    }
+
+    @Override
+    public Page<AuthenticationPrincipal> pagingAppDomains(AuthenticationPrincipal owner, int page, int size) {
+        PageRequest pageRequest = PageRequest.of(page, size);
+        return authenticationPrincipalRepository.findAll((Specification<AuthenticationPrincipal>) (root, query, criteriaBuilder) -> {
+            Path<AuthenticationPrincipal> principalField = root.get("owner");
+            Path<AuthenticationPrincipal.PrincipalType> principalTypeField = root.get("principalType");
+            return criteriaBuilder.and(
+                    criteriaBuilder.equal(principalField, owner),
+                    criteriaBuilder.equal(principalTypeField, AuthenticationPrincipal.PrincipalType.APP_DOMAIN)
+            );
         }, pageRequest);
     }
 }

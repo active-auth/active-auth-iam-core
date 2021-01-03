@@ -1,6 +1,7 @@
 package cn.glogs.activeauth.iamcore.domain;
 
 import cn.glogs.activeauth.iamcore.domain.converter.StringListAttributeConverter;
+import cn.glogs.activeauth.iamcore.domain.validator.ListablePattern;
 import cn.glogs.activeauth.iamcore.exception.business.PatternException;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
@@ -90,10 +91,12 @@ public class AuthorizationPolicy implements IamResource {
         private AuthorizationPolicy.PolicyEffect effect;
 
         @NotEmpty
+        @ListablePattern(regexp = "^[a-zA-Z0-9_-]+:[a-zA-Z0-9]+$")
         @Schema(example = "[\"bookshelf:addBooks\", \"bookshelf:listBooks\"]", type = "array")
         private List<String> actions;
 
         @NotEmpty
+        @ListablePattern(regexp = "^[a-zA-Z0-9/_-]+://users/\\d+/.+$")
         @Schema(example = "[\"bookshelf://users/31/bought-books\", \"bookshelf://users/31/shopping-cart\"]", type = "array")
         private List<String> resources;
     }
@@ -104,22 +107,17 @@ public class AuthorizationPolicy implements IamResource {
 
         private Long id;
 
-        @NotBlank
         @Schema(example = "MyPolicy22")
         private String name;
 
-        @NotBlank
         @Schema(example = "iam://users/77/authorization-policies/62701")
         private String resourceLocator;
 
-        @NotBlank
         private AuthorizationPolicy.PolicyEffect effect;
         @Schema(example = "[\"bookshelf:addBooks\", \"bookshelf:listBooks\"]", type = "array")
 
-        @NotEmpty
         private List<String> actions;
 
-        @NotEmpty
         @Schema(example = "[\"bookshelf://users/31/bought-books\", \"bookshelf://users/31/shopping-cart\"]", type = "array")
         private List<String> resources;
     }

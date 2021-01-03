@@ -1,5 +1,6 @@
 package cn.glogs.activeauth.iamcore.domain.converter;
 
+import cn.glogs.activeauth.iamcore.domain.FillingTemplate;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -12,12 +13,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Converter(autoApply = true)
-public class StringListAttributeConverter implements AttributeConverter<List<String>, String> {
+public class FillingTemplateEntityListAttributeConverter implements AttributeConverter<List<FillingTemplate.FillingTemplateEntity>, String> {
 
     private final static ObjectMapper objectMapper = new ObjectMapper();
 
     @Override
-    public String convertToDatabaseColumn(List<String> strings) {
+    public String convertToDatabaseColumn(List<FillingTemplate.FillingTemplateEntity> strings) {
         try {
             return objectMapper.writeValueAsString(strings);
         } catch (JsonProcessingException ex) {
@@ -28,9 +29,9 @@ public class StringListAttributeConverter implements AttributeConverter<List<Str
     }
 
     @Override
-    public List<String> convertToEntityAttribute(String dbData) {
+    public List<FillingTemplate.FillingTemplateEntity> convertToEntityAttribute(String dbData) {
         try {
-            JavaType javaType = objectMapper.getTypeFactory().constructParametricType(ArrayList.class, String.class);
+            JavaType javaType = objectMapper.getTypeFactory().constructParametricType(ArrayList.class, FillingTemplate.FillingTemplateEntity.class);
             return objectMapper.readValue(dbData, javaType);
         } catch (IOException ex) {
             // logger.error("Unexpected IOEx decoding json from database: " + dbData);

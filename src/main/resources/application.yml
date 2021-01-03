@@ -14,3 +14,7 @@ logging:
     cn:
       glogs:
         activeauth: debug
+
+springdoc:
+  swagger-ui:
+    operations-sorter: alpha
