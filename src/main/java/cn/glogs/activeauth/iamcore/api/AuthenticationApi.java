@@ -55,16 +55,32 @@ public class AuthenticationApi {
     }
 
     @PostMapping("/principals/current/secret-keys/rsa-sha256-key-pairs")
-    public RestResultPacker<AuthenticationPrincipalSecretKey.Vo> genKeyPair(HttpServletRequest request, @RequestBody AuthenticationPrincipalSecretKey.GenKeyPairForm form) throws HTTP400Exception, HTTP401Exception, HTTP403Exception {
-        AuthCheckingContext authCheckingContext = authCheckingHelper.myResources(request, AuthCheckingStatement.checks("iam:GenerateKeyPair", "iam://users/%s/key-pairs"));
+    public RestResultPacker<AuthenticationPrincipalSecretKey.Vo> genSecretKey(HttpServletRequest request, @RequestBody AuthenticationPrincipalSecretKey.GenKeyPairForm form) throws HTTP400Exception, HTTP401Exception, HTTP403Exception {
+        AuthCheckingContext authCheckingContext = authCheckingHelper.myResources(request, AuthCheckingStatement.checks("iam:GenerateSecretKey", "iam://users/%s/secret-keys"));
         return RestResultPacker.success(authenticationPrincipalSecretKeyService.generateKey(authCheckingContext.getCurrentSession().getAuthenticationPrincipal(), form).vo());
     }
 
-    @GetMapping("/principals/current/secret-keys/rsa-sha256-key-pairs")
-    public RestResultPacker<Page<AuthenticationPrincipalSecretKey.Vo>> pagingKeyPairs(HttpServletRequest request, @RequestParam int page, @RequestParam int size) throws HTTP400Exception, HTTP401Exception, HTTP403Exception {
-        AuthCheckingContext authCheckingContext = authCheckingHelper.myResources(request, AuthCheckingStatement.checks("iam:GetKeyPair", "iam://users/%s/key-pairs"));
+    @GetMapping("/principals/current/secret-keys")
+    public RestResultPacker<Page<AuthenticationPrincipalSecretKey.Vo>> pagingSecretKey(HttpServletRequest request, @RequestParam int page, @RequestParam int size) throws HTTP400Exception, HTTP401Exception, HTTP403Exception {
+        AuthCheckingContext authCheckingContext = authCheckingHelper.myResources(request, AuthCheckingStatement.checks("iam:GetSecretKey", "iam://users/%s/secret-keys"));
         Page<AuthenticationPrincipalSecretKey> keyPairPage = authenticationPrincipalSecretKeyService.pagingKeysOfOwner(authCheckingContext.getCurrentSession().getAuthenticationPrincipal(), page, size);
         return RestResultPacker.success(keyPairPage.map((keyPair) -> keyPair.vo().securePrivateKey()));
+    }
+
+    @DeleteMapping("/principals/current/secret-keys/{keyId}")
+    public RestResultPacker<String> deleteKey(HttpServletRequest request, @PathVariable Long keyId) throws HTTP400Exception, HTTP401Exception, HTTP403Exception, HTTP404Exception {
+        AuthCheckingContext authCheckingContext = authCheckingHelper.myResources(request, AuthCheckingStatement.checks("iam:DeleteSecretKey", "iam://users/%s/secret-keys"));
+        try {
+            AuthenticationPrincipalSecretKey secretKey = authenticationPrincipalSecretKeyService.getKeyById(keyId);
+            if (authCheckingContext.belongToCurrentSession(secretKey.getPrincipal())) {
+                authenticationPrincipalSecretKeyService.deleteKeyById(keyId);
+                return RestResultPacker.success("Secret Key Deleted.");
+            } else {
+                throw new NotFoundException("SecretKey Not found for current user");
+            }
+        } catch (NotFoundException e) {
+            throw new HTTP404Exception(e);
+        }
     }
 
     @PostMapping("/principals/current/subprincipals")
@@ -105,17 +121,33 @@ public class AuthenticationApi {
         }
     }
 
-    @PostMapping("/principals/{principalId}/key-pairs")
-    public RestResultPacker<AuthenticationPrincipalSecretKey.Vo> genKeyPair(HttpServletRequest request, @PathVariable Long principalId, @RequestBody AuthenticationPrincipalSecretKey.GenKeyPairForm form) throws HTTP400Exception, HTTP401Exception, HTTP403Exception, HTTP404Exception {
-        AuthCheckingContext authCheckingContext = authCheckingHelper.theirResources(request, AuthCheckingStatement.checks("iam:GenerateKeyPair", "iam://users/%s/key-pairs"), principalId);
+    @PostMapping("/principals/{principalId}/secret-keys/rsa-sha256-key-pairs")
+    public RestResultPacker<AuthenticationPrincipalSecretKey.Vo> genSecretKey(HttpServletRequest request, @PathVariable Long principalId, @RequestBody AuthenticationPrincipalSecretKey.GenKeyPairForm form) throws HTTP400Exception, HTTP401Exception, HTTP403Exception, HTTP404Exception {
+        AuthCheckingContext authCheckingContext = authCheckingHelper.theirResources(request, AuthCheckingStatement.checks("iam:GenerateSecretKey", "iam://users/%s/secret-keys"), principalId);
         return RestResultPacker.success(authenticationPrincipalSecretKeyService.generateKey(authCheckingContext.getResourceOwner(), form).vo());
     }
 
-    @GetMapping("/principals/{principalId}/key-pairs")
-    public RestResultPacker<Page<AuthenticationPrincipalSecretKey.Vo>> pagingKeyPairs(HttpServletRequest request, @PathVariable Long principalId, @RequestParam int page, @RequestParam int size) throws HTTP400Exception, HTTP401Exception, HTTP403Exception, HTTP404Exception {
-        AuthCheckingContext authCheckingContext = authCheckingHelper.theirResources(request, AuthCheckingStatement.checks("iam:GetKeyPair", "iam://users/%s/key-pairs"), principalId);
+    @GetMapping("/principals/{principalId}/secret-keys")
+    public RestResultPacker<Page<AuthenticationPrincipalSecretKey.Vo>> pagingSecretKeys(HttpServletRequest request, @PathVariable Long principalId, @RequestParam int page, @RequestParam int size) throws HTTP400Exception, HTTP401Exception, HTTP403Exception, HTTP404Exception {
+        AuthCheckingContext authCheckingContext = authCheckingHelper.theirResources(request, AuthCheckingStatement.checks("iam:GetSecretKey", "iam://users/%s/secret-keys"), principalId);
         Page<AuthenticationPrincipalSecretKey> keyPairPage = authenticationPrincipalSecretKeyService.pagingKeysOfOwner(authCheckingContext.getResourceOwner(), page, size);
         return RestResultPacker.success(keyPairPage.map((keyPair) -> keyPair.vo().securePrivateKey()));
+    }
+
+    @DeleteMapping("/principals/{principalId}/secret-keys/{keyId}")
+    public RestResultPacker<String> deleteSecretKeys(HttpServletRequest request, @PathVariable Long principalId, @PathVariable Long keyId) throws HTTP400Exception, HTTP401Exception, HTTP403Exception, HTTP404Exception {
+        AuthCheckingContext authCheckingContext = authCheckingHelper.theirResources(request, AuthCheckingStatement.checks("iam:DeleteSecretKey", "iam://users/%s/secret-keys/" + keyId), principalId);
+        try {
+            AuthenticationPrincipalSecretKey secretKey = authenticationPrincipalSecretKeyService.getKeyById(keyId);
+            if (authCheckingContext.belongToResourceOwner(secretKey.getPrincipal())) {
+                authenticationPrincipalSecretKeyService.deleteKeyById(keyId);
+                return RestResultPacker.success("Secret Key Deleted.");
+            } else {
+                throw new NotFoundException("SecretKey Not found for current user");
+            }
+        } catch (NotFoundException e) {
+            throw new HTTP404Exception(e);
+        }
     }
 
     @PostMapping("/principals/{principalId}/subprincipals")
