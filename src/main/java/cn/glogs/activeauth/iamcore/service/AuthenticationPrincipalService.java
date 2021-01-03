@@ -13,6 +13,8 @@ public interface AuthenticationPrincipalService {
 
     Page<AuthenticationPrincipal> pagingPrincipals(int page, int size);
 
+    void deletePrincipalById(Long principalId);
+
     AuthenticationPrincipal createSubprincipal(AuthenticationPrincipal owner, String name, String password);
 
     Page<AuthenticationPrincipal> pagingSubprincipals(AuthenticationPrincipal owner, int page, int size);

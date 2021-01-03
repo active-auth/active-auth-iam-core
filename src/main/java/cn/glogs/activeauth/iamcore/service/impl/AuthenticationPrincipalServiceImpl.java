@@ -45,6 +45,11 @@ public class AuthenticationPrincipalServiceImpl implements AuthenticationPrincip
     }
 
     @Override
+    public void deletePrincipalById(Long principalId) {
+        authenticationPrincipalRepository.deleteById(principalId);
+    }
+
+    @Override
     public AuthenticationPrincipal createSubprincipal(AuthenticationPrincipal owner, String name, String password) {
         AuthenticationPrincipal authenticationPrincipal = AuthenticationPrincipal.createPrincipal(name, password, configuration.getPasswordHashingStrategy(), AuthenticationPrincipal.PrincipalType.PRINCIPAL).withOwner(owner);
         authenticationPrincipalRepository.save(authenticationPrincipal);
