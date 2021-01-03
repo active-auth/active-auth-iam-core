@@ -70,7 +70,7 @@ public class AuthCheckingHelper {
                 }
 
                 HTTPSignatureRsaSha256Verifier signatureVerifier = new HTTPSignatureRsaSha256Verifier(authorizationHeaderValue);
-                AuthenticationPrincipalSecretKey key = authenticationPrincipalSecretKeyService.getKeyByKeyId(signatureVerifier.getSignature().getKeyId());
+                AuthenticationPrincipalSecretKey key = authenticationPrincipalSecretKeyService.getKeyByKeyCode(signatureVerifier.getSignature().getKeyId());
                 Map<String, String> headerMap = new HashMap<>();
                 headerMap.put(timestampHeaderName, timestampHeaderValue);
                 boolean signatureValid = signatureVerifier.verifyAnyRequest(headerMap, key.getPubKey());

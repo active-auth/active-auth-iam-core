@@ -28,6 +28,11 @@ public class AuthenticationPrincipalSecretKeyServiceImpl implements Authenticati
     }
 
     @Override
+    public AuthenticationPrincipalSecretKey getKeyById(Long keyId) throws NotFoundException {
+        return authenticationPrincipalKeyPairRepository.findById(keyId).orElseThrow(() -> new NotFoundException("Keypair not found."));
+    }
+
+    @Override
     public AuthenticationPrincipalSecretKey deleteKeyById(Long keyId) throws NotFoundException {
         AuthenticationPrincipalSecretKey toDelete = authenticationPrincipalKeyPairRepository.findById(keyId).orElseThrow(() -> new NotFoundException("Keypair not found."));
         authenticationPrincipalKeyPairRepository.delete(toDelete);
@@ -64,7 +69,7 @@ public class AuthenticationPrincipalSecretKeyServiceImpl implements Authenticati
     }
 
     @Override
-    public AuthenticationPrincipalSecretKey getKeyByKeyId(String keyId) throws NotFoundException {
-        return authenticationPrincipalKeyPairRepository.findByKeyCode(keyId).orElseThrow(() -> new NotFoundException("Keypair not found."));
+    public AuthenticationPrincipalSecretKey getKeyByKeyCode(String keyCode) throws NotFoundException {
+        return authenticationPrincipalKeyPairRepository.findByKeyCode(keyCode).orElseThrow(() -> new NotFoundException("SecretKey not found."));
     }
 }

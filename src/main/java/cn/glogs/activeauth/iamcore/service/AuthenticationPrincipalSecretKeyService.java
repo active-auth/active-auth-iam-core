@@ -6,11 +6,13 @@ import cn.glogs.activeauth.iamcore.exception.business.NotFoundException;
 import org.springframework.data.domain.Page;
 
 public interface AuthenticationPrincipalSecretKeyService {
+    AuthenticationPrincipalSecretKey getKeyById(Long keyId) throws NotFoundException;
+
     AuthenticationPrincipalSecretKey deleteKeyById(Long keyId) throws NotFoundException;
 
     Page<AuthenticationPrincipalSecretKey> pagingKeysOfOwner(AuthenticationPrincipal principal, int page, int size);
 
     AuthenticationPrincipalSecretKey generateKey(AuthenticationPrincipal principal, AuthenticationPrincipalSecretKey.GenKeyPairForm form);
 
-    AuthenticationPrincipalSecretKey getKeyByKeyId(String keyId) throws NotFoundException;
+    AuthenticationPrincipalSecretKey getKeyByKeyCode(String keyCode) throws NotFoundException;
 }
