@@ -85,19 +85,39 @@ public class AuthenticationApi {
 
     @PostMapping("/principals/current/subprincipals")
     public RestResultPacker<AuthenticationPrincipal.Vo> addSubprincipal(HttpServletRequest request, @RequestBody AuthenticationPrincipal.UserRegisterForm form) throws HTTP400Exception, HTTP401Exception, HTTP403Exception {
-        AuthCheckingContext authCheckingContext = authCheckingHelper.myResources(request, AuthCheckingStatement.checks("iam:AddSubPrincipal", "iam://users/%s/subprincipals"));
+        AuthCheckingContext authCheckingContext = authCheckingHelper.myResources(request, AuthCheckingStatement.checks("iam:AddSubprincipal", "iam://users/%s/subprincipals"));
         return RestResultPacker.success(authenticationPrincipalService.createSubprincipal(authCheckingContext.getCurrentSession().getAuthenticationPrincipal(), form.getName(), form.getPassword()).vo());
     }
 
     @GetMapping("/principals/current/subprincipals")
-    public RestResultPacker<Page<AuthenticationPrincipal.Vo>> pagingSubPrincipals(HttpServletRequest request, @RequestParam int page, @RequestParam int size) throws HTTP400Exception, HTTP401Exception, HTTP403Exception {
-        AuthCheckingContext authCheckingContext = authCheckingHelper.myResources(request, AuthCheckingStatement.checks("iam:GetSubPrincipal", "iam://users/%s/subprincipals"));
+    public RestResultPacker<Page<AuthenticationPrincipal.Vo>> pagingSubprincipals(HttpServletRequest request, @RequestParam int page, @RequestParam int size) throws HTTP400Exception, HTTP401Exception, HTTP403Exception {
+        AuthCheckingContext authCheckingContext = authCheckingHelper.myResources(request, AuthCheckingStatement.checks("iam:GetSubprincipal", "iam://users/%s/subprincipals"));
         return RestResultPacker.success(authenticationPrincipalService.pagingSubprincipals(authCheckingContext.getCurrentSession().getAuthenticationPrincipal(), page, size).map((AuthenticationPrincipal::vo)));
+    }
+
+    @DeleteMapping("/principals/current/subprincipals/{subprincipalId}")
+    public RestResultPacker<String> deleteSubprincipal(HttpServletRequest request, @PathVariable Long subprincipalId) throws HTTP400Exception, HTTP401Exception, HTTP403Exception, HTTP404Exception {
+        AuthCheckingContext authCheckingContext = authCheckingHelper.myResources(request, AuthCheckingStatement.checks("iam:GetSubprincipal", "iam://users/%s/subprincipals"));
+        try {
+            AuthenticationPrincipal subprincipal = authenticationPrincipalService.findPrincipalById(subprincipalId);
+            if (authCheckingContext.belongToCurrentSession(subprincipal.getOwner())) {
+                if (subprincipal.getPrincipalType() == AuthenticationPrincipal.PrincipalType.PRINCIPAL) {
+                    authenticationPrincipalService.deletePrincipalById(subprincipalId);
+                    return RestResultPacker.success("Subprincipal deleted.");
+                } else {
+                    throw new NotFoundException("Principal " + subprincipalId + " is not a subprincipal.");
+                }
+            } else {
+                throw new NotFoundException("Cannot find subprincipal " + subprincipalId + " of current principal.");
+            }
+        } catch (NotFoundException e) {
+            throw new HTTP404Exception(e);
+        }
     }
 
     @GetMapping("/principals/current/subprincipals/{subprincipalId}")
     public RestResultPacker<AuthenticationPrincipal.Vo> getSubprincipal(HttpServletRequest request, @PathVariable Long subprincipalId) throws HTTP403Exception, HTTP401Exception, HTTP400Exception, HTTP404Exception {
-        AuthCheckingContext authCheckingContext = authCheckingHelper.myResources(request, AuthCheckingStatement.checks("iam:GetSubPrincipal", "iam://users/%s/subprincipals/" + subprincipalId));
+        AuthCheckingContext authCheckingContext = authCheckingHelper.myResources(request, AuthCheckingStatement.checks("iam:GetSubprincipal", "iam://users/%s/subprincipals/" + subprincipalId));
         try {
             AuthenticationPrincipal subprincipalToFind = authenticationPrincipalService.findPrincipalById(subprincipalId);
             AuthenticationPrincipal challenger = authCheckingContext.getResourceOwner().getOwner();
@@ -116,6 +136,22 @@ public class AuthenticationApi {
             AuthenticationPrincipal principal = authenticationPrincipalService.findPrincipalById(principalId);
             authCheckingHelper.theirResources(request, AuthCheckingStatement.checks("iam:GetPrincipal", "iam://users/%s/principal"), principal);
             return RestResultPacker.success(principal.vo());
+        } catch (NotFoundException e) {
+            throw new HTTP404Exception(e);
+        }
+    }
+
+    @DeleteMapping("/principals/{principalId}")
+    public RestResultPacker<String> deletePrincipal(HttpServletRequest request, @PathVariable Long principalId) throws HTTP400Exception, HTTP401Exception, HTTP403Exception, HTTP404Exception {
+        try {
+            AuthenticationPrincipal principal = authenticationPrincipalService.findPrincipalById(principalId);
+            AuthCheckingContext authCheckingContext = authCheckingHelper.theirResources(request, AuthCheckingStatement.checks("iam:DeletePrincipal", "iam://users/%s/principal"), principal);
+            // if principal to delete is current principal
+            if (authCheckingContext.belongToCurrentSession(principal)) {
+                throw new HTTP403Exception("Cannot delete current logged in principal.");
+            }
+            authenticationPrincipalService.deletePrincipalById(principalId);
+            return RestResultPacker.success("Deleted!");
         } catch (NotFoundException e) {
             throw new HTTP404Exception(e);
         }
@@ -152,25 +188,45 @@ public class AuthenticationApi {
 
     @PostMapping("/principals/{principalId}/subprincipals")
     public RestResultPacker<AuthenticationPrincipal.Vo> addSubprincipal(HttpServletRequest request, @PathVariable Long principalId, @RequestBody AuthenticationPrincipal.UserRegisterForm form) throws HTTP400Exception, HTTP401Exception, HTTP403Exception, HTTP404Exception {
-        AuthCheckingContext authCheckingContext = authCheckingHelper.theirResources(request, AuthCheckingStatement.checks("iam:AddSubPrincipal", "iam://users/%s/subprincipals"), principalId);
+        AuthCheckingContext authCheckingContext = authCheckingHelper.theirResources(request, AuthCheckingStatement.checks("iam:AddSubprincipal", "iam://users/%s/subprincipals"), principalId);
         return RestResultPacker.success(authenticationPrincipalService.createSubprincipal(authCheckingContext.getResourceOwner(), form.getName(), form.getPassword()).vo());
     }
 
     @GetMapping("/principals/{principalId}/subprincipals")
-    public RestResultPacker<Page<AuthenticationPrincipal.Vo>> pagingSubPrincipals(HttpServletRequest request, @PathVariable Long principalId, @RequestParam int page, @RequestParam int size) throws HTTP400Exception, HTTP401Exception, HTTP403Exception, HTTP404Exception {
-        AuthCheckingContext authCheckingContext = authCheckingHelper.theirResources(request, AuthCheckingStatement.checks("iam:GetSubPrincipal", "iam://users/%s/subprincipals"), principalId);
+    public RestResultPacker<Page<AuthenticationPrincipal.Vo>> pagingSubprincipals(HttpServletRequest request, @PathVariable Long principalId, @RequestParam int page, @RequestParam int size) throws HTTP400Exception, HTTP401Exception, HTTP403Exception, HTTP404Exception {
+        AuthCheckingContext authCheckingContext = authCheckingHelper.theirResources(request, AuthCheckingStatement.checks("iam:GetSubprincipal", "iam://users/%s/subprincipals"), principalId);
         return RestResultPacker.success(authenticationPrincipalService.pagingSubprincipals(authCheckingContext.getResourceOwner(), page, size).map((AuthenticationPrincipal::vo)));
     }
 
     @GetMapping("/principals/{principalId}/subprincipals/{subprincipalId}")
     public RestResultPacker<AuthenticationPrincipal.Vo> getSubprincipal(HttpServletRequest request, @PathVariable Long principalId, @PathVariable Long subprincipalId) throws HTTP403Exception, HTTP401Exception, HTTP400Exception, HTTP404Exception {
-        authCheckingHelper.theirResources(request, AuthCheckingStatement.checks("iam:GetSubPrincipal", "iam://users/%s/subprincipals/" + subprincipalId), principalId);
+        authCheckingHelper.theirResources(request, AuthCheckingStatement.checks("iam:GetSubprincipal", "iam://users/%s/subprincipals/" + subprincipalId), principalId);
         try {
             AuthenticationPrincipal subprincipalToFind = authenticationPrincipalService.findPrincipalById(subprincipalId);
             if (subprincipalToFind.getOwner() != null && !subprincipalToFind.getOwner().getId().equals(principalId)) {
                 throw new NotFoundException(String.format("Cannot find subprincipal %s of principal %s.", subprincipalId, principalId));
             }
             return RestResultPacker.success(subprincipalToFind.vo());
+        } catch (NotFoundException e) {
+            throw new HTTP404Exception(e);
+        }
+    }
+
+    @DeleteMapping("/principals/{principalId}/subprincipals/{subprincipalId}")
+    public RestResultPacker<String> deleteSubprincipal(HttpServletRequest request, @PathVariable Long principalId, @PathVariable Long subprincipalId) throws HTTP400Exception, HTTP401Exception, HTTP403Exception, HTTP404Exception {
+        AuthCheckingContext authCheckingContext = authCheckingHelper.theirResources(request, AuthCheckingStatement.checks("iam:DeleteSubprincipal", "iam://users/%s/subprincipals/" + subprincipalId), principalId);
+        try {
+            AuthenticationPrincipal subprincipal = authenticationPrincipalService.findPrincipalById(subprincipalId);
+            if (authCheckingContext.belongToResourceOwner(subprincipal.getOwner())) {
+                if (subprincipal.getPrincipalType() == AuthenticationPrincipal.PrincipalType.PRINCIPAL) {
+                    authenticationPrincipalService.deletePrincipalById(subprincipalId);
+                    return RestResultPacker.success("Subprincipal deleted.");
+                } else {
+                    throw new NotFoundException("Principal " + subprincipalId + " is not a subprincipal.");
+                }
+            } else {
+                throw new NotFoundException("Cannot find subprincipal " + subprincipalId + " of current principal.");
+            }
         } catch (NotFoundException e) {
             throw new HTTP404Exception(e);
         }

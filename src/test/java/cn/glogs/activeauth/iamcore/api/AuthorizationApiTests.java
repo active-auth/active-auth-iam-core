@@ -2,13 +2,10 @@ package cn.glogs.activeauth.iamcore.api;
 
 import cn.glogs.activeauth.iamcore.api.payload.AuthorizationChallengeForm;
 import cn.glogs.activeauth.iamcore.api.payload.AuthorizationPolicyGrantingForm;
-import cn.glogs.activeauth.iamcore.api.payload.RestResultPacker;
 import cn.glogs.activeauth.iamcore.config.properties.Configuration;
 import cn.glogs.activeauth.iamcore.domain.*;
 import cn.glogs.activeauth.iamcore.domain.sign.HTTPSignatureRsaSha256Signer;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JavaType;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import cn.glogs.activeauth.iamcore.util.ResponseContentMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,7 +15,6 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
 import org.springframework.util.LinkedMultiValueMap;
-import org.tomitribe.auth.signatures.Algorithm;
 
 import java.util.*;
 
@@ -30,7 +26,6 @@ class AuthorizationApiTests {
     private final String timestampHeaderName;
     private static final Base64.Decoder base64Decoder = Base64.getDecoder();
 
-    private static final ObjectMapper objectMapper = new ObjectMapper();
 
     private static final String user1Username = "ponyma";
     private static final String user1Password = "pony199210251311";
@@ -60,51 +55,38 @@ class AuthorizationApiTests {
         this.timestampHeaderName = configuration.getTimestampHeaderName();
     }
 
-    public <T> List<T> getPackedReturningList(String content, Class<T> itemType) throws JsonProcessingException {
-        JavaType listJavaType = objectMapper.getTypeFactory().constructParametricType(List.class, itemType);
-        JavaType packedJavaType = objectMapper.getTypeFactory().constructParametricType(RestResultPacker.class, listJavaType);
-        RestResultPacker<List<T>> pack = objectMapper.readValue(content, packedJavaType);
-        return pack.getData();
-    }
-
-    public <T> T getPackedReturningBody(String content, Class<T> dataType) throws JsonProcessingException {
-        JavaType packedJavaType = objectMapper.getTypeFactory().constructParametricType(RestResultPacker.class, dataType);
-        RestResultPacker<T> pack = objectMapper.readValue(content, packedJavaType);
-        return pack.getData();
-    }
-
     @BeforeEach
     void setUp() throws Exception {
         // user-1 Register
         AuthenticationPrincipal.UserRegisterForm user1RegisterForm = new AuthenticationPrincipal.UserRegisterForm(user1Username, user1Password);
         String user1RegisterResponseContent = testRequestTool.post("/user-center/register", user1RegisterForm, null);
-        this.user1Principal = getPackedReturningBody(user1RegisterResponseContent, AuthenticationPrincipal.Vo.class);
+        this.user1Principal = ResponseContentMapper.getPackedReturningBody(user1RegisterResponseContent, AuthenticationPrincipal.Vo.class);
 
         // user-2 Register
         AuthenticationPrincipal.UserRegisterForm user2RegisterForm = new AuthenticationPrincipal.UserRegisterForm(user2Username, user2Password);
         String user2RegisterResponseContent = testRequestTool.post("/user-center/register", user2RegisterForm, null);
-        this.user2Principal = getPackedReturningBody(user2RegisterResponseContent, AuthenticationPrincipal.Vo.class);
+        this.user2Principal = ResponseContentMapper.getPackedReturningBody(user2RegisterResponseContent, AuthenticationPrincipal.Vo.class);
 
 
         // user-1 Login
         AuthenticationSession.UserLoginForm user1LoginForm = new AuthenticationSession.UserLoginForm(user1Username, user1Password);
         String user1LoginResponseContent = testRequestTool.post("/user-center/login", user1LoginForm, null);
-        this.user1Session = getPackedReturningBody(user1LoginResponseContent, AuthenticationSession.Vo.class);
+        this.user1Session = ResponseContentMapper.getPackedReturningBody(user1LoginResponseContent, AuthenticationSession.Vo.class);
 
         // user-2 Login
         AuthenticationSession.UserLoginForm user2LoginForm = new AuthenticationSession.UserLoginForm(user2Username, user2Password);
         String user2LoginResponseContent = testRequestTool.post("/user-center/login", user2LoginForm, null);
-        this.user2Session = getPackedReturningBody(user2LoginResponseContent, AuthenticationSession.Vo.class);
+        this.user2Session = ResponseContentMapper.getPackedReturningBody(user2LoginResponseContent, AuthenticationSession.Vo.class);
 
         // user-1 create key-pairs
         AuthenticationPrincipalSecretKey.GenKeyPairForm user1GenKeyPairForm = new AuthenticationPrincipalSecretKey.GenKeyPairForm("keypair of user1");
         String user1GenKeyPairResponseContent = testRequestTool.post("/principals/current/secret-keys/rsa-sha256-key-pairs", user1GenKeyPairForm, user1Session.getToken());
-        this.user1KeyPair = getPackedReturningBody(user1GenKeyPairResponseContent, AuthenticationPrincipalSecretKey.Vo.class);
+        this.user1KeyPair = ResponseContentMapper.getPackedReturningBody(user1GenKeyPairResponseContent, AuthenticationPrincipalSecretKey.Vo.class);
 
         // user-2 create key-pairs
         AuthenticationPrincipalSecretKey.GenKeyPairForm user2GenKeyPairForm = new AuthenticationPrincipalSecretKey.GenKeyPairForm("keypair of user2");
         String user2GenKeyPairResponseContent = testRequestTool.post("/principals/current/secret-keys/rsa-sha256-key-pairs", user2GenKeyPairForm, user2Session.getToken());
-        this.user2KeyPair = getPackedReturningBody(user2GenKeyPairResponseContent, AuthenticationPrincipalSecretKey.Vo.class);
+        this.user2KeyPair = ResponseContentMapper.getPackedReturningBody(user2GenKeyPairResponseContent, AuthenticationPrincipalSecretKey.Vo.class);
     }
 
     @Test
@@ -123,7 +105,7 @@ class AuthorizationApiTests {
         ));
 
         String createPolicy1ResponseContent = testRequestTool.post("/principals/current/policies", createPolicy1Form, user1Session.getToken());
-        this.user1TestPolicy = getPackedReturningBody(createPolicy1ResponseContent, AuthorizationPolicy.Vo.class);
+        this.user1TestPolicy = ResponseContentMapper.getPackedReturningBody(createPolicy1ResponseContent, AuthorizationPolicy.Vo.class);
 
         // create policy-2 of user-2
         String user2Locator = user2Principal.getResourceLocator();
@@ -138,7 +120,7 @@ class AuthorizationApiTests {
         ));
 
         String createPolicy2ResponseContent = testRequestTool.post("/principals/current/policies", createPolicy2Form, user2Session.getToken());
-        this.user2TestPolicy = getPackedReturningBody(createPolicy2ResponseContent, AuthorizationPolicy.Vo.class);
+        this.user2TestPolicy = ResponseContentMapper.getPackedReturningBody(createPolicy2ResponseContent, AuthorizationPolicy.Vo.class);
     }
 
     @Test
@@ -151,7 +133,7 @@ class AuthorizationApiTests {
         grantingForm1.setGrantee(user2Principal.getResourceLocator());
         grantingForm1.setPolicies(List.of(user1TestPolicy.getResourceLocator()));
         String createGrantResponsePolicy = testRequestTool.post("/principals/current/grants", grantingForm1, user1Session.getToken());
-        this.testGrants = getPackedReturningList(createGrantResponsePolicy, AuthorizationPolicyGrant.Vo.class);
+        this.testGrants = ResponseContentMapper.getPackedReturningList(createGrantResponsePolicy, AuthorizationPolicyGrant.Vo.class);
 
         // test denied grant for: user1 >- policy2 -> user1, expecting 403.
         AuthorizationPolicyGrantingForm grantingForm2 = new AuthorizationPolicyGrantingForm();
@@ -208,7 +190,7 @@ class AuthorizationApiTests {
         ));
 
         String createPolicy1aResponseContent = testRequestTool.post("/principals/current/policies", createPolicy1aForm, user1Session.getToken());
-        this.user1TestPolicy_a = getPackedReturningBody(createPolicy1aResponseContent, AuthorizationPolicy.Vo.class);
+        this.user1TestPolicy_a = ResponseContentMapper.getPackedReturningBody(createPolicy1aResponseContent, AuthorizationPolicy.Vo.class);
 
         // create policy-1b of user-1, DENY some resources.
         AuthorizationPolicy.Form createPolicy1bForm = new AuthorizationPolicy.Form();
@@ -220,7 +202,7 @@ class AuthorizationApiTests {
         ));
 
         String createPolicy1bResponseContent = testRequestTool.post("/principals/current/policies", createPolicy1bForm, user1Session.getToken());
-        this.user1TestPolicy_b = getPackedReturningBody(createPolicy1bResponseContent, AuthorizationPolicy.Vo.class);
+        this.user1TestPolicy_b = ResponseContentMapper.getPackedReturningBody(createPolicy1bResponseContent, AuthorizationPolicy.Vo.class);
 
         // create policy-1b of user-1, ALLOW some resources.
         // Test case: user add a super-resourced policy by accident.
@@ -233,7 +215,7 @@ class AuthorizationApiTests {
         ));
 
         String createPolicy1cResponseContent = testRequestTool.post("/principals/current/policies", createPolicy1cForm, user1Session.getToken());
-        this.user1TestPolicy_c = getPackedReturningBody(createPolicy1cResponseContent, AuthorizationPolicy.Vo.class);
+        this.user1TestPolicy_c = ResponseContentMapper.getPackedReturningBody(createPolicy1cResponseContent, AuthorizationPolicy.Vo.class);
     }
 
     @Test
@@ -250,7 +232,7 @@ class AuthorizationApiTests {
                 user1TestPolicy_c.getResourceLocator()
         )); // grant policy1a policy1b policy1c
         String createGrantResponsePolicy_a = testRequestTool.post("/principals/current/grants", grantingForm1a, user1Session.getToken());
-        this.testGrants = getPackedReturningList(createGrantResponsePolicy_a, AuthorizationPolicyGrant.Vo.class);
+        this.testGrants = ResponseContentMapper.getPackedReturningList(createGrantResponsePolicy_a, AuthorizationPolicyGrant.Vo.class);
     }
 
     @Test
