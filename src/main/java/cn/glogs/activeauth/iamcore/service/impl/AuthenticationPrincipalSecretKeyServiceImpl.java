@@ -50,7 +50,7 @@ public class AuthenticationPrincipalSecretKeyServiceImpl implements Authenticati
 
     @Override
     @Transactional
-    public AuthenticationPrincipalSecretKey generateKey(AuthenticationPrincipal principal, AuthenticationPrincipalSecretKey.GenKeyPairForm form) {
+    public AuthenticationPrincipalSecretKey generateRSA2048KeyPair(AuthenticationPrincipal principal, AuthenticationPrincipalSecretKey.GenKeyPairForm form) {
         AuthenticationPrincipalSecretKey principalKeyPair = new AuthenticationPrincipalSecretKey();
         try {
             KeyPair keyPair = RSAKeyPair.generateKeyPair();
@@ -59,6 +59,7 @@ public class AuthenticationPrincipalSecretKeyServiceImpl implements Authenticati
             principalKeyPair.setPubKey(keyPair.getPubKey());
             principalKeyPair.setPriKey(keyPair.getPriKey());
             principalKeyPair.setEnabled(true);
+            principalKeyPair.setKeyType(AuthenticationPrincipalSecretKey.SecretKeyType.RSA_2048);
             principalKeyPair.setCreateTime(new Date());
             principalKeyPair.setPrincipal(principal);
             return authenticationPrincipalKeyPairRepository.save(principalKeyPair);

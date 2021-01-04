@@ -12,7 +12,7 @@ public interface AuthenticationPrincipalSecretKeyService {
 
     Page<AuthenticationPrincipalSecretKey> pagingKeysOfOwner(AuthenticationPrincipal principal, int page, int size);
 
-    AuthenticationPrincipalSecretKey generateKey(AuthenticationPrincipal principal, AuthenticationPrincipalSecretKey.GenKeyPairForm form);
+    AuthenticationPrincipalSecretKey generateRSA2048KeyPair(AuthenticationPrincipal principal, AuthenticationPrincipalSecretKey.GenKeyPairForm form);
 
     AuthenticationPrincipalSecretKey getKeyByKeyCode(String keyCode) throws NotFoundException;
 }

@@ -39,11 +39,18 @@ public class AuthenticationPrincipalSecretKey implements IamResource {
 
     private boolean enabled;
 
+    private SecretKeyType keyType;
+
     private Date createTime;
 
     @Override
     public String resourceLocator() {
-        return String.format("iam://users/%s/key-pairs/%s", principal.getId(), id);
+        return String.format("iam://users/%s/secret-keys/%s", principal.getId(), id);
+    }
+
+    public static enum SecretKeyType {
+        RSA_2048,
+        PRIVATE_KEY
     }
 
     public Vo vo() {
