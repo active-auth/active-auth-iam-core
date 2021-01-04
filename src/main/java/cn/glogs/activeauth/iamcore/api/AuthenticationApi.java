@@ -141,6 +141,22 @@ public class AuthenticationApi {
         }
     }
 
+    @DeleteMapping("/principals/{principalId}")
+    public RestResultPacker<String> deletePrincipal(HttpServletRequest request, @PathVariable Long principalId) throws HTTP400Exception, HTTP401Exception, HTTP403Exception, HTTP404Exception {
+        try {
+            AuthenticationPrincipal principal = authenticationPrincipalService.findPrincipalById(principalId);
+            AuthCheckingContext authCheckingContext = authCheckingHelper.theirResources(request, AuthCheckingStatement.checks("iam:DeletePrincipal", "iam://users/%s/principal"), principal);
+            // if principal to delete is current principal
+            if (authCheckingContext.belongToCurrentSession(principal)) {
+                throw new HTTP403Exception("Cannot delete current logged in principal.");
+            }
+            authenticationPrincipalService.deletePrincipalById(principalId);
+            return RestResultPacker.success("Deleted!");
+        } catch (NotFoundException e) {
+            throw new HTTP404Exception(e);
+        }
+    }
+
     @PostMapping("/principals/{principalId}/secret-keys/rsa-sha256-key-pairs")
     public RestResultPacker<AuthenticationPrincipalSecretKey.Vo> genSecretKey(HttpServletRequest request, @PathVariable Long principalId, @RequestBody AuthenticationPrincipalSecretKey.GenKeyPairForm form) throws HTTP400Exception, HTTP401Exception, HTTP403Exception, HTTP404Exception {
         AuthCheckingContext authCheckingContext = authCheckingHelper.theirResources(request, AuthCheckingStatement.checks("iam:GenerateSecretKey", "iam://users/%s/secret-keys"), principalId);
