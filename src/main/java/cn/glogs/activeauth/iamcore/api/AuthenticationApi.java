@@ -4,9 +4,9 @@ import cn.glogs.activeauth.iamcore.api.helper.AuthCheckingHelper;
 import cn.glogs.activeauth.iamcore.api.payload.AuthCheckingStatement;
 import cn.glogs.activeauth.iamcore.api.payload.AuthCheckingContext;
 import cn.glogs.activeauth.iamcore.api.payload.RestResultPacker;
+import cn.glogs.activeauth.iamcore.config.properties.Configuration;
 import cn.glogs.activeauth.iamcore.domain.AuthenticationPrincipal;
 import cn.glogs.activeauth.iamcore.domain.AuthenticationPrincipalSecretKey;
-import cn.glogs.activeauth.iamcore.domain.password.PasswordHashingStrategy;
 import cn.glogs.activeauth.iamcore.exception.HTTP400Exception;
 import cn.glogs.activeauth.iamcore.exception.HTTP401Exception;
 import cn.glogs.activeauth.iamcore.exception.HTTP403Exception;
@@ -29,16 +29,29 @@ public class AuthenticationApi {
 
     private final AuthCheckingHelper authCheckingHelper;
 
-    public AuthenticationApi(AuthenticationPrincipalService authenticationPrincipalService, AuthenticationPrincipalSecretKeyService authenticationPrincipalSecretKeyService, AuthCheckingHelper authCheckingHelper) {
+    private final Configuration configuration;
+
+    public AuthenticationApi(
+            AuthenticationPrincipalService authenticationPrincipalService,
+            AuthenticationPrincipalSecretKeyService authenticationPrincipalSecretKeyService,
+            AuthCheckingHelper authCheckingHelper,
+            Configuration configuration
+    ) {
         this.authenticationPrincipalService = authenticationPrincipalService;
         this.authenticationPrincipalSecretKeyService = authenticationPrincipalSecretKeyService;
         this.authCheckingHelper = authCheckingHelper;
+        this.configuration = configuration;
     }
 
     @PostMapping("/principals")
     public RestResultPacker<AuthenticationPrincipal.Vo> addPrincipal(HttpServletRequest request, @RequestBody @Validated AuthenticationPrincipal.PrincipalForm form) throws HTTP401Exception, HTTP403Exception, HTTP400Exception {
         authCheckingHelper.systemResources(request, AuthCheckingStatement.checks("iam:CreatePrincipal", "iam://principals"));
-        AuthenticationPrincipal toCreatePrincipal = AuthenticationPrincipal.createPrincipal(form.getName(), form.getPassword(), PasswordHashingStrategy.B_CRYPT, AuthenticationPrincipal.PrincipalType.PRINCIPAL);
+        AuthenticationPrincipal toCreatePrincipal = new AuthenticationPrincipal(
+                form.getName(), form.getPassword(),
+                form.isCanUseToken(), form.isCanUseSignature(),
+                AuthenticationPrincipal.PrincipalType.PRINCIPAL,
+                configuration.getPasswordHashingStrategy()
+        );
         return RestResultPacker.success(authenticationPrincipalService.createPrincipal(toCreatePrincipal).vo());
     }
 
@@ -54,10 +67,10 @@ public class AuthenticationApi {
         return RestResultPacker.success(authCheckingContext.getCurrentSession().getAuthenticationPrincipal().vo());
     }
 
-    @PostMapping("/principals/current/secret-keys/rsa-sha256-key-pairs")
+    @PostMapping("/principals/current/secret-keys/rsa2048-key-pairs")
     public RestResultPacker<AuthenticationPrincipalSecretKey.Vo> genSecretKey(HttpServletRequest request, @RequestBody AuthenticationPrincipalSecretKey.GenKeyPairForm form) throws HTTP400Exception, HTTP401Exception, HTTP403Exception {
         AuthCheckingContext authCheckingContext = authCheckingHelper.myResources(request, AuthCheckingStatement.checks("iam:GenerateSecretKey", "iam://users/%s/secret-keys"));
-        return RestResultPacker.success(authenticationPrincipalSecretKeyService.generateKey(authCheckingContext.getCurrentSession().getAuthenticationPrincipal(), form).vo());
+        return RestResultPacker.success(authenticationPrincipalSecretKeyService.generateRSA2048KeyPair(authCheckingContext.getCurrentSession().getAuthenticationPrincipal(), form).vo());
     }
 
     @GetMapping("/principals/current/secret-keys")
@@ -84,9 +97,16 @@ public class AuthenticationApi {
     }
 
     @PostMapping("/principals/current/subprincipals")
-    public RestResultPacker<AuthenticationPrincipal.Vo> addSubprincipal(HttpServletRequest request, @RequestBody AuthenticationPrincipal.UserRegisterForm form) throws HTTP400Exception, HTTP401Exception, HTTP403Exception {
+    public RestResultPacker<AuthenticationPrincipal.Vo> addSubprincipal(HttpServletRequest request, @RequestBody AuthenticationPrincipal.PrincipalForm form) throws HTTP400Exception, HTTP401Exception, HTTP403Exception {
         AuthCheckingContext authCheckingContext = authCheckingHelper.myResources(request, AuthCheckingStatement.checks("iam:AddSubprincipal", "iam://users/%s/subprincipals"));
-        return RestResultPacker.success(authenticationPrincipalService.createSubprincipal(authCheckingContext.getCurrentSession().getAuthenticationPrincipal(), form.getName(), form.getPassword()).vo());
+        AuthenticationPrincipal toCreatePrincipal = new AuthenticationPrincipal(
+                form.getName(), form.getPassword(),
+                form.isCanUseToken(), form.isCanUseSignature(),
+                AuthenticationPrincipal.PrincipalType.PRINCIPAL,
+                configuration.getPasswordHashingStrategy()
+        );
+        toCreatePrincipal.setOwner(authCheckingContext.getResourceOwner());
+        return RestResultPacker.success(authenticationPrincipalService.createPrincipal(toCreatePrincipal).vo());
     }
 
     @GetMapping("/principals/current/subprincipals")
@@ -157,10 +177,10 @@ public class AuthenticationApi {
         }
     }
 
-    @PostMapping("/principals/{principalId}/secret-keys/rsa-sha256-key-pairs")
+    @PostMapping("/principals/{principalId}/secret-keys/rsa2048-key-pairs")
     public RestResultPacker<AuthenticationPrincipalSecretKey.Vo> genSecretKey(HttpServletRequest request, @PathVariable Long principalId, @RequestBody AuthenticationPrincipalSecretKey.GenKeyPairForm form) throws HTTP400Exception, HTTP401Exception, HTTP403Exception, HTTP404Exception {
         AuthCheckingContext authCheckingContext = authCheckingHelper.theirResources(request, AuthCheckingStatement.checks("iam:GenerateSecretKey", "iam://users/%s/secret-keys"), principalId);
-        return RestResultPacker.success(authenticationPrincipalSecretKeyService.generateKey(authCheckingContext.getResourceOwner(), form).vo());
+        return RestResultPacker.success(authenticationPrincipalSecretKeyService.generateRSA2048KeyPair(authCheckingContext.getResourceOwner(), form).vo());
     }
 
     @GetMapping("/principals/{principalId}/secret-keys")
@@ -187,9 +207,18 @@ public class AuthenticationApi {
     }
 
     @PostMapping("/principals/{principalId}/subprincipals")
-    public RestResultPacker<AuthenticationPrincipal.Vo> addSubprincipal(HttpServletRequest request, @PathVariable Long principalId, @RequestBody AuthenticationPrincipal.UserRegisterForm form) throws HTTP400Exception, HTTP401Exception, HTTP403Exception, HTTP404Exception {
+    public RestResultPacker<AuthenticationPrincipal.Vo> addSubprincipal(HttpServletRequest request, @PathVariable Long principalId, @RequestBody AuthenticationPrincipal.PrincipalForm form) throws HTTP400Exception, HTTP401Exception, HTTP403Exception, HTTP404Exception {
         AuthCheckingContext authCheckingContext = authCheckingHelper.theirResources(request, AuthCheckingStatement.checks("iam:AddSubprincipal", "iam://users/%s/subprincipals"), principalId);
-        return RestResultPacker.success(authenticationPrincipalService.createSubprincipal(authCheckingContext.getResourceOwner(), form.getName(), form.getPassword()).vo());
+        AuthenticationPrincipal toCreatePrincipal = new AuthenticationPrincipal(
+                form.getName(),
+                form.getPassword(),
+                form.isCanUseToken(),
+                form.isCanUseSignature(),
+                AuthenticationPrincipal.PrincipalType.PRINCIPAL,
+                configuration.getPasswordHashingStrategy()
+        );
+        toCreatePrincipal.setOwner(authCheckingContext.getResourceOwner());
+        return RestResultPacker.success(authenticationPrincipalService.createPrincipal(toCreatePrincipal).vo());
     }
 
     @GetMapping("/principals/{principalId}/subprincipals")
