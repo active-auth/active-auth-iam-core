@@ -26,11 +26,13 @@ public class AuthenticationPrincipal implements IamResource {
 
     private String encryptedPassword;
 
-    private Date createTime;
+    private Date createdAt;
 
-    private boolean canUseToken;
+    private Date updatedAt;
 
-    private boolean canUseSignature;
+    private boolean sessionCreatable;
+
+    private boolean signatureCreatable;
 
     private PrincipalType principalType;
 
@@ -40,6 +42,20 @@ public class AuthenticationPrincipal implements IamResource {
     @Override
     public String resourceLocator() {
         return String.format("%s://users/%s/principal", "iam", id);
+    }
+
+    public AuthenticationPrincipal(
+            String name, String originalPassword,
+            boolean sessionCreatable, boolean signatureCreatable,
+            PrincipalType principalType,
+            PasswordHashingStrategy passwordHashingStrategy
+    ) {
+        this.name = name;
+        this.encryptedPassword = passwordHashingStrategy.getHashing().hashing(originalPassword);
+        this.sessionCreatable = sessionCreatable;
+        this.signatureCreatable = signatureCreatable;
+        this.principalType = principalType;
+        this.createdAt = new Date();
     }
 
     public static enum PrincipalType {
@@ -58,15 +74,6 @@ public class AuthenticationPrincipal implements IamResource {
         }
     }
 
-    public static AuthenticationPrincipal createPrincipal(String name, String password, PasswordHashingStrategy passwordHashingStrategy, PrincipalType type) {
-        AuthenticationPrincipal result = new AuthenticationPrincipal();
-        result.name = name;
-        result.encryptedPassword = passwordHashingStrategy.getHashing().hashing(password);
-        result.principalType = type;
-        result.createTime = new Date();
-        return result;
-    }
-
     public boolean passwordVerify(String toCheckPassword, PasswordHashingStrategy passwordHashingStrategy) {
         return passwordHashingStrategy.getHashing().check(toCheckPassword, encryptedPassword);
     }
@@ -76,16 +83,11 @@ public class AuthenticationPrincipal implements IamResource {
         vo.id = id;
         vo.resourceLocator = this.resourceLocator();
         vo.name = name;
-        vo.createTime = createTime;
-        vo.canUseToken = canUseToken;
-        vo.canUseSignature = canUseSignature;
+        vo.createAt = createdAt;
+        vo.sessionCreatable = sessionCreatable;
+        vo.signatureCreatable = signatureCreatable;
         vo.principalType = principalType;
         return vo;
-    }
-
-    public AuthenticationPrincipal withOwner(AuthenticationPrincipal owner) {
-        this.owner = owner;
-        return this;
     }
 
     @Data
@@ -96,11 +98,11 @@ public class AuthenticationPrincipal implements IamResource {
         private String resourceLocator;
         @Schema(defaultValue = "pony")
         private String name;
-        private Date createTime;
+        private Date createAt;
         @Schema(defaultValue = "false", type = "boolean")
-        private boolean canUseToken;
+        private boolean sessionCreatable;
         @Schema(defaultValue = "false", type = "boolean")
-        private boolean canUseSignature;
+        private boolean signatureCreatable;
         private PrincipalType principalType;
     }
 

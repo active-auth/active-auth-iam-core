@@ -39,7 +39,7 @@ public class UserApi {
 
     @PostMapping("/register")
     public RestResultPacker<AuthenticationPrincipal.Vo> addPrincipal(@RequestBody @Validated AuthenticationPrincipal.UserRegisterForm form) {
-        AuthenticationPrincipal toCreatePrincipal = AuthenticationPrincipal.createPrincipal(form.getName(), form.getPassword(), PasswordHashingStrategy.B_CRYPT, AuthenticationPrincipal.PrincipalType.PRINCIPAL);
+        AuthenticationPrincipal toCreatePrincipal = new AuthenticationPrincipal(form.getName(), form.getPassword(), true, false, AuthenticationPrincipal.PrincipalType.PRINCIPAL, PasswordHashingStrategy.B_CRYPT);
         return RestResultPacker.success(authenticationPrincipalService.createPrincipal(toCreatePrincipal).vo());
     }
 }
