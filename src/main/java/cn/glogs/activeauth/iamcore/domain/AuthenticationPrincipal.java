@@ -15,6 +15,7 @@ import java.util.regex.Pattern;
 
 @Data
 @Entity
+@NoArgsConstructor
 public class AuthenticationPrincipal implements IamResource {
 
     @Id
@@ -32,12 +33,24 @@ public class AuthenticationPrincipal implements IamResource {
 
     private boolean sessionCreatable;
 
+    private boolean sessionUsable;
+
     private boolean signatureCreatable;
+
+    private boolean signatureUsable;
 
     private PrincipalType principalType;
 
     @ManyToOne
     private AuthenticationPrincipal owner;
+
+    public boolean canCreateSignature() {
+        return signatureCreatable && principalType != PrincipalType.PRINCIPAL_GROUP;
+    }
+
+    public boolean canCreateSession() {
+        return sessionCreatable && principalType == PrincipalType.PRINCIPAL;
+    }
 
     @Override
     public String resourceLocator() {
@@ -47,13 +60,16 @@ public class AuthenticationPrincipal implements IamResource {
     public AuthenticationPrincipal(
             String name, String originalPassword,
             boolean sessionCreatable, boolean signatureCreatable,
+            boolean sessionUsable, boolean signatureUsable,
             PrincipalType principalType,
             PasswordHashingStrategy passwordHashingStrategy
     ) {
         this.name = name;
         this.encryptedPassword = passwordHashingStrategy.getHashing().hashing(originalPassword);
         this.sessionCreatable = sessionCreatable;
+        this.sessionUsable = sessionUsable;
         this.signatureCreatable = signatureCreatable;
+        this.signatureUsable = signatureUsable;
         this.principalType = principalType;
         this.createdAt = new Date();
     }
@@ -120,9 +136,13 @@ public class AuthenticationPrincipal implements IamResource {
         @Schema(defaultValue = "P0ny_1980")
         private String password;
 
-        private boolean canUseToken;
+        private boolean sessionCreatable;
 
-        private boolean canUseSignature;
+        private boolean sessionUsable;
+
+        private boolean signatureCreatable;
+
+        private boolean signatureUsable;
     }
 
     @Data
