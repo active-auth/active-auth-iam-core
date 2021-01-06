@@ -44,7 +44,7 @@ public class AuthenticationSessionServiceImpl implements AuthenticationSessionSe
     @Transactional
     public AuthenticationSession login(AuthenticationSession.UserLoginForm form) throws NotFoundException, AuthenticationPrincipal.PasswordNotMatchException, AuthenticationPrincipal.PrincipalTypeDoesNotAllowedToLoginException {
         AuthenticationPrincipal authenticationPrincipal = authenticationPrincipalRepository.findByName(form.getName()).orElseThrow(() -> new NotFoundException("Principal Not Found."));
-        if (authenticationPrincipal.getPrincipalType() != AuthenticationPrincipal.PrincipalType.PRINCIPAL) {
+        if (!authenticationPrincipal.canCreateSession()) {
             throw new AuthenticationPrincipal.PrincipalTypeDoesNotAllowedToLoginException("Principal does not allowed to login!");
         }
         if (!authenticationPrincipal.passwordVerify(form.getSecret(), passwordHashingStrategy))

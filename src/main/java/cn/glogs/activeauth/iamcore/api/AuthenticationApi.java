@@ -11,6 +11,7 @@ import cn.glogs.activeauth.iamcore.exception.HTTP403Exception;
 import cn.glogs.activeauth.iamcore.exception.HTTP404Exception;
 import cn.glogs.activeauth.iamcore.exception.HTTPException;
 import cn.glogs.activeauth.iamcore.exception.business.NotFoundException;
+import cn.glogs.activeauth.iamcore.exception.business.SignatureException;
 import cn.glogs.activeauth.iamcore.service.AuthenticationPrincipalSecretKeyService;
 import cn.glogs.activeauth.iamcore.service.AuthenticationPrincipalService;
 import org.springframework.data.domain.Page;
@@ -47,7 +48,8 @@ public class AuthenticationApi {
         authCheckingHelper.systemResources(request, AuthCheckingStatement.checks("iam:CreatePrincipal", "iam://principals"));
         AuthenticationPrincipal toCreatePrincipal = new AuthenticationPrincipal(
                 form.getName(), form.getPassword(),
-                form.isCanUseToken(), form.isCanUseSignature(),
+                form.isSessionCreatable(), form.isSignatureCreatable(),
+                form.isSessionUsable(), form.isSignatureUsable(),
                 AuthenticationPrincipal.PrincipalType.PRINCIPAL,
                 configuration.getPasswordHashingStrategy()
         );
@@ -69,7 +71,11 @@ public class AuthenticationApi {
     @PostMapping("/principals/current/secret-keys/rsa2048-key-pairs")
     public RestResultPacker<AuthenticationPrincipalSecretKey.Vo> genSecretKey(HttpServletRequest request, @RequestBody AuthenticationPrincipalSecretKey.GenKeyPairForm form) throws HTTPException {
         AuthCheckingContext authCheckingContext = authCheckingHelper.myResources(request, AuthCheckingStatement.checks("iam:GenerateSecretKey", "iam://users/%s/secret-keys"));
-        return RestResultPacker.success(authenticationPrincipalSecretKeyService.generateRSA2048KeyPair(authCheckingContext.getCurrentSession().getAuthenticationPrincipal(), form).vo());
+        try {
+            return RestResultPacker.success(authenticationPrincipalSecretKeyService.generateRSA2048KeyPair(authCheckingContext.getCurrentSession().getAuthenticationPrincipal(), form).vo());
+        } catch (SignatureException e) {
+            throw new HTTP403Exception(e);
+        }
     }
 
     @GetMapping("/principals/current/secret-keys")
@@ -100,7 +106,8 @@ public class AuthenticationApi {
         AuthCheckingContext authCheckingContext = authCheckingHelper.myResources(request, AuthCheckingStatement.checks("iam:AddSubprincipal", "iam://users/%s/subprincipals"));
         AuthenticationPrincipal toCreatePrincipal = new AuthenticationPrincipal(
                 form.getName(), form.getPassword(),
-                form.isCanUseToken(), form.isCanUseSignature(),
+                form.isSessionCreatable(), form.isSignatureCreatable(),
+                form.isSessionUsable(), form.isSignatureUsable(),
                 AuthenticationPrincipal.PrincipalType.PRINCIPAL,
                 configuration.getPasswordHashingStrategy()
         );
@@ -179,7 +186,11 @@ public class AuthenticationApi {
     @PostMapping("/principals/{principalId}/secret-keys/rsa2048-key-pairs")
     public RestResultPacker<AuthenticationPrincipalSecretKey.Vo> genSecretKey(HttpServletRequest request, @PathVariable Long principalId, @RequestBody AuthenticationPrincipalSecretKey.GenKeyPairForm form) throws HTTPException {
         AuthCheckingContext authCheckingContext = authCheckingHelper.theirResources(request, AuthCheckingStatement.checks("iam:GenerateSecretKey", "iam://users/%s/secret-keys"), principalId);
-        return RestResultPacker.success(authenticationPrincipalSecretKeyService.generateRSA2048KeyPair(authCheckingContext.getResourceOwner(), form).vo());
+        try {
+            return RestResultPacker.success(authenticationPrincipalSecretKeyService.generateRSA2048KeyPair(authCheckingContext.getResourceOwner(), form).vo());
+        } catch (SignatureException e) {
+            throw new HTTP403Exception(e);
+        }
     }
 
     @GetMapping("/principals/{principalId}/secret-keys")
@@ -209,10 +220,9 @@ public class AuthenticationApi {
     public RestResultPacker<AuthenticationPrincipal.Vo> addSubprincipal(HttpServletRequest request, @PathVariable Long principalId, @RequestBody AuthenticationPrincipal.PrincipalForm form) throws HTTPException {
         AuthCheckingContext authCheckingContext = authCheckingHelper.theirResources(request, AuthCheckingStatement.checks("iam:AddSubprincipal", "iam://users/%s/subprincipals"), principalId);
         AuthenticationPrincipal toCreatePrincipal = new AuthenticationPrincipal(
-                form.getName(),
-                form.getPassword(),
-                form.isCanUseToken(),
-                form.isCanUseSignature(),
+                form.getName(), form.getPassword(),
+                form.isSessionCreatable(), form.isSignatureCreatable(),
+                form.isSessionUsable(), form.isSignatureUsable(),
                 AuthenticationPrincipal.PrincipalType.PRINCIPAL,
                 configuration.getPasswordHashingStrategy()
         );

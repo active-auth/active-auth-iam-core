@@ -5,6 +5,7 @@ import cn.glogs.activeauth.iamcore.domain.AuthenticationPrincipalSecretKey;
 import cn.glogs.activeauth.iamcore.domain.keypair.KeyPair;
 import cn.glogs.activeauth.iamcore.domain.keypair.RSAKeyPair;
 import cn.glogs.activeauth.iamcore.exception.business.NotFoundException;
+import cn.glogs.activeauth.iamcore.exception.business.SignatureException;
 import cn.glogs.activeauth.iamcore.repository.AuthenticationPrincipalKeyPairRepository;
 import cn.glogs.activeauth.iamcore.service.AuthenticationPrincipalSecretKeyService;
 import org.springframework.data.domain.Page;
@@ -50,7 +51,10 @@ public class AuthenticationPrincipalSecretKeyServiceImpl implements Authenticati
 
     @Override
     @Transactional
-    public AuthenticationPrincipalSecretKey generateRSA2048KeyPair(AuthenticationPrincipal principal, AuthenticationPrincipalSecretKey.GenKeyPairForm form) {
+    public AuthenticationPrincipalSecretKey generateRSA2048KeyPair(AuthenticationPrincipal principal, AuthenticationPrincipalSecretKey.GenKeyPairForm form) throws SignatureException {
+        if (!principal.canCreateSignature()) {
+            throw new SignatureException("Signature not creatable.");
+        }
         AuthenticationPrincipalSecretKey principalKeyPair = new AuthenticationPrincipalSecretKey();
         try {
             KeyPair keyPair = RSAKeyPair.generateKeyPair();
