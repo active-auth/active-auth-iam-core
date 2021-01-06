@@ -7,10 +7,9 @@ import cn.glogs.activeauth.iamcore.api.payload.RestResultPacker;
 import cn.glogs.activeauth.iamcore.config.properties.Configuration;
 import cn.glogs.activeauth.iamcore.domain.AuthenticationPrincipal;
 import cn.glogs.activeauth.iamcore.domain.AuthenticationPrincipalSecretKey;
-import cn.glogs.activeauth.iamcore.exception.HTTP400Exception;
-import cn.glogs.activeauth.iamcore.exception.HTTP401Exception;
 import cn.glogs.activeauth.iamcore.exception.HTTP403Exception;
 import cn.glogs.activeauth.iamcore.exception.HTTP404Exception;
+import cn.glogs.activeauth.iamcore.exception.HTTPException;
 import cn.glogs.activeauth.iamcore.exception.business.NotFoundException;
 import cn.glogs.activeauth.iamcore.service.AuthenticationPrincipalSecretKeyService;
 import cn.glogs.activeauth.iamcore.service.AuthenticationPrincipalService;
@@ -44,7 +43,7 @@ public class AuthenticationApi {
     }
 
     @PostMapping("/principals")
-    public RestResultPacker<AuthenticationPrincipal.Vo> addPrincipal(HttpServletRequest request, @RequestBody @Validated AuthenticationPrincipal.PrincipalForm form) throws HTTP401Exception, HTTP403Exception, HTTP400Exception {
+    public RestResultPacker<AuthenticationPrincipal.Vo> addPrincipal(HttpServletRequest request, @RequestBody @Validated AuthenticationPrincipal.PrincipalForm form) throws HTTPException {
         authCheckingHelper.systemResources(request, AuthCheckingStatement.checks("iam:CreatePrincipal", "iam://principals"));
         AuthenticationPrincipal toCreatePrincipal = new AuthenticationPrincipal(
                 form.getName(), form.getPassword(),
@@ -56,32 +55,32 @@ public class AuthenticationApi {
     }
 
     @GetMapping("/principals")
-    public RestResultPacker<Page<AuthenticationPrincipal.Vo>> pagingPrincipals(HttpServletRequest request, int page, int size) throws HTTP400Exception, HTTP401Exception, HTTP403Exception {
+    public RestResultPacker<Page<AuthenticationPrincipal.Vo>> pagingPrincipals(HttpServletRequest request, int page, int size) throws HTTPException {
         authCheckingHelper.systemResources(request, AuthCheckingStatement.checks("iam:GetPrincipal", "iam://principals"));
         return RestResultPacker.success(authenticationPrincipalService.pagingPrincipals(page, size).map((AuthenticationPrincipal::vo)));
     }
 
     @GetMapping("/principals/current")
-    public RestResultPacker<AuthenticationPrincipal.Vo> getCurrentPrincipal(HttpServletRequest request) throws HTTP400Exception, HTTP401Exception, HTTP403Exception {
+    public RestResultPacker<AuthenticationPrincipal.Vo> getCurrentPrincipal(HttpServletRequest request) throws HTTPException {
         AuthCheckingContext authCheckingContext = authCheckingHelper.myResources(request, AuthCheckingStatement.checks("iam:GetPrincipal", "iam://users/%s/principal"));
         return RestResultPacker.success(authCheckingContext.getCurrentSession().getAuthenticationPrincipal().vo());
     }
 
     @PostMapping("/principals/current/secret-keys/rsa2048-key-pairs")
-    public RestResultPacker<AuthenticationPrincipalSecretKey.Vo> genSecretKey(HttpServletRequest request, @RequestBody AuthenticationPrincipalSecretKey.GenKeyPairForm form) throws HTTP400Exception, HTTP401Exception, HTTP403Exception {
+    public RestResultPacker<AuthenticationPrincipalSecretKey.Vo> genSecretKey(HttpServletRequest request, @RequestBody AuthenticationPrincipalSecretKey.GenKeyPairForm form) throws HTTPException {
         AuthCheckingContext authCheckingContext = authCheckingHelper.myResources(request, AuthCheckingStatement.checks("iam:GenerateSecretKey", "iam://users/%s/secret-keys"));
         return RestResultPacker.success(authenticationPrincipalSecretKeyService.generateRSA2048KeyPair(authCheckingContext.getCurrentSession().getAuthenticationPrincipal(), form).vo());
     }
 
     @GetMapping("/principals/current/secret-keys")
-    public RestResultPacker<Page<AuthenticationPrincipalSecretKey.Vo>> pagingSecretKey(HttpServletRequest request, @RequestParam int page, @RequestParam int size) throws HTTP400Exception, HTTP401Exception, HTTP403Exception {
+    public RestResultPacker<Page<AuthenticationPrincipalSecretKey.Vo>> pagingSecretKey(HttpServletRequest request, @RequestParam int page, @RequestParam int size) throws HTTPException {
         AuthCheckingContext authCheckingContext = authCheckingHelper.myResources(request, AuthCheckingStatement.checks("iam:GetSecretKey", "iam://users/%s/secret-keys"));
         Page<AuthenticationPrincipalSecretKey> keyPairPage = authenticationPrincipalSecretKeyService.pagingKeysOfOwner(authCheckingContext.getCurrentSession().getAuthenticationPrincipal(), page, size);
         return RestResultPacker.success(keyPairPage.map((keyPair) -> keyPair.vo().securePrivateKey()));
     }
 
     @DeleteMapping("/principals/current/secret-keys/{keyId}")
-    public RestResultPacker<String> deleteKey(HttpServletRequest request, @PathVariable Long keyId) throws HTTP400Exception, HTTP401Exception, HTTP403Exception, HTTP404Exception {
+    public RestResultPacker<String> deleteKey(HttpServletRequest request, @PathVariable Long keyId) throws HTTPException {
         AuthCheckingContext authCheckingContext = authCheckingHelper.myResources(request, AuthCheckingStatement.checks("iam:DeleteSecretKey", "iam://users/%s/secret-keys"));
         try {
             AuthenticationPrincipalSecretKey secretKey = authenticationPrincipalSecretKeyService.getKeyById(keyId);
@@ -97,7 +96,7 @@ public class AuthenticationApi {
     }
 
     @PostMapping("/principals/current/subprincipals")
-    public RestResultPacker<AuthenticationPrincipal.Vo> addSubprincipal(HttpServletRequest request, @RequestBody AuthenticationPrincipal.PrincipalForm form) throws HTTP400Exception, HTTP401Exception, HTTP403Exception {
+    public RestResultPacker<AuthenticationPrincipal.Vo> addSubprincipal(HttpServletRequest request, @RequestBody AuthenticationPrincipal.PrincipalForm form) throws HTTPException {
         AuthCheckingContext authCheckingContext = authCheckingHelper.myResources(request, AuthCheckingStatement.checks("iam:AddSubprincipal", "iam://users/%s/subprincipals"));
         AuthenticationPrincipal toCreatePrincipal = new AuthenticationPrincipal(
                 form.getName(), form.getPassword(),
@@ -110,13 +109,13 @@ public class AuthenticationApi {
     }
 
     @GetMapping("/principals/current/subprincipals")
-    public RestResultPacker<Page<AuthenticationPrincipal.Vo>> pagingSubprincipals(HttpServletRequest request, @RequestParam int page, @RequestParam int size) throws HTTP400Exception, HTTP401Exception, HTTP403Exception {
+    public RestResultPacker<Page<AuthenticationPrincipal.Vo>> pagingSubprincipals(HttpServletRequest request, @RequestParam int page, @RequestParam int size) throws HTTPException {
         AuthCheckingContext authCheckingContext = authCheckingHelper.myResources(request, AuthCheckingStatement.checks("iam:GetSubprincipal", "iam://users/%s/subprincipals"));
         return RestResultPacker.success(authenticationPrincipalService.pagingSubprincipals(authCheckingContext.getCurrentSession().getAuthenticationPrincipal(), page, size).map((AuthenticationPrincipal::vo)));
     }
 
     @DeleteMapping("/principals/current/subprincipals/{subprincipalId}")
-    public RestResultPacker<String> deleteSubprincipal(HttpServletRequest request, @PathVariable Long subprincipalId) throws HTTP400Exception, HTTP401Exception, HTTP403Exception, HTTP404Exception {
+    public RestResultPacker<String> deleteSubprincipal(HttpServletRequest request, @PathVariable Long subprincipalId) throws HTTPException {
         AuthCheckingContext authCheckingContext = authCheckingHelper.myResources(request, AuthCheckingStatement.checks("iam:GetSubprincipal", "iam://users/%s/subprincipals"));
         try {
             AuthenticationPrincipal subprincipal = authenticationPrincipalService.findPrincipalById(subprincipalId);
@@ -136,7 +135,7 @@ public class AuthenticationApi {
     }
 
     @GetMapping("/principals/current/subprincipals/{subprincipalId}")
-    public RestResultPacker<AuthenticationPrincipal.Vo> getSubprincipal(HttpServletRequest request, @PathVariable Long subprincipalId) throws HTTP403Exception, HTTP401Exception, HTTP400Exception, HTTP404Exception {
+    public RestResultPacker<AuthenticationPrincipal.Vo> getSubprincipal(HttpServletRequest request, @PathVariable Long subprincipalId) throws HTTPException {
         AuthCheckingContext authCheckingContext = authCheckingHelper.myResources(request, AuthCheckingStatement.checks("iam:GetSubprincipal", "iam://users/%s/subprincipals/" + subprincipalId));
         try {
             AuthenticationPrincipal subprincipalToFind = authenticationPrincipalService.findPrincipalById(subprincipalId);
@@ -151,7 +150,7 @@ public class AuthenticationApi {
     }
 
     @GetMapping("/principals/{principalId}")
-    public RestResultPacker<AuthenticationPrincipal.Vo> findPrincipalById(HttpServletRequest request, @PathVariable Long principalId) throws HTTP400Exception, HTTP401Exception, HTTP403Exception, HTTP404Exception {
+    public RestResultPacker<AuthenticationPrincipal.Vo> findPrincipalById(HttpServletRequest request, @PathVariable Long principalId) throws HTTPException {
         try {
             AuthenticationPrincipal principal = authenticationPrincipalService.findPrincipalById(principalId);
             authCheckingHelper.theirResources(request, AuthCheckingStatement.checks("iam:GetPrincipal", "iam://users/%s/principal"), principal);
@@ -162,7 +161,7 @@ public class AuthenticationApi {
     }
 
     @DeleteMapping("/principals/{principalId}")
-    public RestResultPacker<String> deletePrincipal(HttpServletRequest request, @PathVariable Long principalId) throws HTTP400Exception, HTTP401Exception, HTTP403Exception, HTTP404Exception {
+    public RestResultPacker<String> deletePrincipal(HttpServletRequest request, @PathVariable Long principalId) throws HTTPException {
         try {
             AuthenticationPrincipal principal = authenticationPrincipalService.findPrincipalById(principalId);
             AuthCheckingContext authCheckingContext = authCheckingHelper.theirResources(request, AuthCheckingStatement.checks("iam:DeletePrincipal", "iam://users/%s/principal"), principal);
@@ -178,20 +177,20 @@ public class AuthenticationApi {
     }
 
     @PostMapping("/principals/{principalId}/secret-keys/rsa2048-key-pairs")
-    public RestResultPacker<AuthenticationPrincipalSecretKey.Vo> genSecretKey(HttpServletRequest request, @PathVariable Long principalId, @RequestBody AuthenticationPrincipalSecretKey.GenKeyPairForm form) throws HTTP400Exception, HTTP401Exception, HTTP403Exception, HTTP404Exception {
+    public RestResultPacker<AuthenticationPrincipalSecretKey.Vo> genSecretKey(HttpServletRequest request, @PathVariable Long principalId, @RequestBody AuthenticationPrincipalSecretKey.GenKeyPairForm form) throws HTTPException {
         AuthCheckingContext authCheckingContext = authCheckingHelper.theirResources(request, AuthCheckingStatement.checks("iam:GenerateSecretKey", "iam://users/%s/secret-keys"), principalId);
         return RestResultPacker.success(authenticationPrincipalSecretKeyService.generateRSA2048KeyPair(authCheckingContext.getResourceOwner(), form).vo());
     }
 
     @GetMapping("/principals/{principalId}/secret-keys")
-    public RestResultPacker<Page<AuthenticationPrincipalSecretKey.Vo>> pagingSecretKeys(HttpServletRequest request, @PathVariable Long principalId, @RequestParam int page, @RequestParam int size) throws HTTP400Exception, HTTP401Exception, HTTP403Exception, HTTP404Exception {
+    public RestResultPacker<Page<AuthenticationPrincipalSecretKey.Vo>> pagingSecretKeys(HttpServletRequest request, @PathVariable Long principalId, @RequestParam int page, @RequestParam int size) throws HTTPException {
         AuthCheckingContext authCheckingContext = authCheckingHelper.theirResources(request, AuthCheckingStatement.checks("iam:GetSecretKey", "iam://users/%s/secret-keys"), principalId);
         Page<AuthenticationPrincipalSecretKey> keyPairPage = authenticationPrincipalSecretKeyService.pagingKeysOfOwner(authCheckingContext.getResourceOwner(), page, size);
         return RestResultPacker.success(keyPairPage.map((keyPair) -> keyPair.vo().securePrivateKey()));
     }
 
     @DeleteMapping("/principals/{principalId}/secret-keys/{keyId}")
-    public RestResultPacker<String> deleteSecretKeys(HttpServletRequest request, @PathVariable Long principalId, @PathVariable Long keyId) throws HTTP400Exception, HTTP401Exception, HTTP403Exception, HTTP404Exception {
+    public RestResultPacker<String> deleteSecretKeys(HttpServletRequest request, @PathVariable Long principalId, @PathVariable Long keyId) throws HTTPException {
         AuthCheckingContext authCheckingContext = authCheckingHelper.theirResources(request, AuthCheckingStatement.checks("iam:DeleteSecretKey", "iam://users/%s/secret-keys/" + keyId), principalId);
         try {
             AuthenticationPrincipalSecretKey secretKey = authenticationPrincipalSecretKeyService.getKeyById(keyId);
@@ -207,7 +206,7 @@ public class AuthenticationApi {
     }
 
     @PostMapping("/principals/{principalId}/subprincipals")
-    public RestResultPacker<AuthenticationPrincipal.Vo> addSubprincipal(HttpServletRequest request, @PathVariable Long principalId, @RequestBody AuthenticationPrincipal.PrincipalForm form) throws HTTP400Exception, HTTP401Exception, HTTP403Exception, HTTP404Exception {
+    public RestResultPacker<AuthenticationPrincipal.Vo> addSubprincipal(HttpServletRequest request, @PathVariable Long principalId, @RequestBody AuthenticationPrincipal.PrincipalForm form) throws HTTPException {
         AuthCheckingContext authCheckingContext = authCheckingHelper.theirResources(request, AuthCheckingStatement.checks("iam:AddSubprincipal", "iam://users/%s/subprincipals"), principalId);
         AuthenticationPrincipal toCreatePrincipal = new AuthenticationPrincipal(
                 form.getName(),
@@ -222,13 +221,13 @@ public class AuthenticationApi {
     }
 
     @GetMapping("/principals/{principalId}/subprincipals")
-    public RestResultPacker<Page<AuthenticationPrincipal.Vo>> pagingSubprincipals(HttpServletRequest request, @PathVariable Long principalId, @RequestParam int page, @RequestParam int size) throws HTTP400Exception, HTTP401Exception, HTTP403Exception, HTTP404Exception {
+    public RestResultPacker<Page<AuthenticationPrincipal.Vo>> pagingSubprincipals(HttpServletRequest request, @PathVariable Long principalId, @RequestParam int page, @RequestParam int size) throws HTTPException {
         AuthCheckingContext authCheckingContext = authCheckingHelper.theirResources(request, AuthCheckingStatement.checks("iam:GetSubprincipal", "iam://users/%s/subprincipals"), principalId);
         return RestResultPacker.success(authenticationPrincipalService.pagingSubprincipals(authCheckingContext.getResourceOwner(), page, size).map((AuthenticationPrincipal::vo)));
     }
 
     @GetMapping("/principals/{principalId}/subprincipals/{subprincipalId}")
-    public RestResultPacker<AuthenticationPrincipal.Vo> getSubprincipal(HttpServletRequest request, @PathVariable Long principalId, @PathVariable Long subprincipalId) throws HTTP403Exception, HTTP401Exception, HTTP400Exception, HTTP404Exception {
+    public RestResultPacker<AuthenticationPrincipal.Vo> getSubprincipal(HttpServletRequest request, @PathVariable Long principalId, @PathVariable Long subprincipalId) throws HTTPException {
         authCheckingHelper.theirResources(request, AuthCheckingStatement.checks("iam:GetSubprincipal", "iam://users/%s/subprincipals/" + subprincipalId), principalId);
         try {
             AuthenticationPrincipal subprincipalToFind = authenticationPrincipalService.findPrincipalById(subprincipalId);
@@ -242,7 +241,7 @@ public class AuthenticationApi {
     }
 
     @DeleteMapping("/principals/{principalId}/subprincipals/{subprincipalId}")
-    public RestResultPacker<String> deleteSubprincipal(HttpServletRequest request, @PathVariable Long principalId, @PathVariable Long subprincipalId) throws HTTP400Exception, HTTP401Exception, HTTP403Exception, HTTP404Exception {
+    public RestResultPacker<String> deleteSubprincipal(HttpServletRequest request, @PathVariable Long principalId, @PathVariable Long subprincipalId) throws HTTPException {
         AuthCheckingContext authCheckingContext = authCheckingHelper.theirResources(request, AuthCheckingStatement.checks("iam:DeleteSubprincipal", "iam://users/%s/subprincipals/" + subprincipalId), principalId);
         try {
             AuthenticationPrincipal subprincipal = authenticationPrincipalService.findPrincipalById(subprincipalId);
