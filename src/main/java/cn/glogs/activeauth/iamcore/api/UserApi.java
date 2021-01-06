@@ -6,6 +6,7 @@ import cn.glogs.activeauth.iamcore.domain.AuthenticationSession;
 import cn.glogs.activeauth.iamcore.domain.password.PasswordHashingStrategy;
 import cn.glogs.activeauth.iamcore.exception.HTTP401Exception;
 import cn.glogs.activeauth.iamcore.exception.HTTP404Exception;
+import cn.glogs.activeauth.iamcore.exception.HTTPException;
 import cn.glogs.activeauth.iamcore.exception.business.NotFoundException;
 import cn.glogs.activeauth.iamcore.service.AuthenticationPrincipalService;
 import cn.glogs.activeauth.iamcore.service.AuthenticationSessionService;
@@ -27,7 +28,7 @@ public class UserApi {
     }
 
     @PostMapping("/login")
-    public RestResultPacker<AuthenticationSession.Vo> login(@RequestBody @Validated AuthenticationSession.UserLoginForm form) throws HTTP401Exception, HTTP404Exception {
+    public RestResultPacker<AuthenticationSession.Vo> login(@RequestBody @Validated AuthenticationSession.UserLoginForm form) throws HTTPException {
         try {
             return RestResultPacker.success(authenticationSessionService.login(form).vo());
         } catch (NotFoundException e) {

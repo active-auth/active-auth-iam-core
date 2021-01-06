@@ -1,6 +1,7 @@
 package cn.glogs.activeauth.iamcore.service.impl;
 
 import cn.glogs.activeauth.iamcore.domain.FillingTemplate;
+import cn.glogs.activeauth.iamcore.exception.business.NotFoundException;
 import cn.glogs.activeauth.iamcore.repository.FillingTemplateRepository;
 import cn.glogs.activeauth.iamcore.service.FillingTemplateService;
 import org.springframework.data.domain.Page;
@@ -14,6 +15,16 @@ public class FillingTemplateServiceImpl implements FillingTemplateService {
 
     public FillingTemplateServiceImpl(FillingTemplateRepository fillingTemplateRepository) {
         this.fillingTemplateRepository = fillingTemplateRepository;
+    }
+
+    @Override
+    public FillingTemplate getTemplate(Long id) throws NotFoundException {
+        return fillingTemplateRepository.findById(id).orElseThrow(() -> new NotFoundException("Template not found."));
+    }
+
+    @Override
+    public FillingTemplate getTemplate(String serviceCode) throws NotFoundException {
+        return fillingTemplateRepository.findByServiceCode(serviceCode).orElseThrow(() -> new NotFoundException("Template not found."));
     }
 
     @Override
