@@ -10,6 +10,7 @@ import cn.glogs.activeauth.iamcore.exception.*;
 import cn.glogs.activeauth.iamcore.exception.business.NotFoundException;
 import cn.glogs.activeauth.iamcore.exception.business.PatternException;
 import cn.glogs.activeauth.iamcore.service.*;
+import io.swagger.v3.oas.annotations.Operation;
 import org.springframework.data.domain.Page;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -35,6 +36,7 @@ public class AuthorizationApi {
         this.authCheckingHelper = authCheckingHelper;
     }
 
+    @Operation(tags = {"authorization-policy"})
     @PostMapping("/principals/current/policies")
     public RestResultPacker<AuthorizationPolicy.Vo> addPolicy(HttpServletRequest request, @RequestBody @Validated AuthorizationPolicy.Form form) throws HTTPException {
         AuthCheckingContext authCheckingContext = authCheckingHelper.myResources(request, AuthCheckingStatement.checks("iam:AddPolicy", "iam://users/%s/policies"));
@@ -42,6 +44,7 @@ public class AuthorizationApi {
         return RestResultPacker.success(authorizationPolicy.vo());
     }
 
+    @Operation(tags = {"authorization-policy"})
     @PostMapping("/principals/{principalId}/policies")
     public RestResultPacker<AuthorizationPolicy.Vo> addPolicy(HttpServletRequest request, @PathVariable Long principalId, @RequestBody @Validated AuthorizationPolicy.Form form) throws HTTPException {
         AuthCheckingContext authCheckingContext = authCheckingHelper.theirResources(request, AuthCheckingStatement.checks("iam:AddPolicy", "iam://users/%s/policies"), principalId);
@@ -49,18 +52,21 @@ public class AuthorizationApi {
         return RestResultPacker.success(authorizationPolicy.vo());
     }
 
+    @Operation(tags = {"authorization-policy"})
     @GetMapping("/principals/current/policies")
     public RestResultPacker<Page<AuthorizationPolicy.Vo>> pagingPolicies(HttpServletRequest request, @RequestParam int page, @RequestParam int size) throws HTTPException {
         AuthCheckingContext authCheckingContext = authCheckingHelper.myResources(request, AuthCheckingStatement.checks("iam:GetPolicy", "iam://users/%s/policies"));
         return RestResultPacker.success(authorizationPolicyService.pagingPolicies(authCheckingContext.getResourceOwner(), page, size).map(AuthorizationPolicy::vo));
     }
 
+    @Operation(tags = {"authorization-policy"})
     @GetMapping("/principals/{principalId}/policies")
     public RestResultPacker<Page<AuthorizationPolicy.Vo>> pagingPolicies(HttpServletRequest request, @PathVariable Long principalId, @RequestParam int page, @RequestParam int size) throws HTTPException {
         AuthCheckingContext authCheckingContext = authCheckingHelper.theirResources(request, AuthCheckingStatement.checks("iam:GetPolicy", "iam://users/%s/policies"), principalId);
         return RestResultPacker.success(authorizationPolicyService.pagingPolicies(authCheckingContext.getResourceOwner(), page, size).map(AuthorizationPolicy::vo));
     }
 
+    @Operation(tags = {"authorization-policy"})
     @DeleteMapping("/principals/current/policies/{policyId}")
     public RestResultPacker<String> deletePolicy(HttpServletRequest request, @PathVariable Long policyId) throws HTTPException {
         AuthCheckingContext authCheckingContext = authCheckingHelper.myResources(request, AuthCheckingStatement.checks("iam:DeletePolicy", "iam://users/%s/policies/" + policyId).and("iam:DeletePolicy", "iam://users/%s/policies" + policyId));
@@ -77,6 +83,7 @@ public class AuthorizationApi {
         }
     }
 
+    @Operation(tags = {"authorization-policy"})
     @DeleteMapping("/principals/{principalId}/policies/{policyId}")
     public RestResultPacker<String> deletePolicy(HttpServletRequest request, @PathVariable Long principalId, @PathVariable Long policyId) throws HTTPException {
         AuthCheckingContext authCheckingContext = authCheckingHelper.theirResources(request, AuthCheckingStatement.checks("iam:DeletePolicy", "iam://users/%s/policies/" + policyId).and("iam:DeletePolicy", "iam://users/%s/policies" + policyId), principalId);
@@ -93,6 +100,7 @@ public class AuthorizationApi {
         }
     }
 
+    @Operation(tags = {"authorization-grant"})
     @PostMapping("/principals/current/grants")
     public RestResultPacker<List<AuthorizationPolicyGrant.Vo>> addGrant(HttpServletRequest request, @RequestBody @Validated AuthorizationPolicyGrantingForm form) throws HTTPException {
         try {
@@ -127,6 +135,7 @@ public class AuthorizationApi {
         }
     }
 
+    @Operation(tags = {"authorization-grant"})
     @PostMapping("/principals/{principalId}/grants")
     public RestResultPacker<List<AuthorizationPolicyGrant.Vo>> addGrant(HttpServletRequest request, @PathVariable Long principalId, @RequestBody @Validated AuthorizationPolicyGrantingForm form) throws HTTPException {
         try {
@@ -161,6 +170,7 @@ public class AuthorizationApi {
         }
     }
 
+    @Operation(tags = {"authorization-grant"})
     @GetMapping("/principals/current/grants")
     public RestResultPacker<Page<AuthorizationPolicyGrant.Vo>> pagingGrantsOut(HttpServletRequest request, @RequestParam int page, @RequestParam int size) throws HTTPException {
         AuthCheckingContext authCheckingContext = authCheckingHelper.myResources(request, AuthCheckingStatement.checks("iam:GetGrant", "iam://users/%s/grants"));
@@ -168,6 +178,7 @@ public class AuthorizationApi {
         return RestResultPacker.success(grantsPage.map(AuthorizationPolicyGrant::vo));
     }
 
+    @Operation(tags = {"authorization-grant"})
     @GetMapping("/principals/{principalId}/grants")
     public RestResultPacker<Page<AuthorizationPolicyGrant.Vo>> pagingGrantsOut(HttpServletRequest request, @PathVariable Long principalId, @RequestParam int page, @RequestParam int size) throws HTTPException {
         AuthCheckingContext authCheckingContext = authCheckingHelper.theirResources(request, AuthCheckingStatement.checks("iam:GetGrant", "iam://users/%s/grants"), principalId);
@@ -175,6 +186,7 @@ public class AuthorizationApi {
         return RestResultPacker.success(grantsPage.map(AuthorizationPolicyGrant::vo));
     }
 
+    @Operation(tags = {"authorization-grant"})
     @DeleteMapping("/principals/current/grants/{grantId}")
     public RestResultPacker<AuthorizationPolicyGrant.Vo> deleteGrantsOut(HttpServletRequest request, @PathVariable Long grantId) throws HTTPException {
         AuthCheckingContext authCheckingContext = authCheckingHelper.myResources(request, AuthCheckingStatement.checks("iam:DeleteGrant", "iam://users/%s/grants/" + grantId).and("iam:DeleteGrant", "iam://users/%s/grants/" + grantId));
@@ -191,6 +203,7 @@ public class AuthorizationApi {
         }
     }
 
+    @Operation(tags = {"authorization-grant"})
     @DeleteMapping("/principals/{principalId}/grants/{grantId}")
     public RestResultPacker<AuthorizationPolicyGrant.Vo> deleteGrantsOut(HttpServletRequest request, @PathVariable Long principalId, @PathVariable Long grantId) throws HTTPException {
         AuthCheckingContext authCheckingContext = authCheckingHelper.theirResources(request, AuthCheckingStatement.checks("iam:DeleteGrant", "iam://users/%s/grants/" + grantId).and("iam:DeleteGrant", "iam://users/%s/grants/" + grantId), principalId);
@@ -207,6 +220,7 @@ public class AuthorizationApi {
         }
     }
 
+    @Operation(tags = {"authorization-grant"})
     @GetMapping("/principals/current/grants/in")
     public RestResultPacker<Page<AuthorizationPolicyGrant.Vo>> pagingGrantsIn(HttpServletRequest request, @RequestParam int page, @RequestParam int size) throws HTTPException {
         AuthCheckingContext authCheckingContext = authCheckingHelper.myResources(request, AuthCheckingStatement.checks("iam:GetGrant", "iam://users/%s/grants-in"));
@@ -214,6 +228,7 @@ public class AuthorizationApi {
         return RestResultPacker.success(grantsPage.map(AuthorizationPolicyGrant::vo));
     }
 
+    @Operation(tags = {"authorization-grant"})
     @GetMapping("/principals/{principalId}/grants/in")
     public RestResultPacker<Page<AuthorizationPolicyGrant.Vo>> pagingGrantsIn(HttpServletRequest request, @PathVariable Long principalId, @RequestParam int page, @RequestParam int size) throws HTTPException {
         AuthCheckingContext authCheckingContext = authCheckingHelper.theirResources(request, AuthCheckingStatement.checks("iam:GetGrant", "iam://users/%s/grants-in"), principalId);
@@ -221,6 +236,7 @@ public class AuthorizationApi {
         return RestResultPacker.success(grantsPage.map(AuthorizationPolicyGrant::vo));
     }
 
+    @Operation(tags = {"authorization-challenging"})
     @PostMapping("/principals/current/authorization-challengings")
     public RestResultPacker<AuthorizationChallengeForm> authorizationChallenging(HttpServletRequest request, @RequestBody @Validated AuthorizationChallengeForm form) throws HTTPException {
         AuthCheckingContext authCheckingContext = authCheckingHelper.myResources(request, AuthCheckingStatement.checks("iam:ChallengeAuth", "iam://users/%s/auth-challengings"));
@@ -231,6 +247,7 @@ public class AuthorizationApi {
         return RestResultPacker.success(form, "Accessible!");
     }
 
+    @Operation(tags = {"authorization-challenging"})
     @PostMapping("/principals/{principalId}/authorization-challengings")
     public RestResultPacker<AuthorizationChallengeForm> authorizationChallenging(HttpServletRequest request, @PathVariable Long principalId, @RequestBody @Validated AuthorizationChallengeForm form) throws HTTPException {
         AuthCheckingContext authCheckingContext = authCheckingHelper.theirResources(request, AuthCheckingStatement.checks("iam:ChallengeAuth", "iam://users/%s/auth-challengings"), principalId);
@@ -241,6 +258,7 @@ public class AuthorizationApi {
         return RestResultPacker.success(form, "Accessible!");
     }
 
+    @Operation(tags = {"authorization-challenging"})
     @PostMapping("/principals/current/authorization-principal-challengings")
     public RestResultPacker<AuthorizationChallengeFormOfPrincipal> authorizationChallengingOfPrincipal(HttpServletRequest request, @RequestBody @Validated AuthorizationChallengeFormOfPrincipal form) throws HTTPException {
         try {

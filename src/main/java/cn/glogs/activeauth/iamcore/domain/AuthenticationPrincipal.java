@@ -25,6 +25,8 @@ public class AuthenticationPrincipal implements IamResource {
     @Column(unique = true)
     private String name;
 
+    private String description;
+
     private String encryptedPassword;
 
     private Date createdAt;
@@ -74,6 +76,10 @@ public class AuthenticationPrincipal implements IamResource {
         this.createdAt = new Date();
     }
 
+    public boolean typeIs(PrincipalType type) {
+        return null != principalType && principalType != type;
+    }
+
     public static enum PrincipalType {
         PRINCIPAL, PRINCIPAL_GROUP, APP_DOMAIN;
     }
@@ -99,6 +105,7 @@ public class AuthenticationPrincipal implements IamResource {
         vo.id = id;
         vo.resourceLocator = this.resourceLocator();
         vo.name = name;
+        vo.description = description;
         vo.createAt = createdAt;
         vo.sessionCreatable = sessionCreatable;
         vo.signatureCreatable = signatureCreatable;
@@ -114,6 +121,8 @@ public class AuthenticationPrincipal implements IamResource {
         private String resourceLocator;
         @Schema(defaultValue = "pony")
         private String name;
+        @Schema(defaultValue = "pony")
+        private String description;
         private Date createAt;
         @Schema(defaultValue = "false", type = "boolean")
         private boolean sessionCreatable;
@@ -143,6 +152,20 @@ public class AuthenticationPrincipal implements IamResource {
         private boolean signatureCreatable;
 
         private boolean signatureUsable;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Schema(name = "AuthenticationPrincipal.PrincipalGroupForm")
+    public static class PrincipalGroupForm {
+
+        @NotBlank
+        @Schema(defaultValue = "AdminGroup")
+        private String name;
+
+        @Schema(defaultValue = "Admin Group of pony.")
+        private String description;
     }
 
     @Data
