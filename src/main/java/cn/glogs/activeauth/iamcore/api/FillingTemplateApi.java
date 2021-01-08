@@ -6,6 +6,7 @@ import cn.glogs.activeauth.iamcore.exception.HTTP404Exception;
 import cn.glogs.activeauth.iamcore.exception.HTTPException;
 import cn.glogs.activeauth.iamcore.exception.business.NotFoundException;
 import cn.glogs.activeauth.iamcore.service.FillingTemplateService;
+import io.swagger.v3.oas.annotations.Operation;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
@@ -18,6 +19,7 @@ public class FillingTemplateApi {
         this.fillingTemplateService = fillingTemplateService;
     }
 
+    @Operation(tags = {"filling-template"})
     @GetMapping("/filling-templates/{templateId}")
     public RestResultPacker<FillingTemplate.Vo> getTemplates(@PathVariable Long templateId) throws HTTPException {
         try {
