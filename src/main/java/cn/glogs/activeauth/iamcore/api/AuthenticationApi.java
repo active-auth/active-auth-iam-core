@@ -339,7 +339,7 @@ public class AuthenticationApi {
         try {
             AuthenticationPrincipal principalGroupToFind = authenticationPrincipalService.findPrincipalById(principalGroupId);
             if (principalGroupToFind.getOwner() != null && !principalGroupToFind.typeIs(AuthenticationPrincipal.PrincipalType.PRINCIPAL_GROUP)) {
-                throw new NotFoundException(String.format("Cannot find principal-group %s of principal %s.", principalGroupId, authCheckingContext.getResourceOwner().getId()));
+                throw new NotFoundException(String.format("Cannot find principal group %s of principal %s.", principalGroupId, authCheckingContext.getResourceOwner().getId()));
             }
             return RestResultPacker.success(principalGroupToFind.vo());
         } catch (NotFoundException e) {
@@ -354,7 +354,7 @@ public class AuthenticationApi {
         try {
             AuthenticationPrincipal principalGroupToFind = authenticationPrincipalService.findPrincipalById(principalGroupId);
             if (principalGroupToFind.getOwner() != null && !principalGroupToFind.getOwner().getId().equals(principalId) && !principalGroupToFind.typeIs(AuthenticationPrincipal.PrincipalType.PRINCIPAL_GROUP)) {
-                throw new NotFoundException(String.format("Cannot find principal-group %s of principal %s.", principalGroupId, principalId));
+                throw new NotFoundException(String.format("Cannot find principal group %s of principal %s.", principalGroupId, principalId));
             }
             return RestResultPacker.success(principalGroupToFind.vo());
         } catch (NotFoundException e) {
@@ -398,6 +398,120 @@ public class AuthenticationApi {
                 }
             } else {
                 throw new NotFoundException("Cannot find principal group " + principalGroupId + " of current principal.");
+            }
+        } catch (NotFoundException e) {
+            throw new HTTP404Exception(e);
+        }
+    }
+
+    @Operation(tags = {"authentication-app-domain"})
+    @PostMapping("/principals/current/app-domains")
+    public RestResultPacker<AuthenticationPrincipal.Vo> addAppDomain(HttpServletRequest request, @RequestBody AuthenticationPrincipal.PrincipalGroupForm form) throws HTTPException {
+        AuthCheckingContext authCheckingContext = authCheckingHelper.myResources(request, AuthCheckingStatement.checks("iam:AddAppDomain", "iam://users/%s/app-domains"));
+        AuthenticationPrincipal toCreatePrincipal = new AuthenticationPrincipal(
+                form.getName(), "NO-PASSWORD",
+                false, true, false, true,
+                AuthenticationPrincipal.PrincipalType.APP_DOMAIN,
+                configuration.getPasswordHashingStrategy()
+        );
+        toCreatePrincipal.setOwner(authCheckingContext.getResourceOwner());
+        return RestResultPacker.success(authenticationPrincipalService.createPrincipal(toCreatePrincipal).vo());
+    }
+
+    @Operation(tags = {"authentication-app-domain"})
+    @PostMapping("/principals/{principalId}/app-domains")
+    public RestResultPacker<AuthenticationPrincipal.Vo> addAppDomain(HttpServletRequest request, @PathVariable Long principalId, @RequestBody AuthenticationPrincipal.PrincipalGroupForm form) throws HTTPException {
+        AuthCheckingContext authCheckingContext = authCheckingHelper.theirResources(request, AuthCheckingStatement.checks("iam:AddAppDomain", "iam://users/%s/app-domains"), principalId);
+        AuthenticationPrincipal toCreatePrincipal = new AuthenticationPrincipal(
+                form.getName(), "NO-PASSWORD",
+                false, true, false, true,
+                AuthenticationPrincipal.PrincipalType.APP_DOMAIN,
+                configuration.getPasswordHashingStrategy()
+        );
+        toCreatePrincipal.setOwner(authCheckingContext.getResourceOwner());
+        return RestResultPacker.success(authenticationPrincipalService.createPrincipal(toCreatePrincipal).vo());
+    }
+
+    @Operation(tags = {"authentication-app-domain"})
+    @GetMapping("/principals/current/app-domains")
+    public RestResultPacker<Page<AuthenticationPrincipal.Vo>> pagingAppDomains(HttpServletRequest request, @RequestParam int page, @RequestParam int size) throws HTTPException {
+        AuthCheckingContext authCheckingContext = authCheckingHelper.myResources(request, AuthCheckingStatement.checks("iam:GetAppDomain", "iam://users/%s/app-domains"));
+        return RestResultPacker.success(authenticationPrincipalService.pagingAppDomains(authCheckingContext.getResourceOwner(), page, size).map((AuthenticationPrincipal::vo)));
+    }
+
+    @Operation(tags = {"authentication-app-domain"})
+    @GetMapping("/principals/{principalId}/app-domains")
+    public RestResultPacker<Page<AuthenticationPrincipal.Vo>> pagingAppDomains(HttpServletRequest request, @PathVariable Long principalId, @RequestParam int page, @RequestParam int size) throws HTTPException {
+        AuthCheckingContext authCheckingContext = authCheckingHelper.theirResources(request, AuthCheckingStatement.checks("iam:GetAppDomain", "iam://users/%s/app-domains"), principalId);
+        return RestResultPacker.success(authenticationPrincipalService.pagingAppDomains(authCheckingContext.getResourceOwner(), page, size).map((AuthenticationPrincipal::vo)));
+    }
+
+    @Operation(tags = {"authentication-app-domain"})
+    @GetMapping("/principals/current/app-domains/{appDomainId}")
+    public RestResultPacker<AuthenticationPrincipal.Vo> getAppDomain(HttpServletRequest request, @PathVariable Long appDomainId) throws HTTPException {
+        AuthCheckingContext authCheckingContext = authCheckingHelper.myResources(request, AuthCheckingStatement.checks("iam:GetAppDomain", "iam://users/%s/app-domains/" + appDomainId));
+        try {
+            AuthenticationPrincipal principalGroupToFind = authenticationPrincipalService.findPrincipalById(appDomainId);
+            if (principalGroupToFind.getOwner() != null && !principalGroupToFind.typeIs(AuthenticationPrincipal.PrincipalType.APP_DOMAIN)) {
+                throw new NotFoundException(String.format("Cannot find app domain %s of principal %s.", appDomainId, authCheckingContext.getResourceOwner().getId()));
+            }
+            return RestResultPacker.success(principalGroupToFind.vo());
+        } catch (NotFoundException e) {
+            throw new HTTP404Exception(e);
+        }
+    }
+
+    @Operation(tags = {"authentication-app-domain"})
+    @GetMapping("/principals/{principalId}/app-domains/{appDomainId}")
+    public RestResultPacker<AuthenticationPrincipal.Vo> getAppDomain(HttpServletRequest request, @PathVariable Long principalId, @PathVariable Long appDomainId) throws HTTPException {
+        authCheckingHelper.theirResources(request, AuthCheckingStatement.checks("iam:GetAppDomain", "iam://users/%s/app-domains/" + appDomainId), principalId);
+        try {
+            AuthenticationPrincipal principalGroupToFind = authenticationPrincipalService.findPrincipalById(appDomainId);
+            if (principalGroupToFind.getOwner() != null && !principalGroupToFind.getOwner().getId().equals(principalId) && !principalGroupToFind.typeIs(AuthenticationPrincipal.PrincipalType.APP_DOMAIN)) {
+                throw new NotFoundException(String.format("Cannot find app domain %s of principal %s.", appDomainId, principalId));
+            }
+            return RestResultPacker.success(principalGroupToFind.vo());
+        } catch (NotFoundException e) {
+            throw new HTTP404Exception(e);
+        }
+    }
+
+    @Operation(tags = {"authentication-app-domain"})
+    @DeleteMapping("/principals/current/app-domains/{appDomainId}")
+    public RestResultPacker<String> deleteAppDomain(HttpServletRequest request, @PathVariable Long appDomainId) throws HTTPException {
+        AuthCheckingContext authCheckingContext = authCheckingHelper.myResources(request, AuthCheckingStatement.checks("iam:DeleteAppDomain", "iam://users/%s/app-domain/" + appDomainId));
+        try {
+            AuthenticationPrincipal subprincipal = authenticationPrincipalService.findPrincipalById(appDomainId);
+            if (authCheckingContext.belongToResourceOwner(subprincipal.getOwner())) {
+                if (subprincipal.typeIs(AuthenticationPrincipal.PrincipalType.APP_DOMAIN)) {
+                    authenticationPrincipalService.deletePrincipalById(appDomainId);
+                    return RestResultPacker.success("App domain deleted.");
+                } else {
+                    throw new NotFoundException("Principal " + appDomainId + " is not an app domain.");
+                }
+            } else {
+                throw new NotFoundException("Cannot find app domain " + appDomainId + " of current principal.");
+            }
+        } catch (NotFoundException e) {
+            throw new HTTP404Exception(e);
+        }
+    }
+
+    @Operation(tags = {"authentication-app-domain"})
+    @DeleteMapping("/principals/{principalId}/app-domains/{appDomainId}")
+    public RestResultPacker<String> deleteAppDomain(HttpServletRequest request, @PathVariable Long principalId, @PathVariable Long appDomainId) throws HTTPException {
+        AuthCheckingContext authCheckingContext = authCheckingHelper.theirResources(request, AuthCheckingStatement.checks("iam:DeleteAppDomain", "iam://users/%s/app-domain/" + appDomainId), principalId);
+        try {
+            AuthenticationPrincipal subprincipal = authenticationPrincipalService.findPrincipalById(appDomainId);
+            if (authCheckingContext.belongToResourceOwner(subprincipal.getOwner())) {
+                if (subprincipal.typeIs(AuthenticationPrincipal.PrincipalType.APP_DOMAIN)) {
+                    authenticationPrincipalService.deletePrincipalById(appDomainId);
+                    return RestResultPacker.success("App domain deleted.");
+                } else {
+                    throw new NotFoundException("Principal " + appDomainId + " is not an app domain.");
+                }
+            } else {
+                throw new NotFoundException("Cannot find app domain " + appDomainId + " of current principal.");
             }
         } catch (NotFoundException e) {
             throw new HTTP404Exception(e);
