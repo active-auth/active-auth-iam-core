@@ -157,6 +157,20 @@ public class AuthenticationPrincipal implements IamResource {
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
+    @Schema(name = "AuthenticationPrincipal.AppDomainForm")
+    public static class AppDomainForm {
+
+        @NotBlank
+        @Schema(defaultValue = "SampleApp")
+        private String name;
+
+        @Schema(defaultValue = "Sample App of pony.")
+        private String description;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
     @Schema(name = "AuthenticationPrincipal.PrincipalGroupForm")
     public static class PrincipalGroupForm {
 
