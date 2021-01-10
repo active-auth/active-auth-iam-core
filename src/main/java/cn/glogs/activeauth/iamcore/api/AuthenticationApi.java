@@ -362,16 +362,12 @@ public class AuthenticationApi {
         }
     }
 
-    @Operation(tags = {"authentication-principal-group"})
-    @DeleteMapping("/principals/current/principal-groups/{principalGroupId}")
-    public RestResultPacker<String> deletePrincipalGroup(HttpServletRequest request, @PathVariable Long principalGroupId) throws HTTPException {
-        AuthCheckingContext authCheckingContext = authCheckingHelper.myResources(request, AuthCheckingStatement.checks("iam:DeletePrincipalGroup", "iam://users/%s/principal-groups/" + principalGroupId));
+    private void deletePrincipalGroup(AuthCheckingContext authCheckingContext, Long principalGroupId) throws HTTP404Exception {
         try {
             AuthenticationPrincipal subprincipal = authenticationPrincipalService.findPrincipalById(principalGroupId);
             if (authCheckingContext.belongToResourceOwner(subprincipal.getOwner())) {
                 if (subprincipal.typeIs(AuthenticationPrincipal.PrincipalType.PRINCIPAL)) {
                     authenticationPrincipalService.deletePrincipalById(principalGroupId);
-                    return RestResultPacker.success("Principal group deleted.");
                 } else {
                     throw new NotFoundException("Principal " + principalGroupId + " is not a principal group.");
                 }
@@ -384,24 +380,19 @@ public class AuthenticationApi {
     }
 
     @Operation(tags = {"authentication-principal-group"})
+    @DeleteMapping("/principals/current/principal-groups/{principalGroupId}")
+    public RestResultPacker<String> deletePrincipalGroup(HttpServletRequest request, @PathVariable Long principalGroupId) throws HTTPException {
+        AuthCheckingContext authCheckingContext = authCheckingHelper.myResources(request, AuthCheckingStatement.checks("iam:DeletePrincipalGroup", "iam://users/%s/principal-groups/" + principalGroupId));
+        deletePrincipalGroup(authCheckingContext, principalGroupId);
+        return RestResultPacker.success("Principal group deleted.");
+    }
+
+    @Operation(tags = {"authentication-principal-group"})
     @DeleteMapping("/principals/{principalId}/principal-groups/{principalGroupId}")
     public RestResultPacker<String> deletePrincipalGroup(HttpServletRequest request, @PathVariable Long principalId, @PathVariable Long principalGroupId) throws HTTPException {
         AuthCheckingContext authCheckingContext = authCheckingHelper.theirResources(request, AuthCheckingStatement.checks("iam:DeletePrincipalGroup", "iam://users/%s/principal-groups/" + principalGroupId), principalId);
-        try {
-            AuthenticationPrincipal subprincipal = authenticationPrincipalService.findPrincipalById(principalGroupId);
-            if (authCheckingContext.belongToResourceOwner(subprincipal.getOwner())) {
-                if (subprincipal.typeIs(AuthenticationPrincipal.PrincipalType.PRINCIPAL)) {
-                    authenticationPrincipalService.deletePrincipalById(principalGroupId);
-                    return RestResultPacker.success("Principal group deleted.");
-                } else {
-                    throw new NotFoundException("Principal " + principalGroupId + " is not a principal group.");
-                }
-            } else {
-                throw new NotFoundException("Cannot find principal group " + principalGroupId + " of current principal.");
-            }
-        } catch (NotFoundException e) {
-            throw new HTTP404Exception(e);
-        }
+        deletePrincipalGroup(authCheckingContext, principalGroupId);
+        return RestResultPacker.success("Principal group deleted.");
     }
 
     @Operation(tags = {"authentication-app-domain"})
@@ -476,16 +467,12 @@ public class AuthenticationApi {
         }
     }
 
-    @Operation(tags = {"authentication-app-domain"})
-    @DeleteMapping("/principals/current/app-domains/{appDomainId}")
-    public RestResultPacker<String> deleteAppDomain(HttpServletRequest request, @PathVariable Long appDomainId) throws HTTPException {
-        AuthCheckingContext authCheckingContext = authCheckingHelper.myResources(request, AuthCheckingStatement.checks("iam:DeleteAppDomain", "iam://users/%s/app-domain/" + appDomainId));
+    private void deleteAppDomain(AuthCheckingContext authCheckingContext, Long appDomainId) throws HTTP404Exception {
         try {
             AuthenticationPrincipal subprincipal = authenticationPrincipalService.findPrincipalById(appDomainId);
             if (authCheckingContext.belongToResourceOwner(subprincipal.getOwner())) {
                 if (subprincipal.typeIs(AuthenticationPrincipal.PrincipalType.APP_DOMAIN)) {
                     authenticationPrincipalService.deletePrincipalById(appDomainId);
-                    return RestResultPacker.success("App domain deleted.");
                 } else {
                     throw new NotFoundException("Principal " + appDomainId + " is not an app domain.");
                 }
@@ -498,23 +485,18 @@ public class AuthenticationApi {
     }
 
     @Operation(tags = {"authentication-app-domain"})
+    @DeleteMapping("/principals/current/app-domains/{appDomainId}")
+    public RestResultPacker<String> deleteAppDomain(HttpServletRequest request, @PathVariable Long appDomainId) throws HTTPException {
+        AuthCheckingContext authCheckingContext = authCheckingHelper.myResources(request, AuthCheckingStatement.checks("iam:DeleteAppDomain", "iam://users/%s/app-domain/" + appDomainId));
+        deleteAppDomain(authCheckingContext, appDomainId);
+        return RestResultPacker.success("App domain deleted.");
+    }
+
+    @Operation(tags = {"authentication-app-domain"})
     @DeleteMapping("/principals/{principalId}/app-domains/{appDomainId}")
     public RestResultPacker<String> deleteAppDomain(HttpServletRequest request, @PathVariable Long principalId, @PathVariable Long appDomainId) throws HTTPException {
         AuthCheckingContext authCheckingContext = authCheckingHelper.theirResources(request, AuthCheckingStatement.checks("iam:DeleteAppDomain", "iam://users/%s/app-domain/" + appDomainId), principalId);
-        try {
-            AuthenticationPrincipal subprincipal = authenticationPrincipalService.findPrincipalById(appDomainId);
-            if (authCheckingContext.belongToResourceOwner(subprincipal.getOwner())) {
-                if (subprincipal.typeIs(AuthenticationPrincipal.PrincipalType.APP_DOMAIN)) {
-                    authenticationPrincipalService.deletePrincipalById(appDomainId);
-                    return RestResultPacker.success("App domain deleted.");
-                } else {
-                    throw new NotFoundException("Principal " + appDomainId + " is not an app domain.");
-                }
-            } else {
-                throw new NotFoundException("Cannot find app domain " + appDomainId + " of current principal.");
-            }
-        } catch (NotFoundException e) {
-            throw new HTTP404Exception(e);
-        }
+        deleteAppDomain(authCheckingContext, appDomainId);
+        return RestResultPacker.success("App domain deleted.");
     }
 }
