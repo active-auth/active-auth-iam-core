@@ -8,6 +8,8 @@ An open-sourced cloud platform PBAC Authentication & Authorization Center.
 
 ### Locating Resources
 
+#### Locator Style
+
 A resource locator looks like
 
 > prefix:partition:service:region:account-id:resource/paths/and/id
@@ -24,6 +26,15 @@ Here is an example:
 | region | cn-north-3 | Your subsystem region/datacenter code. <br> Example shows that resource is located in QingDao, Shandong, China(`cn-north-3`) |
 | account-id | 7611 | Principal ID. Example shows that resource belongs to user `7611`. |
 | resource/paths/and/id | volume/vol-8678eY3109N946oVsq | Resource paths and resource id. <br> Example shows that resource is a `volume`, id: `vol-8678eY3109N946oVsq`. |
+
+#### Legal Empty Field in Locator
+
+Field `region` and `account-id` is allowed to be empty. Here is a legal example:
+
+> wecloud:wecloud-cn:oss:::my-website-static-media
+
+A storage bucket is named uniquely in a global namespace, or any other system resource owner of whom can't be included in
+the locator, in that case you can keep field `region` and `account-id` empty to describe a resource.
 
 ## Maintainers
 
