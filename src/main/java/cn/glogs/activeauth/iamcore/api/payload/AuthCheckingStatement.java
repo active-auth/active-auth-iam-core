@@ -35,7 +35,7 @@ public class AuthCheckingStatement {
             String[] strArr = new String[resourceFormats.size()];
             for (int i = 0; i < resourceFormats.size(); i++) {
                 String resourceFormat = resourceFormats.get(i);
-                if (!(resourceFormat.split("%s").length == formatArgs.length + 1)) {
+                if (!(resourceFormat.split("\\{\\}").length == formatArgs.length + 1)) {
                     throw new ResourceArgsException("Not enough or too many resource formats args. Resource format: " + resourceFormat + ", args count: " + formatArgs.length);
                 }
                 strArr[i] = String.format(resourceFormat, formatArgs);

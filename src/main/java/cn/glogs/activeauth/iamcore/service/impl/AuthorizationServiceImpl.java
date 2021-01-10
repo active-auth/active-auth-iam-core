@@ -59,7 +59,7 @@ public class AuthorizationServiceImpl implements AuthorizationService {
         List<String> deniedMyResourcePolicies = new ArrayList<>();
         List<String> deniedNotMyResourcePolicies = new ArrayList<>();
 
-        String myResourcePattern = String.format("^.+://users/%s/.*$", challenger.getId());
+        String myResourcePattern = locatorConfiguration.myResourcePattern(challenger.getId());
 
         List<String> myResources = new ArrayList<>();
         List<String> notMyResources = new ArrayList<>();
