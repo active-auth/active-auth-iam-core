@@ -73,7 +73,7 @@ public class AuthenticationApi {
     @Operation(tags = {"authentication-principal"})
     @GetMapping("/principals/current")
     public RestResultPacker<AuthenticationPrincipal.Vo> getCurrentPrincipal(HttpServletRequest request) throws HTTPException {
-        AuthCheckingContext authCheckingContext = authCheckingHelper.myResources(request, AuthCheckingStatement.checks("iam:GetPrincipal", locatorConfiguration.fullLocator("{}", "principal")));
+        AuthCheckingContext authCheckingContext = authCheckingHelper.myResources(request, AuthCheckingStatement.checks("iam:GetPrincipal", locatorConfiguration.fullLocator("%s", "principal")));
         return RestResultPacker.success(authCheckingContext.getCurrentSession().getAuthenticationPrincipal().vo(locatorConfiguration));
     }
 
@@ -82,7 +82,7 @@ public class AuthenticationApi {
     public RestResultPacker<AuthenticationPrincipalSecretKey.Vo> genSecretKey(HttpServletRequest request, @RequestBody AuthenticationPrincipalSecretKey.GenKeyPairForm form) throws HTTPException {
         AuthCheckingContext authCheckingContext = authCheckingHelper.myResources(
                 request, AuthCheckingStatement.checks(
-                        "iam:GenerateSecretKey", locatorConfiguration.fullLocator("{}", "secret-key")
+                        "iam:GenerateSecretKey", locatorConfiguration.fullLocator("%s", "secret-key")
                 ));
         try {
             return RestResultPacker.success(authenticationPrincipalSecretKeyService.generateRSA2048KeyPair(authCheckingContext.getCurrentSession().getAuthenticationPrincipal(), form).vo(locatorConfiguration));
@@ -94,7 +94,7 @@ public class AuthenticationApi {
     @Operation(tags = {"authentication-secret-key"})
     @GetMapping("/principals/current/secret-keys")
     public RestResultPacker<Page<AuthenticationPrincipalSecretKey.Vo>> pagingSecretKey(HttpServletRequest request, @RequestParam int page, @RequestParam int size) throws HTTPException {
-        AuthCheckingContext authCheckingContext = authCheckingHelper.myResources(request, AuthCheckingStatement.checks("iam:GetSecretKey", locatorConfiguration.fullLocator("{}", "secret-key")));
+        AuthCheckingContext authCheckingContext = authCheckingHelper.myResources(request, AuthCheckingStatement.checks("iam:GetSecretKey", locatorConfiguration.fullLocator("%s", "secret-key")));
         Page<AuthenticationPrincipalSecretKey> keyPairPage = authenticationPrincipalSecretKeyService.pagingKeysOfOwner(authCheckingContext.getCurrentSession().getAuthenticationPrincipal(), page, size);
         return RestResultPacker.success(keyPairPage.map((keyPair) -> keyPair.vo(locatorConfiguration).securePrivateKey()));
     }
@@ -102,7 +102,7 @@ public class AuthenticationApi {
     @Operation(tags = {"authentication-secret-key"})
     @DeleteMapping("/principals/current/secret-keys/{keyId}")
     public RestResultPacker<String> deleteKey(HttpServletRequest request, @PathVariable Long keyId) throws HTTPException {
-        AuthCheckingContext authCheckingContext = authCheckingHelper.myResources(request, AuthCheckingStatement.checks("iam:DeleteSecretKey", locatorConfiguration.fullLocator("{}", "secret-key")));
+        AuthCheckingContext authCheckingContext = authCheckingHelper.myResources(request, AuthCheckingStatement.checks("iam:DeleteSecretKey", locatorConfiguration.fullLocator("%s", "secret-key")));
         try {
             AuthenticationPrincipalSecretKey secretKey = authenticationPrincipalSecretKeyService.getKeyById(keyId);
             if (authCheckingContext.belongToCurrentSession(secretKey.getPrincipal())) {
@@ -119,7 +119,7 @@ public class AuthenticationApi {
     @Operation(tags = {"authentication-subprincipal"})
     @PostMapping("/principals/current/subprincipals")
     public RestResultPacker<AuthenticationPrincipal.Vo> addSubprincipal(HttpServletRequest request, @RequestBody AuthenticationPrincipal.PrincipalForm form) throws HTTPException {
-        AuthCheckingContext authCheckingContext = authCheckingHelper.myResources(request, AuthCheckingStatement.checks("iam:AddSubprincipal", locatorConfiguration.fullLocator("{}", "subprincipal")));
+        AuthCheckingContext authCheckingContext = authCheckingHelper.myResources(request, AuthCheckingStatement.checks("iam:AddSubprincipal", locatorConfiguration.fullLocator("%s", "subprincipal")));
         AuthenticationPrincipal toCreatePrincipal = new AuthenticationPrincipal(
                 form.getName(), form.getPassword(),
                 form.isSessionCreatable(), form.isSignatureCreatable(),
@@ -134,14 +134,14 @@ public class AuthenticationApi {
     @Operation(tags = {"authentication-subprincipal"})
     @GetMapping("/principals/current/subprincipals")
     public RestResultPacker<Page<AuthenticationPrincipal.Vo>> pagingSubprincipals(HttpServletRequest request, @RequestParam int page, @RequestParam int size) throws HTTPException {
-        AuthCheckingContext authCheckingContext = authCheckingHelper.myResources(request, AuthCheckingStatement.checks("iam:GetSubprincipal", locatorConfiguration.fullLocator("{}", "subprincipal")));
+        AuthCheckingContext authCheckingContext = authCheckingHelper.myResources(request, AuthCheckingStatement.checks("iam:GetSubprincipal", locatorConfiguration.fullLocator("%s", "subprincipal")));
         return RestResultPacker.success(authenticationPrincipalService.pagingSubprincipals(authCheckingContext.getCurrentSession().getAuthenticationPrincipal(), page, size).map(owner -> owner.vo(locatorConfiguration)));
     }
 
     @Operation(tags = {"authentication-subprincipal"})
     @DeleteMapping("/principals/current/subprincipals/{subprincipalId}")
     public RestResultPacker<String> deleteSubprincipal(HttpServletRequest request, @PathVariable Long subprincipalId) throws HTTPException {
-        AuthCheckingContext authCheckingContext = authCheckingHelper.myResources(request, AuthCheckingStatement.checks("iam:GetSubprincipal", locatorConfiguration.fullLocator("{}", "subprincipal")));
+        AuthCheckingContext authCheckingContext = authCheckingHelper.myResources(request, AuthCheckingStatement.checks("iam:GetSubprincipal", locatorConfiguration.fullLocator("%s", "subprincipal")));
         try {
             AuthenticationPrincipal subprincipal = authenticationPrincipalService.findPrincipalById(subprincipalId);
             if (authCheckingContext.belongToCurrentSession(subprincipal.getOwner())) {
@@ -162,7 +162,7 @@ public class AuthenticationApi {
     @Operation(tags = {"authentication-subprincipal"})
     @GetMapping("/principals/current/subprincipals/{subprincipalId}")
     public RestResultPacker<AuthenticationPrincipal.Vo> getSubprincipal(HttpServletRequest request, @PathVariable Long subprincipalId) throws HTTPException {
-        AuthCheckingContext authCheckingContext = authCheckingHelper.myResources(request, AuthCheckingStatement.checks("iam:GetSubprincipal", locatorConfiguration.fullLocator("{}", "subprincipal", subprincipalId.toString())));
+        AuthCheckingContext authCheckingContext = authCheckingHelper.myResources(request, AuthCheckingStatement.checks("iam:GetSubprincipal", locatorConfiguration.fullLocator("%s", "subprincipal", subprincipalId.toString())));
         try {
             AuthenticationPrincipal subprincipalToFind = authenticationPrincipalService.findPrincipalById(subprincipalId);
             AuthenticationPrincipal challenger = authCheckingContext.getResourceOwner().getOwner();
@@ -180,7 +180,7 @@ public class AuthenticationApi {
     public RestResultPacker<AuthenticationPrincipal.Vo> findPrincipalById(HttpServletRequest request, @PathVariable Long principalId) throws HTTPException {
         try {
             AuthenticationPrincipal principal = authenticationPrincipalService.findPrincipalById(principalId);
-            authCheckingHelper.theirResources(request, AuthCheckingStatement.checks("iam:GetPrincipal", locatorConfiguration.fullLocator("{}", "principal")), principal);
+            authCheckingHelper.theirResources(request, AuthCheckingStatement.checks("iam:GetPrincipal", locatorConfiguration.fullLocator("%s", "principal")), principal);
             return RestResultPacker.success(principal.vo(locatorConfiguration));
         } catch (NotFoundException e) {
             throw new HTTP404Exception(e);
@@ -192,7 +192,7 @@ public class AuthenticationApi {
     public RestResultPacker<String> deletePrincipal(HttpServletRequest request, @PathVariable Long principalId) throws HTTPException {
         try {
             AuthenticationPrincipal principal = authenticationPrincipalService.findPrincipalById(principalId);
-            AuthCheckingContext authCheckingContext = authCheckingHelper.theirResources(request, AuthCheckingStatement.checks("iam:DeletePrincipal", locatorConfiguration.fullLocator("{}", "principal")), principal);
+            AuthCheckingContext authCheckingContext = authCheckingHelper.theirResources(request, AuthCheckingStatement.checks("iam:DeletePrincipal", locatorConfiguration.fullLocator("%s", "principal")), principal);
             // if principal to delete is current principal
             if (authCheckingContext.belongToCurrentSession(principal)) {
                 throw new HTTP403Exception("Cannot delete current logged in principal.");
@@ -207,7 +207,7 @@ public class AuthenticationApi {
     @Operation(tags = {"authentication-secret-key"})
     @PostMapping("/principals/{principalId}/secret-keys/rsa2048-key-pairs")
     public RestResultPacker<AuthenticationPrincipalSecretKey.Vo> genSecretKey(HttpServletRequest request, @PathVariable Long principalId, @RequestBody AuthenticationPrincipalSecretKey.GenKeyPairForm form) throws HTTPException {
-        AuthCheckingContext authCheckingContext = authCheckingHelper.theirResources(request, AuthCheckingStatement.checks("iam:GenerateSecretKey", locatorConfiguration.fullLocator("{}", "secret-key")), principalId);
+        AuthCheckingContext authCheckingContext = authCheckingHelper.theirResources(request, AuthCheckingStatement.checks("iam:GenerateSecretKey", locatorConfiguration.fullLocator("%s", "secret-key")), principalId);
         try {
             return RestResultPacker.success(authenticationPrincipalSecretKeyService.generateRSA2048KeyPair(authCheckingContext.getResourceOwner(), form).vo(locatorConfiguration));
         } catch (SignatureException e) {
@@ -218,7 +218,7 @@ public class AuthenticationApi {
     @Operation(tags = {"authentication-secret-key"})
     @GetMapping("/principals/{principalId}/secret-keys")
     public RestResultPacker<Page<AuthenticationPrincipalSecretKey.Vo>> pagingSecretKeys(HttpServletRequest request, @PathVariable Long principalId, @RequestParam int page, @RequestParam int size) throws HTTPException {
-        AuthCheckingContext authCheckingContext = authCheckingHelper.theirResources(request, AuthCheckingStatement.checks("iam:GetSecretKey", locatorConfiguration.fullLocator("{}", "secret-key")), principalId);
+        AuthCheckingContext authCheckingContext = authCheckingHelper.theirResources(request, AuthCheckingStatement.checks("iam:GetSecretKey", locatorConfiguration.fullLocator("%s", "secret-key")), principalId);
         Page<AuthenticationPrincipalSecretKey> keyPairPage = authenticationPrincipalSecretKeyService.pagingKeysOfOwner(authCheckingContext.getResourceOwner(), page, size);
         return RestResultPacker.success(keyPairPage.map((keyPair) -> keyPair.vo(locatorConfiguration).securePrivateKey()));
     }
@@ -226,7 +226,7 @@ public class AuthenticationApi {
     @Operation(tags = {"authentication-secret-key"})
     @DeleteMapping("/principals/{principalId}/secret-keys/{keyId}")
     public RestResultPacker<String> deleteSecretKeys(HttpServletRequest request, @PathVariable Long principalId, @PathVariable Long keyId) throws HTTPException {
-        AuthCheckingContext authCheckingContext = authCheckingHelper.theirResources(request, AuthCheckingStatement.checks("iam:DeleteSecretKey", locatorConfiguration.fullLocator("{}", "secret-key", keyId.toString())), principalId);
+        AuthCheckingContext authCheckingContext = authCheckingHelper.theirResources(request, AuthCheckingStatement.checks("iam:DeleteSecretKey", locatorConfiguration.fullLocator("%s", "secret-key", keyId.toString())), principalId);
         try {
             AuthenticationPrincipalSecretKey secretKey = authenticationPrincipalSecretKeyService.getKeyById(keyId);
             if (authCheckingContext.belongToResourceOwner(secretKey.getPrincipal())) {
@@ -243,7 +243,7 @@ public class AuthenticationApi {
     @Operation(tags = {"authentication-subprincipal"})
     @PostMapping("/principals/{principalId}/subprincipals")
     public RestResultPacker<AuthenticationPrincipal.Vo> addSubprincipal(HttpServletRequest request, @PathVariable Long principalId, @RequestBody AuthenticationPrincipal.PrincipalForm form) throws HTTPException {
-        AuthCheckingContext authCheckingContext = authCheckingHelper.theirResources(request, AuthCheckingStatement.checks("iam:AddSubprincipal", locatorConfiguration.fullLocator("{}", "subprincipal")), principalId);
+        AuthCheckingContext authCheckingContext = authCheckingHelper.theirResources(request, AuthCheckingStatement.checks("iam:AddSubprincipal", locatorConfiguration.fullLocator("%s", "subprincipal")), principalId);
         AuthenticationPrincipal toCreatePrincipal = new AuthenticationPrincipal(
                 form.getName(), form.getPassword(),
                 form.isSessionCreatable(), form.isSignatureCreatable(),
@@ -258,14 +258,14 @@ public class AuthenticationApi {
     @Operation(tags = {"authentication-subprincipal"})
     @GetMapping("/principals/{principalId}/subprincipals")
     public RestResultPacker<Page<AuthenticationPrincipal.Vo>> pagingSubprincipals(HttpServletRequest request, @PathVariable Long principalId, @RequestParam int page, @RequestParam int size) throws HTTPException {
-        AuthCheckingContext authCheckingContext = authCheckingHelper.theirResources(request, AuthCheckingStatement.checks("iam:GetSubprincipal", locatorConfiguration.fullLocator("{}", "subprincipal")), principalId);
+        AuthCheckingContext authCheckingContext = authCheckingHelper.theirResources(request, AuthCheckingStatement.checks("iam:GetSubprincipal", locatorConfiguration.fullLocator("%s", "subprincipal")), principalId);
         return RestResultPacker.success(authenticationPrincipalService.pagingSubprincipals(authCheckingContext.getResourceOwner(), page, size).map(owner -> owner.vo(locatorConfiguration)));
     }
 
     @Operation(tags = {"authentication-subprincipal"})
     @GetMapping("/principals/{principalId}/subprincipals/{subprincipalId}")
     public RestResultPacker<AuthenticationPrincipal.Vo> getSubprincipal(HttpServletRequest request, @PathVariable Long principalId, @PathVariable Long subprincipalId) throws HTTPException {
-        authCheckingHelper.theirResources(request, AuthCheckingStatement.checks("iam:GetSubprincipal", locatorConfiguration.fullLocator("{}", "subprincipal", subprincipalId.toString())), principalId);
+        authCheckingHelper.theirResources(request, AuthCheckingStatement.checks("iam:GetSubprincipal", locatorConfiguration.fullLocator("%s", "subprincipal", subprincipalId.toString())), principalId);
         try {
             AuthenticationPrincipal subprincipalToFind = authenticationPrincipalService.findPrincipalById(subprincipalId);
             if (subprincipalToFind.getOwner() != null && !subprincipalToFind.getOwner().getId().equals(principalId) && subprincipalToFind.typeIs(AuthenticationPrincipal.PrincipalType.PRINCIPAL)) {
@@ -280,7 +280,7 @@ public class AuthenticationApi {
     @Operation(tags = {"authentication-subprincipal"})
     @DeleteMapping("/principals/{principalId}/subprincipals/{subprincipalId}")
     public RestResultPacker<String> deleteSubprincipal(HttpServletRequest request, @PathVariable Long principalId, @PathVariable Long subprincipalId) throws HTTPException {
-        AuthCheckingContext authCheckingContext = authCheckingHelper.theirResources(request, AuthCheckingStatement.checks("iam:DeleteSubprincipal", locatorConfiguration.fullLocator("{}", "subprincipal", subprincipalId.toString())), principalId);
+        AuthCheckingContext authCheckingContext = authCheckingHelper.theirResources(request, AuthCheckingStatement.checks("iam:DeleteSubprincipal", locatorConfiguration.fullLocator("%s", "subprincipal", subprincipalId.toString())), principalId);
         try {
             AuthenticationPrincipal subprincipal = authenticationPrincipalService.findPrincipalById(subprincipalId);
             if (authCheckingContext.belongToResourceOwner(subprincipal.getOwner())) {
@@ -301,7 +301,7 @@ public class AuthenticationApi {
     @Operation(tags = {"authentication-principal-group"})
     @PostMapping("/principals/current/principal-groups")
     public RestResultPacker<AuthenticationPrincipal.Vo> addPrincipalGroup(HttpServletRequest request, @RequestBody AuthenticationPrincipal.PrincipalGroupForm form) throws HTTPException {
-        AuthCheckingContext authCheckingContext = authCheckingHelper.myResources(request, AuthCheckingStatement.checks("iam:AddPrincipalGroup", locatorConfiguration.fullLocator("{}", "principal-group")));
+        AuthCheckingContext authCheckingContext = authCheckingHelper.myResources(request, AuthCheckingStatement.checks("iam:AddPrincipalGroup", locatorConfiguration.fullLocator("%s", "principal-group")));
         AuthenticationPrincipal toCreatePrincipal = new AuthenticationPrincipal(
                 form.getName(), "NO-PASSWORD",
                 false, false, false, false,
@@ -315,7 +315,7 @@ public class AuthenticationApi {
     @Operation(tags = {"authentication-principal-group"})
     @PostMapping("/principals/{principalId}/principal-groups")
     public RestResultPacker<AuthenticationPrincipal.Vo> addPrincipalGroup(HttpServletRequest request, @PathVariable Long principalId, @RequestBody AuthenticationPrincipal.PrincipalGroupForm form) throws HTTPException {
-        AuthCheckingContext authCheckingContext = authCheckingHelper.theirResources(request, AuthCheckingStatement.checks("iam:AddPrincipalGroup", locatorConfiguration.fullLocator("{}", "principal-group")), principalId);
+        AuthCheckingContext authCheckingContext = authCheckingHelper.theirResources(request, AuthCheckingStatement.checks("iam:AddPrincipalGroup", locatorConfiguration.fullLocator("%s", "principal-group")), principalId);
         AuthenticationPrincipal toCreatePrincipal = new AuthenticationPrincipal(
                 form.getName(), "NO-PASSWORD",
                 false, false, false, false,
@@ -329,21 +329,21 @@ public class AuthenticationApi {
     @Operation(tags = {"authentication-principal-group"})
     @GetMapping("/principals/current/principal-groups")
     public RestResultPacker<Page<AuthenticationPrincipal.Vo>> pagingPrincipalGroups(HttpServletRequest request, @RequestParam int page, @RequestParam int size) throws HTTPException {
-        AuthCheckingContext authCheckingContext = authCheckingHelper.myResources(request, AuthCheckingStatement.checks("iam:GetPrincipalGroup", locatorConfiguration.fullLocator("{}", "principal-group")));
+        AuthCheckingContext authCheckingContext = authCheckingHelper.myResources(request, AuthCheckingStatement.checks("iam:GetPrincipalGroup", locatorConfiguration.fullLocator("%s", "principal-group")));
         return RestResultPacker.success(authenticationPrincipalService.pagingPrincipalGroups(authCheckingContext.getResourceOwner(), page, size).map(owner -> owner.vo(locatorConfiguration)));
     }
 
     @Operation(tags = {"authentication-principal-group"})
     @GetMapping("/principals/{principalId}/principal-groups")
     public RestResultPacker<Page<AuthenticationPrincipal.Vo>> pagingPrincipalGroups(HttpServletRequest request, @PathVariable Long principalId, @RequestParam int page, @RequestParam int size) throws HTTPException {
-        AuthCheckingContext authCheckingContext = authCheckingHelper.theirResources(request, AuthCheckingStatement.checks("iam:GetPrincipalGroup", locatorConfiguration.fullLocator("{}", "principal-group")), principalId);
+        AuthCheckingContext authCheckingContext = authCheckingHelper.theirResources(request, AuthCheckingStatement.checks("iam:GetPrincipalGroup", locatorConfiguration.fullLocator("%s", "principal-group")), principalId);
         return RestResultPacker.success(authenticationPrincipalService.pagingPrincipalGroups(authCheckingContext.getResourceOwner(), page, size).map(owner -> owner.vo(locatorConfiguration)));
     }
 
     @Operation(tags = {"authentication-principal-group"})
     @GetMapping("/principals/current/principal-groups/{principalGroupId}")
     public RestResultPacker<AuthenticationPrincipal.Vo> getPrincipalGroup(HttpServletRequest request, @PathVariable Long principalGroupId) throws HTTPException {
-        AuthCheckingContext authCheckingContext = authCheckingHelper.myResources(request, AuthCheckingStatement.checks("iam:GetPrincipalGroup", locatorConfiguration.fullLocator("{}", "principal-group", principalGroupId.toString())));
+        AuthCheckingContext authCheckingContext = authCheckingHelper.myResources(request, AuthCheckingStatement.checks("iam:GetPrincipalGroup", locatorConfiguration.fullLocator("%s", "principal-group", principalGroupId.toString())));
         try {
             AuthenticationPrincipal principalGroupToFind = authenticationPrincipalService.findPrincipalById(principalGroupId);
             if (principalGroupToFind.getOwner() != null && !principalGroupToFind.typeIs(AuthenticationPrincipal.PrincipalType.PRINCIPAL_GROUP)) {
@@ -358,7 +358,7 @@ public class AuthenticationApi {
     @Operation(tags = {"authentication-principal-group"})
     @GetMapping("/principals/{principalId}/principal-groups/{principalGroupId}")
     public RestResultPacker<AuthenticationPrincipal.Vo> getPrincipalGroup(HttpServletRequest request, @PathVariable Long principalId, @PathVariable Long principalGroupId) throws HTTPException {
-        authCheckingHelper.theirResources(request, AuthCheckingStatement.checks("iam:GetPrincipalGroup", locatorConfiguration.fullLocator("{}", "principal-group", principalGroupId.toString())), principalId);
+        authCheckingHelper.theirResources(request, AuthCheckingStatement.checks("iam:GetPrincipalGroup", locatorConfiguration.fullLocator("%s", "principal-group", principalGroupId.toString())), principalId);
         try {
             AuthenticationPrincipal principalGroupToFind = authenticationPrincipalService.findPrincipalById(principalGroupId);
             if (principalGroupToFind.getOwner() != null && !principalGroupToFind.getOwner().getId().equals(principalId) && !principalGroupToFind.typeIs(AuthenticationPrincipal.PrincipalType.PRINCIPAL_GROUP)) {
@@ -390,7 +390,7 @@ public class AuthenticationApi {
     @Operation(tags = {"authentication-principal-group"})
     @DeleteMapping("/principals/current/principal-groups/{principalGroupId}")
     public RestResultPacker<String> deletePrincipalGroup(HttpServletRequest request, @PathVariable Long principalGroupId) throws HTTPException {
-        AuthCheckingContext authCheckingContext = authCheckingHelper.myResources(request, AuthCheckingStatement.checks("iam:DeletePrincipalGroup", locatorConfiguration.fullLocator("{}", "principal-group", principalGroupId.toString())));
+        AuthCheckingContext authCheckingContext = authCheckingHelper.myResources(request, AuthCheckingStatement.checks("iam:DeletePrincipalGroup", locatorConfiguration.fullLocator("%s", "principal-group", principalGroupId.toString())));
         deletePrincipalGroup(authCheckingContext, principalGroupId);
         return RestResultPacker.success("Principal group deleted.");
     }
@@ -398,7 +398,7 @@ public class AuthenticationApi {
     @Operation(tags = {"authentication-principal-group"})
     @DeleteMapping("/principals/{principalId}/principal-groups/{principalGroupId}")
     public RestResultPacker<String> deletePrincipalGroup(HttpServletRequest request, @PathVariable Long principalId, @PathVariable Long principalGroupId) throws HTTPException {
-        AuthCheckingContext authCheckingContext = authCheckingHelper.theirResources(request, AuthCheckingStatement.checks("iam:DeletePrincipalGroup", locatorConfiguration.fullLocator("{}", "principal-group", principalGroupId.toString())), principalId);
+        AuthCheckingContext authCheckingContext = authCheckingHelper.theirResources(request, AuthCheckingStatement.checks("iam:DeletePrincipalGroup", locatorConfiguration.fullLocator("%s", "principal-group", principalGroupId.toString())), principalId);
         deletePrincipalGroup(authCheckingContext, principalGroupId);
         return RestResultPacker.success("Principal group deleted.");
     }
@@ -406,7 +406,7 @@ public class AuthenticationApi {
     @Operation(tags = {"authentication-app-domain"})
     @PostMapping("/principals/current/app-domains")
     public RestResultPacker<AuthenticationPrincipal.Vo> addAppDomain(HttpServletRequest request, @RequestBody AuthenticationPrincipal.PrincipalGroupForm form) throws HTTPException {
-        AuthCheckingContext authCheckingContext = authCheckingHelper.myResources(request, AuthCheckingStatement.checks("iam:AddAppDomain", locatorConfiguration.fullLocator("{}", "app-domain")));
+        AuthCheckingContext authCheckingContext = authCheckingHelper.myResources(request, AuthCheckingStatement.checks("iam:AddAppDomain", locatorConfiguration.fullLocator("%s", "app-domain")));
         AuthenticationPrincipal toCreatePrincipal = new AuthenticationPrincipal(
                 form.getName(), "NO-PASSWORD",
                 false, true, false, true,
@@ -420,7 +420,7 @@ public class AuthenticationApi {
     @Operation(tags = {"authentication-app-domain"})
     @PostMapping("/principals/{principalId}/app-domains")
     public RestResultPacker<AuthenticationPrincipal.Vo> addAppDomain(HttpServletRequest request, @PathVariable Long principalId, @RequestBody AuthenticationPrincipal.PrincipalGroupForm form) throws HTTPException {
-        AuthCheckingContext authCheckingContext = authCheckingHelper.theirResources(request, AuthCheckingStatement.checks("iam:AddAppDomain", locatorConfiguration.fullLocator("{}", "app-domain")), principalId);
+        AuthCheckingContext authCheckingContext = authCheckingHelper.theirResources(request, AuthCheckingStatement.checks("iam:AddAppDomain", locatorConfiguration.fullLocator("%s", "app-domain")), principalId);
         AuthenticationPrincipal toCreatePrincipal = new AuthenticationPrincipal(
                 form.getName(), "NO-PASSWORD",
                 false, true, false, true,
@@ -434,21 +434,21 @@ public class AuthenticationApi {
     @Operation(tags = {"authentication-app-domain"})
     @GetMapping("/principals/current/app-domains")
     public RestResultPacker<Page<AuthenticationPrincipal.Vo>> pagingAppDomains(HttpServletRequest request, @RequestParam int page, @RequestParam int size) throws HTTPException {
-        AuthCheckingContext authCheckingContext = authCheckingHelper.myResources(request, AuthCheckingStatement.checks("iam:GetAppDomain", locatorConfiguration.fullLocator("{}", "app-domain")));
+        AuthCheckingContext authCheckingContext = authCheckingHelper.myResources(request, AuthCheckingStatement.checks("iam:GetAppDomain", locatorConfiguration.fullLocator("%s", "app-domain")));
         return RestResultPacker.success(authenticationPrincipalService.pagingAppDomains(authCheckingContext.getResourceOwner(), page, size).map(owner -> owner.vo(locatorConfiguration)));
     }
 
     @Operation(tags = {"authentication-app-domain"})
     @GetMapping("/principals/{principalId}/app-domains")
     public RestResultPacker<Page<AuthenticationPrincipal.Vo>> pagingAppDomains(HttpServletRequest request, @PathVariable Long principalId, @RequestParam int page, @RequestParam int size) throws HTTPException {
-        AuthCheckingContext authCheckingContext = authCheckingHelper.theirResources(request, AuthCheckingStatement.checks("iam:GetAppDomain", locatorConfiguration.fullLocator("{}", "app-domain")), principalId);
+        AuthCheckingContext authCheckingContext = authCheckingHelper.theirResources(request, AuthCheckingStatement.checks("iam:GetAppDomain", locatorConfiguration.fullLocator("%s", "app-domain")), principalId);
         return RestResultPacker.success(authenticationPrincipalService.pagingAppDomains(authCheckingContext.getResourceOwner(), page, size).map(owner -> owner.vo(locatorConfiguration)));
     }
 
     @Operation(tags = {"authentication-app-domain"})
     @GetMapping("/principals/current/app-domains/{appDomainId}")
     public RestResultPacker<AuthenticationPrincipal.Vo> getAppDomain(HttpServletRequest request, @PathVariable Long appDomainId) throws HTTPException {
-        AuthCheckingContext authCheckingContext = authCheckingHelper.myResources(request, AuthCheckingStatement.checks("iam:GetAppDomain", locatorConfiguration.fullLocator("{}", "app-domain", appDomainId.toString())));
+        AuthCheckingContext authCheckingContext = authCheckingHelper.myResources(request, AuthCheckingStatement.checks("iam:GetAppDomain", locatorConfiguration.fullLocator("%s", "app-domain", appDomainId.toString())));
         try {
             AuthenticationPrincipal principalGroupToFind = authenticationPrincipalService.findPrincipalById(appDomainId);
             if (principalGroupToFind.getOwner() != null && !principalGroupToFind.typeIs(AuthenticationPrincipal.PrincipalType.APP_DOMAIN)) {
@@ -463,7 +463,7 @@ public class AuthenticationApi {
     @Operation(tags = {"authentication-app-domain"})
     @GetMapping("/principals/{principalId}/app-domains/{appDomainId}")
     public RestResultPacker<AuthenticationPrincipal.Vo> getAppDomain(HttpServletRequest request, @PathVariable Long principalId, @PathVariable Long appDomainId) throws HTTPException {
-        authCheckingHelper.theirResources(request, AuthCheckingStatement.checks("iam:GetAppDomain", locatorConfiguration.fullLocator("{}", "app-domain", appDomainId.toString())), principalId);
+        authCheckingHelper.theirResources(request, AuthCheckingStatement.checks("iam:GetAppDomain", locatorConfiguration.fullLocator("%s", "app-domain", appDomainId.toString())), principalId);
         try {
             AuthenticationPrincipal principalGroupToFind = authenticationPrincipalService.findPrincipalById(appDomainId);
             if (principalGroupToFind.getOwner() != null && !principalGroupToFind.getOwner().getId().equals(principalId) && !principalGroupToFind.typeIs(AuthenticationPrincipal.PrincipalType.APP_DOMAIN)) {
@@ -495,7 +495,7 @@ public class AuthenticationApi {
     @Operation(tags = {"authentication-app-domain"})
     @DeleteMapping("/principals/current/app-domains/{appDomainId}")
     public RestResultPacker<String> deleteAppDomain(HttpServletRequest request, @PathVariable Long appDomainId) throws HTTPException {
-        AuthCheckingContext authCheckingContext = authCheckingHelper.myResources(request, AuthCheckingStatement.checks("iam:DeleteAppDomain", locatorConfiguration.fullLocator("{}", "app-domain", appDomainId.toString())));
+        AuthCheckingContext authCheckingContext = authCheckingHelper.myResources(request, AuthCheckingStatement.checks("iam:DeleteAppDomain", locatorConfiguration.fullLocator("%s", "app-domain", appDomainId.toString())));
         deleteAppDomain(authCheckingContext, appDomainId);
         return RestResultPacker.success("App domain deleted.");
     }
@@ -503,7 +503,7 @@ public class AuthenticationApi {
     @Operation(tags = {"authentication-app-domain"})
     @DeleteMapping("/principals/{principalId}/app-domains/{appDomainId}")
     public RestResultPacker<String> deleteAppDomain(HttpServletRequest request, @PathVariable Long principalId, @PathVariable Long appDomainId) throws HTTPException {
-        AuthCheckingContext authCheckingContext = authCheckingHelper.theirResources(request, AuthCheckingStatement.checks("iam:DeleteAppDomain", locatorConfiguration.fullLocator("{}", "app-domain", appDomainId.toString())), principalId);
+        AuthCheckingContext authCheckingContext = authCheckingHelper.theirResources(request, AuthCheckingStatement.checks("iam:DeleteAppDomain", locatorConfiguration.fullLocator("%s", "app-domain", appDomainId.toString())), principalId);
         deleteAppDomain(authCheckingContext, appDomainId);
         return RestResultPacker.success("App domain deleted.");
     }

@@ -51,7 +51,7 @@ public class AuthorizationApi {
     public RestResultPacker<AuthorizationPolicy.Vo> addPolicy(HttpServletRequest request, @RequestBody @Validated AuthorizationPolicy.Form form) throws HTTPException {
         AuthCheckingContext authCheckingContext = authCheckingHelper.myResources(
                 request, AuthCheckingStatement.checks(
-                        "iam:AddPolicy", locatorConfiguration.fullLocator("{}", "policy")
+                        "iam:AddPolicy", locatorConfiguration.fullLocator("%s", "policy")
                 ));
         AuthorizationPolicy authorizationPolicy = authorizationPolicyService.addPolicy(authCheckingContext.getResourceOwner(), form);
         return RestResultPacker.success(authorizationPolicy.vo(locatorConfiguration));
@@ -62,7 +62,7 @@ public class AuthorizationApi {
     public RestResultPacker<AuthorizationPolicy.Vo> addPolicy(HttpServletRequest request, @PathVariable Long principalId, @RequestBody @Validated AuthorizationPolicy.Form form) throws HTTPException {
         AuthCheckingContext authCheckingContext = authCheckingHelper.theirResources(
                 request, AuthCheckingStatement.checks(
-                        "iam:AddPolicy", locatorConfiguration.fullLocator("{}", "policy")
+                        "iam:AddPolicy", locatorConfiguration.fullLocator("%s", "policy")
                 ), principalId);
         AuthorizationPolicy authorizationPolicy = authorizationPolicyService.addPolicy(authCheckingContext.getResourceOwner(), form);
         return RestResultPacker.success(authorizationPolicy.vo(locatorConfiguration));
@@ -73,7 +73,7 @@ public class AuthorizationApi {
     public RestResultPacker<Page<AuthorizationPolicy.Vo>> pagingPolicies(HttpServletRequest request, @RequestParam int page, @RequestParam int size) throws HTTPException {
         AuthCheckingContext authCheckingContext = authCheckingHelper.myResources(
                 request, AuthCheckingStatement.checks(
-                        "iam:GetPolicy", locatorConfiguration.fullLocator("{}", "policy")
+                        "iam:GetPolicy", locatorConfiguration.fullLocator("%s", "policy")
                 ));
         return RestResultPacker.success(authorizationPolicyService.pagingPolicies(authCheckingContext.getResourceOwner(), page, size).map(owner -> owner.vo(locatorConfiguration)));
     }
@@ -83,7 +83,7 @@ public class AuthorizationApi {
     public RestResultPacker<Page<AuthorizationPolicy.Vo>> pagingPolicies(HttpServletRequest request, @PathVariable Long principalId, @RequestParam int page, @RequestParam int size) throws HTTPException {
         AuthCheckingContext authCheckingContext = authCheckingHelper.theirResources(
                 request, AuthCheckingStatement.checks(
-                        "iam:GetPolicy", locatorConfiguration.fullLocator("{}", "policy")
+                        "iam:GetPolicy", locatorConfiguration.fullLocator("%s", "policy")
                 ), principalId);
         return RestResultPacker.success(authorizationPolicyService.pagingPolicies(authCheckingContext.getResourceOwner(), page, size).map(owner -> owner.vo(locatorConfiguration)));
     }
@@ -106,9 +106,9 @@ public class AuthorizationApi {
     public RestResultPacker<String> deletePolicy(HttpServletRequest request, @PathVariable Long policyId) throws HTTPException {
         AuthCheckingContext authCheckingContext = authCheckingHelper.myResources(
                 request, AuthCheckingStatement.checks(
-                        "iam:DeletePolicy", locatorConfiguration.fullLocator("{}", "policy", policyId.toString())
+                        "iam:DeletePolicy", locatorConfiguration.fullLocator("%s", "policy", policyId.toString())
                 ).and(
-                        "iam:DeletePolicy", locatorConfiguration.fullLocator("{}", "policy", policyId.toString())
+                        "iam:DeletePolicy", locatorConfiguration.fullLocator("%s", "policy", policyId.toString())
                 ));
         deletePolicy(authCheckingContext, policyId);
         return RestResultPacker.success("Deleted!");
@@ -119,9 +119,9 @@ public class AuthorizationApi {
     public RestResultPacker<String> deletePolicy(HttpServletRequest request, @PathVariable Long principalId, @PathVariable Long policyId) throws HTTPException {
         AuthCheckingContext authCheckingContext = authCheckingHelper.theirResources(
                 request, AuthCheckingStatement.checks(
-                        "iam:DeletePolicy", locatorConfiguration.fullLocator("{}", "policy", policyId.toString())
+                        "iam:DeletePolicy", locatorConfiguration.fullLocator("%s", "policy", policyId.toString())
                 ).and(
-                        "iam:DeletePolicy", locatorConfiguration.fullLocator("{}", "policy", policyId.toString())
+                        "iam:DeletePolicy", locatorConfiguration.fullLocator("%s", "policy", policyId.toString())
                 ), principalId);
         deletePolicy(authCheckingContext, policyId);
         return RestResultPacker.success("Deleted!");
@@ -139,13 +139,13 @@ public class AuthorizationApi {
                 if (session == null) {
                     AuthCheckingContext authCheckingContext = authCheckingHelper.theirResources(
                             request, AuthCheckingStatement.checks(
-                                    "iam:GetPolicy", locatorConfiguration.fullLocator("{}", "policy")
+                                    "iam:GetPolicy", locatorConfiguration.fullLocator("%s", "policy")
                             ), policyOwnerId);
                     session = authCheckingContext.getCurrentSession();
                 } else {
                     authCheckingHelper.theirResources(
                             session, AuthCheckingStatement.checks(
-                                    "iam:GetPolicy", locatorConfiguration.fullLocator("{}", "policy")
+                                    "iam:GetPolicy", locatorConfiguration.fullLocator("%s", "policy")
                             ), policyOwnerId);
                 }
                 grantingPolicies.add(policy);
@@ -180,7 +180,7 @@ public class AuthorizationApi {
         // Check if Current User can add grants.
         AuthCheckingContext authCheckingContext = authCheckingHelper.myResources(
                 request, AuthCheckingStatement.checks(
-                        "iam:AddGrant", locatorConfiguration.fullLocator("{}", "grant")
+                        "iam:AddGrant", locatorConfiguration.fullLocator("%s", "grant")
                 ));
         return RestResultPacker.success(grantingPolicies(authCheckingContext, form.getGrantee(), policies));
     }
@@ -192,7 +192,7 @@ public class AuthorizationApi {
         // Check if Current User can add grants.
         AuthCheckingContext authCheckingContext = authCheckingHelper.theirResources(
                 request, AuthCheckingStatement.checks(
-                        "iam:AddGrant", locatorConfiguration.fullLocator("{}", "grant")
+                        "iam:AddGrant", locatorConfiguration.fullLocator("%s", "grant")
                 ), principalId);
         return RestResultPacker.success(grantingPolicies(authCheckingContext, form.getGrantee(), policies));
     }
@@ -202,7 +202,7 @@ public class AuthorizationApi {
     public RestResultPacker<Page<AuthorizationPolicyGrant.Vo>> pagingGrantsOut(HttpServletRequest request, @RequestParam int page, @RequestParam int size) throws HTTPException {
         AuthCheckingContext authCheckingContext = authCheckingHelper.myResources(
                 request, AuthCheckingStatement.checks(
-                        "iam:GetGrant", locatorConfiguration.fullLocator("{}", "grant")
+                        "iam:GetGrant", locatorConfiguration.fullLocator("%s", "grant")
                 ));
         Page<AuthorizationPolicyGrant> grantsPage = authorizationPolicyGrantService.pagingGrantsFrom(authCheckingContext.getCurrentSession().getAuthenticationPrincipal(), page, size);
         return RestResultPacker.success(grantsPage.map(owner -> owner.vo(locatorConfiguration)));
@@ -213,7 +213,7 @@ public class AuthorizationApi {
     public RestResultPacker<Page<AuthorizationPolicyGrant.Vo>> pagingGrantsOut(HttpServletRequest request, @PathVariable Long principalId, @RequestParam int page, @RequestParam int size) throws HTTPException {
         AuthCheckingContext authCheckingContext = authCheckingHelper.theirResources(
                 request, AuthCheckingStatement.checks(
-                        "iam:GetGrant", locatorConfiguration.fullLocator("{}", "grant")
+                        "iam:GetGrant", locatorConfiguration.fullLocator("%s", "grant")
                 ), principalId);
         Page<AuthorizationPolicyGrant> grantsPage = authorizationPolicyGrantService.pagingGrantsFrom(authCheckingContext.getCurrentSession().getAuthenticationPrincipal(), page, size);
         return RestResultPacker.success(grantsPage.map(owner -> owner.vo(locatorConfiguration)));
@@ -237,9 +237,9 @@ public class AuthorizationApi {
     public RestResultPacker<String> deleteGrantOut(HttpServletRequest request, @PathVariable Long grantId) throws HTTPException {
         AuthCheckingContext authCheckingContext = authCheckingHelper.myResources(
                 request, AuthCheckingStatement.checks(
-                        "iam:DeleteGrant", locatorConfiguration.fullLocator("{}", "grant", grantId.toString())
+                        "iam:DeleteGrant", locatorConfiguration.fullLocator("%s", "grant", grantId.toString())
                 ).and(
-                        "iam:DeleteGrant", locatorConfiguration.fullLocator("{}", "grant", grantId.toString())
+                        "iam:DeleteGrant", locatorConfiguration.fullLocator("%s", "grant", grantId.toString())
                 ));
         deleteGrantOut(authCheckingContext, grantId);
         return RestResultPacker.success("Grant Deleted.");
@@ -250,9 +250,9 @@ public class AuthorizationApi {
     public RestResultPacker<String> deleteGrantOut(HttpServletRequest request, @PathVariable Long principalId, @PathVariable Long grantId) throws HTTPException {
         AuthCheckingContext authCheckingContext = authCheckingHelper.theirResources(
                 request, AuthCheckingStatement.checks(
-                        "iam:DeleteGrant", locatorConfiguration.fullLocator("{}", "grant", grantId.toString())
+                        "iam:DeleteGrant", locatorConfiguration.fullLocator("%s", "grant", grantId.toString())
                 ).and(
-                        "iam:DeleteGrant", locatorConfiguration.fullLocator("{}", "grant", grantId.toString())
+                        "iam:DeleteGrant", locatorConfiguration.fullLocator("%s", "grant", grantId.toString())
                 ), principalId);
         deleteGrantOut(authCheckingContext, grantId);
         return RestResultPacker.success("Grant Deleted.");
@@ -263,7 +263,7 @@ public class AuthorizationApi {
     public RestResultPacker<Page<AuthorizationPolicyGrant.Vo>> pagingGrantsIn(HttpServletRequest request, @RequestParam int page, @RequestParam int size) throws HTTPException {
         AuthCheckingContext authCheckingContext = authCheckingHelper.myResources(
                 request, AuthCheckingStatement.checks(
-                        "iam:GetGrant", locatorConfiguration.fullLocator("{}", "grant-in")
+                        "iam:GetGrant", locatorConfiguration.fullLocator("%s", "grant-in")
                 ));
         Page<AuthorizationPolicyGrant> grantsPage = authorizationPolicyGrantService.pagingGrantsTo(authCheckingContext.getCurrentSession().getAuthenticationPrincipal(), page, size);
         return RestResultPacker.success(grantsPage.map(owner -> owner.vo(locatorConfiguration)));
@@ -274,7 +274,7 @@ public class AuthorizationApi {
     public RestResultPacker<Page<AuthorizationPolicyGrant.Vo>> pagingGrantsIn(HttpServletRequest request, @PathVariable Long principalId, @RequestParam int page, @RequestParam int size) throws HTTPException {
         AuthCheckingContext authCheckingContext = authCheckingHelper.theirResources(
                 request, AuthCheckingStatement.checks(
-                        "iam:GetGrant", locatorConfiguration.fullLocator("{}", "grant-in")
+                        "iam:GetGrant", locatorConfiguration.fullLocator("%s", "grant-in")
                 ), principalId);
         Page<AuthorizationPolicyGrant> grantsPage = authorizationPolicyGrantService.pagingGrantsTo(authCheckingContext.getCurrentSession().getAuthenticationPrincipal(), page, size);
         return RestResultPacker.success(grantsPage.map(owner -> owner.vo(locatorConfiguration)));
@@ -285,7 +285,7 @@ public class AuthorizationApi {
     public RestResultPacker<AuthorizationChallengeForm> authorizationChallenging(HttpServletRequest request, @RequestBody @Validated AuthorizationChallengeForm form) throws HTTPException {
         AuthCheckingContext authCheckingContext = authCheckingHelper.myResources(
                 request, AuthCheckingStatement.checks(
-                        "iam:ChallengeAuth", locatorConfiguration.fullLocator("{}", "auth-challenging")
+                        "iam:ChallengeAuth", locatorConfiguration.fullLocator("%s", "auth-challenging")
                 ));
         boolean accessible = authorizationService.challenge(authCheckingContext.getCurrentSession().getAuthenticationPrincipal(), form.getAction(), form.resourcesArray());
         if (!accessible) {
@@ -299,7 +299,7 @@ public class AuthorizationApi {
     public RestResultPacker<AuthorizationChallengeForm> authorizationChallenging(HttpServletRequest request, @PathVariable Long principalId, @RequestBody @Validated AuthorizationChallengeForm form) throws HTTPException {
         AuthCheckingContext authCheckingContext = authCheckingHelper.theirResources(
                 request, AuthCheckingStatement.checks(
-                        "iam:ChallengeAuth", locatorConfiguration.fullLocator("{}", "auth-challenging")
+                        "iam:ChallengeAuth", locatorConfiguration.fullLocator("%s", "auth-challenging")
                 ), principalId);
         boolean accessible = authorizationService.challenge(authCheckingContext.getCurrentSession().getAuthenticationPrincipal(), form.getAction(), form.resourcesArray());
         if (!accessible) {
@@ -314,7 +314,7 @@ public class AuthorizationApi {
         try {
             AuthCheckingContext authCheckingContext = authCheckingHelper.theirResources(
                     request, AuthCheckingStatement.checks(
-                            "iam:ChallengeAuth", locatorConfiguration.fullLocator("{}", "auth-challenging")
+                            "iam:ChallengeAuth", locatorConfiguration.fullLocator("%s", "auth-challenging")
                     ), AuthenticationPrincipal.idFromLocator(locatorConfiguration, form.getPrincipal()));
             boolean accessible = authorizationService.challenge(authCheckingContext.getResourceOwner(), form.getAction(), form.resourcesArray());
             if (!accessible) {
