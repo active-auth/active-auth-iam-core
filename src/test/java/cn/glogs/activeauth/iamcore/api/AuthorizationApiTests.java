@@ -2,7 +2,8 @@ package cn.glogs.activeauth.iamcore.api;
 
 import cn.glogs.activeauth.iamcore.api.payload.AuthorizationChallengeForm;
 import cn.glogs.activeauth.iamcore.api.payload.AuthorizationPolicyGrantingForm;
-import cn.glogs.activeauth.iamcore.config.properties.Configuration;
+import cn.glogs.activeauth.iamcore.config.properties.AuthConfiguration;
+import cn.glogs.activeauth.iamcore.config.properties.LocatorConfiguration;
 import cn.glogs.activeauth.iamcore.domain.*;
 import cn.glogs.activeauth.iamcore.domain.sign.HTTPSignatureRsaSha256Signer;
 import cn.glogs.activeauth.iamcore.util.ResponseContentMapper;
@@ -23,6 +24,7 @@ import java.util.*;
 class AuthorizationApiTests {
 
     private final TestRequestTool testRequestTool;
+    private final LocatorConfiguration locatorConfiguration;
     private final String timestampHeaderName;
     private static final Base64.Decoder base64Decoder = Base64.getDecoder();
 
@@ -50,9 +52,10 @@ class AuthorizationApiTests {
     private List<AuthorizationPolicyGrant.Vo> testGrants;
 
     @Autowired
-    public AuthorizationApiTests(MockMvc mockMvc, Configuration configuration) {
-        this.testRequestTool = new TestRequestTool(mockMvc, configuration);
-        this.timestampHeaderName = configuration.getTimestampHeaderName();
+    public AuthorizationApiTests(MockMvc mockMvc, AuthConfiguration authConfiguration, LocatorConfiguration locatorConfiguration) {
+        this.testRequestTool = new TestRequestTool(mockMvc, authConfiguration);
+        this.locatorConfiguration = locatorConfiguration;
+        this.timestampHeaderName = authConfiguration.getTimestampHeaderName();
     }
 
     @BeforeEach
@@ -94,7 +97,7 @@ class AuthorizationApiTests {
     void testCreatePolicy() throws Exception {
         // create policy-1 of user-1
         String user1Locator = user1Principal.getResourceLocator();
-        Long user1Id = AuthenticationPrincipal.idFromLocator(user1Locator);
+        Long user1Id = AuthenticationPrincipal.idFromLocator(locatorConfiguration, user1Locator);
         AuthorizationPolicy.Form createPolicy1Form = new AuthorizationPolicy.Form();
         createPolicy1Form.setName("policy-1: Pony's bookshelf");
         createPolicy1Form.setEffect(AuthorizationPolicy.PolicyEffect.ALLOW);
@@ -109,7 +112,7 @@ class AuthorizationApiTests {
 
         // create policy-2 of user-2
         String user2Locator = user2Principal.getResourceLocator();
-        Long user2Id = AuthenticationPrincipal.idFromLocator(user2Locator);
+        Long user2Id = AuthenticationPrincipal.idFromLocator(locatorConfiguration, user2Locator);
         AuthorizationPolicy.Form createPolicy2Form = new AuthorizationPolicy.Form();
         createPolicy2Form.setName("policy-2: Jack's petshop");
         createPolicy2Form.setEffect(AuthorizationPolicy.PolicyEffect.ALLOW);
@@ -158,7 +161,7 @@ class AuthorizationApiTests {
     void testChallengingAuthorities() throws Exception {
         testAddGrant();
 
-        Long user1Id = AuthenticationPrincipal.idFromLocator(user1Principal.getResourceLocator());
+        Long user1Id = AuthenticationPrincipal.idFromLocator(locatorConfiguration, user1Principal.getResourceLocator());
         AuthorizationChallengeForm challengingForm = new AuthorizationChallengeForm();
         challengingForm.setAction("bookshelf:getBook");
         challengingForm.setResources(List.of(String.format("bookshelf://users/%s/favorite-books", user1Id)));
@@ -179,7 +182,7 @@ class AuthorizationApiTests {
     void testCreatePolicyInWildcard() throws Exception {
         // create policy-1a of user-1, ALLOW some resources.
         String user1Locator = user1Principal.getResourceLocator();
-        Long user1Id = AuthenticationPrincipal.idFromLocator(user1Locator);
+        Long user1Id = AuthenticationPrincipal.idFromLocator(locatorConfiguration, user1Locator);
         AuthorizationPolicy.Form createPolicy1aForm = new AuthorizationPolicy.Form();
         createPolicy1aForm.setName("policy-1a: Pony's bookshelf");
         createPolicy1aForm.setEffect(AuthorizationPolicy.PolicyEffect.ALLOW);
@@ -240,7 +243,7 @@ class AuthorizationApiTests {
     void testChallengingAuthoritiesInWildcardingPolicies() throws Exception {
         testAddGrantInWildcardingPolicies();
 
-        Long user1Id = AuthenticationPrincipal.idFromLocator(user1Principal.getResourceLocator());
+        Long user1Id = AuthenticationPrincipal.idFromLocator(locatorConfiguration, user1Principal.getResourceLocator());
         AuthorizationChallengeForm challengingForm = new AuthorizationChallengeForm();
 
         // User2 challenging granted denied resource, expecting 403.
@@ -285,7 +288,7 @@ class AuthorizationApiTests {
         Map<String, String> headers = new HashMap<>();
         headers.put(timestampHeaderName, Long.toString(currentTimestampSeconds));
 
-        Long user1Id = AuthenticationPrincipal.idFromLocator(user1Principal.getResourceLocator());
+        Long user1Id = AuthenticationPrincipal.idFromLocator(locatorConfiguration, user1Principal.getResourceLocator());
         AuthorizationChallengeForm challengingForm = new AuthorizationChallengeForm();
         challengingForm.setAction("bookshelf:getBook");
         challengingForm.setResources(List.of(String.format("bookshelf://users/%s/favorite-books", user1Id)));

@@ -1,5 +1,6 @@
 package cn.glogs.activeauth.iamcore.domain;
 
+import cn.glogs.activeauth.iamcore.config.properties.LocatorConfiguration;
 import cn.glogs.activeauth.iamcore.domain.password.PasswordHashingStrategy;
 import cn.glogs.activeauth.iamcore.exception.business.PatternException;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -55,8 +56,8 @@ public class AuthenticationPrincipal implements IamResource {
     }
 
     @Override
-    public String resourceLocator() {
-        return String.format("%s://users/%s/principal", "iam", id);
+    public String resourceLocator(LocatorConfiguration locatorConfiguration) {
+        return locatorConfiguration.fullLocator(id.toString(), "principal");
     }
 
     public AuthenticationPrincipal(
@@ -80,19 +81,19 @@ public class AuthenticationPrincipal implements IamResource {
         return null != principalType && principalType != type;
     }
 
-    public static enum PrincipalType {
+    public enum PrincipalType {
         PRINCIPAL, PRINCIPAL_GROUP, APP_DOMAIN;
     }
 
-    public static Long idFromLocator(String locator) throws PatternException {
-        String pattern = "^iam://users/(\\d+)/principal/?$";
+    public static Long idFromLocator(LocatorConfiguration locatorConfiguration, String locator) throws PatternException {
+        String pattern = locatorConfiguration.fullPattern("principal");
         Pattern r = Pattern.compile(pattern);
         Matcher m = r.matcher(locator);
         if (m.find()) {
             String principalIdStr = m.group(1);
             return Long.valueOf(principalIdStr);
         } else {
-            throw new PatternException("Principal locator regex not matching for ^iam://users/\\d+$/principal/?");
+            throw new PatternException("Principal locator regex not matching for " + pattern);
         }
     }
 
@@ -100,10 +101,10 @@ public class AuthenticationPrincipal implements IamResource {
         return passwordHashingStrategy.getHashing().check(toCheckPassword, encryptedPassword);
     }
 
-    public Vo vo() {
+    public Vo vo(LocatorConfiguration locatorConfiguration) {
         Vo vo = new Vo();
         vo.id = id;
-        vo.resourceLocator = this.resourceLocator();
+        vo.resourceLocator = this.resourceLocator(locatorConfiguration);
         vo.name = name;
         vo.description = description;
         vo.createAt = createdAt;
@@ -117,7 +118,7 @@ public class AuthenticationPrincipal implements IamResource {
     @Schema(name = "AuthenticationPrincipal.Vo")
     public static class Vo {
         private Long id;
-        @Schema(defaultValue = "iam://users/116/principal")
+//        @Schema(defaultValue = "iam://users/116/principal")
         private String resourceLocator;
         @Schema(defaultValue = "pony")
         private String name;

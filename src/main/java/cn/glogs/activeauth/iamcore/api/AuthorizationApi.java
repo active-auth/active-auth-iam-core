@@ -2,6 +2,7 @@ package cn.glogs.activeauth.iamcore.api;
 
 import cn.glogs.activeauth.iamcore.api.helper.AuthCheckingHelper;
 import cn.glogs.activeauth.iamcore.api.payload.*;
+import cn.glogs.activeauth.iamcore.config.properties.LocatorConfiguration;
 import cn.glogs.activeauth.iamcore.domain.AuthenticationPrincipal;
 import cn.glogs.activeauth.iamcore.domain.AuthenticationSession;
 import cn.glogs.activeauth.iamcore.domain.AuthorizationPolicy;
@@ -27,13 +28,22 @@ public class AuthorizationApi {
     private final AuthorizationPolicyService authorizationPolicyService;
     private final AuthorizationPolicyGrantService authorizationPolicyGrantService;
     private final AuthCheckingHelper authCheckingHelper;
+    private final LocatorConfiguration locatorConfiguration;
 
-    public AuthorizationApi(AuthenticationPrincipalService authenticationPrincipalService, AuthorizationService authorizationService, AuthorizationPolicyService authorizationPolicyService, AuthorizationPolicyGrantService authorizationPolicyGrantService, AuthCheckingHelper authCheckingHelper) {
+    public AuthorizationApi(
+            AuthenticationPrincipalService authenticationPrincipalService, 
+            AuthorizationService authorizationService, 
+            AuthorizationPolicyService authorizationPolicyService, 
+            AuthorizationPolicyGrantService authorizationPolicyGrantService, 
+            AuthCheckingHelper authCheckingHelper,
+            LocatorConfiguration locatorConfiguration
+    ) {
         this.authenticationPrincipalService = authenticationPrincipalService;
         this.authorizationService = authorizationService;
         this.authorizationPolicyService = authorizationPolicyService;
         this.authorizationPolicyGrantService = authorizationPolicyGrantService;
         this.authCheckingHelper = authCheckingHelper;
+        this.locatorConfiguration = locatorConfiguration;
     }
 
     @Operation(tags = {"authorization-policy"})
@@ -41,7 +51,7 @@ public class AuthorizationApi {
     public RestResultPacker<AuthorizationPolicy.Vo> addPolicy(HttpServletRequest request, @RequestBody @Validated AuthorizationPolicy.Form form) throws HTTPException {
         AuthCheckingContext authCheckingContext = authCheckingHelper.myResources(request, AuthCheckingStatement.checks("iam:AddPolicy", "iam://users/%s/policies"));
         AuthorizationPolicy authorizationPolicy = authorizationPolicyService.addPolicy(authCheckingContext.getResourceOwner(), form);
-        return RestResultPacker.success(authorizationPolicy.vo());
+        return RestResultPacker.success(authorizationPolicy.vo(locatorConfiguration));
     }
 
     @Operation(tags = {"authorization-policy"})
@@ -49,21 +59,21 @@ public class AuthorizationApi {
     public RestResultPacker<AuthorizationPolicy.Vo> addPolicy(HttpServletRequest request, @PathVariable Long principalId, @RequestBody @Validated AuthorizationPolicy.Form form) throws HTTPException {
         AuthCheckingContext authCheckingContext = authCheckingHelper.theirResources(request, AuthCheckingStatement.checks("iam:AddPolicy", "iam://users/%s/policies"), principalId);
         AuthorizationPolicy authorizationPolicy = authorizationPolicyService.addPolicy(authCheckingContext.getResourceOwner(), form);
-        return RestResultPacker.success(authorizationPolicy.vo());
+        return RestResultPacker.success(authorizationPolicy.vo(locatorConfiguration));
     }
 
     @Operation(tags = {"authorization-policy"})
     @GetMapping("/principals/current/policies")
     public RestResultPacker<Page<AuthorizationPolicy.Vo>> pagingPolicies(HttpServletRequest request, @RequestParam int page, @RequestParam int size) throws HTTPException {
         AuthCheckingContext authCheckingContext = authCheckingHelper.myResources(request, AuthCheckingStatement.checks("iam:GetPolicy", "iam://users/%s/policies"));
-        return RestResultPacker.success(authorizationPolicyService.pagingPolicies(authCheckingContext.getResourceOwner(), page, size).map(AuthorizationPolicy::vo));
+        return RestResultPacker.success(authorizationPolicyService.pagingPolicies(authCheckingContext.getResourceOwner(), page, size).map(owner -> owner.vo(locatorConfiguration)));
     }
 
     @Operation(tags = {"authorization-policy"})
     @GetMapping("/principals/{principalId}/policies")
     public RestResultPacker<Page<AuthorizationPolicy.Vo>> pagingPolicies(HttpServletRequest request, @PathVariable Long principalId, @RequestParam int page, @RequestParam int size) throws HTTPException {
         AuthCheckingContext authCheckingContext = authCheckingHelper.theirResources(request, AuthCheckingStatement.checks("iam:GetPolicy", "iam://users/%s/policies"), principalId);
-        return RestResultPacker.success(authorizationPolicyService.pagingPolicies(authCheckingContext.getResourceOwner(), page, size).map(AuthorizationPolicy::vo));
+        return RestResultPacker.success(authorizationPolicyService.pagingPolicies(authCheckingContext.getResourceOwner(), page, size).map(owner -> owner.vo(locatorConfiguration)));
     }
 
     private void deletePolicy(AuthCheckingContext authCheckingContext, Long policyId) throws HTTP404Exception {
@@ -101,8 +111,8 @@ public class AuthorizationApi {
             // Check if Current User can get those policies.
             AuthenticationSession session = null;
             for (String policyLocator : grantingPolicyLocators) {
-                Long policyId = AuthorizationPolicy.idFromLocator(policyLocator);
-                Long policyOwnerId = AuthorizationPolicy.ownerIdFromLocator(policyLocator);
+                Long policyId = AuthorizationPolicy.idFromLocator(locatorConfiguration, policyLocator);
+                Long policyOwnerId = AuthorizationPolicy.ownerIdFromLocator(locatorConfiguration, policyLocator);
                 AuthorizationPolicy policy = authorizationPolicyService.getPolicyById(policyId);
                 if (session == null) {
                     AuthCheckingContext authCheckingContext = authCheckingHelper.theirResources(request, AuthCheckingStatement.checks("iam:GetPolicy", "iam://users/%s/policies"), policyOwnerId);
@@ -123,10 +133,10 @@ public class AuthorizationApi {
     private List<AuthorizationPolicyGrant.Vo> grantingPolicies(AuthCheckingContext authCheckingContext, String granteeLocator, List<AuthorizationPolicy> policies) throws HTTPException {
         try {
             AuthenticationPrincipal granter = authCheckingContext.getCurrentSession().getAuthenticationPrincipal();
-            AuthenticationPrincipal grantee = authenticationPrincipalService.findPrincipalById(AuthenticationPrincipal.idFromLocator(granteeLocator));
+            AuthenticationPrincipal grantee = authenticationPrincipalService.findPrincipalById(AuthenticationPrincipal.idFromLocator(locatorConfiguration, granteeLocator));
             List<AuthorizationPolicyGrant> policyGrants = authorizationPolicyGrantService.addGrants(granter, grantee, policies);
             List<AuthorizationPolicyGrant.Vo> results = new ArrayList<>();
-            policyGrants.forEach(policyGrant -> results.add(policyGrant.vo()));
+            policyGrants.forEach(policyGrant -> results.add(policyGrant.vo(locatorConfiguration)));
             return results;
         } catch (PatternException e) {
             throw new HTTP400Exception(e);
@@ -158,7 +168,7 @@ public class AuthorizationApi {
     public RestResultPacker<Page<AuthorizationPolicyGrant.Vo>> pagingGrantsOut(HttpServletRequest request, @RequestParam int page, @RequestParam int size) throws HTTPException {
         AuthCheckingContext authCheckingContext = authCheckingHelper.myResources(request, AuthCheckingStatement.checks("iam:GetGrant", "iam://users/%s/grants"));
         Page<AuthorizationPolicyGrant> grantsPage = authorizationPolicyGrantService.pagingGrantsFrom(authCheckingContext.getCurrentSession().getAuthenticationPrincipal(), page, size);
-        return RestResultPacker.success(grantsPage.map(AuthorizationPolicyGrant::vo));
+        return RestResultPacker.success(grantsPage.map(owner -> owner.vo(locatorConfiguration)));
     }
 
     @Operation(tags = {"authorization-grant"})
@@ -166,7 +176,7 @@ public class AuthorizationApi {
     public RestResultPacker<Page<AuthorizationPolicyGrant.Vo>> pagingGrantsOut(HttpServletRequest request, @PathVariable Long principalId, @RequestParam int page, @RequestParam int size) throws HTTPException {
         AuthCheckingContext authCheckingContext = authCheckingHelper.theirResources(request, AuthCheckingStatement.checks("iam:GetGrant", "iam://users/%s/grants"), principalId);
         Page<AuthorizationPolicyGrant> grantsPage = authorizationPolicyGrantService.pagingGrantsFrom(authCheckingContext.getCurrentSession().getAuthenticationPrincipal(), page, size);
-        return RestResultPacker.success(grantsPage.map(AuthorizationPolicyGrant::vo));
+        return RestResultPacker.success(grantsPage.map(owner -> owner.vo(locatorConfiguration)));
     }
 
     private void deleteGrantOut(AuthCheckingContext authCheckingContext, Long grantId) throws HTTP404Exception {
@@ -203,7 +213,7 @@ public class AuthorizationApi {
     public RestResultPacker<Page<AuthorizationPolicyGrant.Vo>> pagingGrantsIn(HttpServletRequest request, @RequestParam int page, @RequestParam int size) throws HTTPException {
         AuthCheckingContext authCheckingContext = authCheckingHelper.myResources(request, AuthCheckingStatement.checks("iam:GetGrant", "iam://users/%s/grants-in"));
         Page<AuthorizationPolicyGrant> grantsPage = authorizationPolicyGrantService.pagingGrantsTo(authCheckingContext.getCurrentSession().getAuthenticationPrincipal(), page, size);
-        return RestResultPacker.success(grantsPage.map(AuthorizationPolicyGrant::vo));
+        return RestResultPacker.success(grantsPage.map(owner -> owner.vo(locatorConfiguration)));
     }
 
     @Operation(tags = {"authorization-grant"})
@@ -211,7 +221,7 @@ public class AuthorizationApi {
     public RestResultPacker<Page<AuthorizationPolicyGrant.Vo>> pagingGrantsIn(HttpServletRequest request, @PathVariable Long principalId, @RequestParam int page, @RequestParam int size) throws HTTPException {
         AuthCheckingContext authCheckingContext = authCheckingHelper.theirResources(request, AuthCheckingStatement.checks("iam:GetGrant", "iam://users/%s/grants-in"), principalId);
         Page<AuthorizationPolicyGrant> grantsPage = authorizationPolicyGrantService.pagingGrantsTo(authCheckingContext.getCurrentSession().getAuthenticationPrincipal(), page, size);
-        return RestResultPacker.success(grantsPage.map(AuthorizationPolicyGrant::vo));
+        return RestResultPacker.success(grantsPage.map(owner -> owner.vo(locatorConfiguration)));
     }
 
     @Operation(tags = {"authorization-challenging"})
@@ -240,7 +250,7 @@ public class AuthorizationApi {
     @PostMapping("/principals/current/authorization-principal-challengings")
     public RestResultPacker<AuthorizationChallengeFormOfPrincipal> authorizationChallengingOfPrincipal(HttpServletRequest request, @RequestBody @Validated AuthorizationChallengeFormOfPrincipal form) throws HTTPException {
         try {
-            AuthCheckingContext authCheckingContext = authCheckingHelper.theirResources(request, AuthCheckingStatement.checks("iam:ChallengeAuth", "iam://users/%s/auth-challengings"), AuthenticationPrincipal.idFromLocator(form.getPrincipal()));
+            AuthCheckingContext authCheckingContext = authCheckingHelper.theirResources(request, AuthCheckingStatement.checks("iam:ChallengeAuth", "iam://users/%s/auth-challengings"), AuthenticationPrincipal.idFromLocator(locatorConfiguration, form.getPrincipal()));
             boolean accessible = authorizationService.challenge(authCheckingContext.getResourceOwner(), form.getAction(), form.resourcesArray());
             if (!accessible) {
                 throw new HTTP403Exception("Inaccessible!");

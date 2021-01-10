@@ -4,7 +4,8 @@ import cn.glogs.activeauth.iamcore.api.helper.AuthCheckingHelper;
 import cn.glogs.activeauth.iamcore.api.payload.AuthCheckingStatement;
 import cn.glogs.activeauth.iamcore.api.payload.AuthCheckingContext;
 import cn.glogs.activeauth.iamcore.api.payload.RestResultPacker;
-import cn.glogs.activeauth.iamcore.config.properties.Configuration;
+import cn.glogs.activeauth.iamcore.config.properties.AuthConfiguration;
+import cn.glogs.activeauth.iamcore.config.properties.LocatorConfiguration;
 import cn.glogs.activeauth.iamcore.domain.AuthenticationPrincipal;
 import cn.glogs.activeauth.iamcore.domain.AuthenticationPrincipalSecretKey;
 import cn.glogs.activeauth.iamcore.exception.HTTP403Exception;
@@ -30,18 +31,22 @@ public class AuthenticationApi {
 
     private final AuthCheckingHelper authCheckingHelper;
 
-    private final Configuration configuration;
+    private final AuthConfiguration authConfiguration;
+
+    private final LocatorConfiguration locatorConfiguration;
 
     public AuthenticationApi(
             AuthenticationPrincipalService authenticationPrincipalService,
             AuthenticationPrincipalSecretKeyService authenticationPrincipalSecretKeyService,
             AuthCheckingHelper authCheckingHelper,
-            Configuration configuration
+            AuthConfiguration authConfiguration,
+            LocatorConfiguration locatorConfiguration
     ) {
         this.authenticationPrincipalService = authenticationPrincipalService;
         this.authenticationPrincipalSecretKeyService = authenticationPrincipalSecretKeyService;
         this.authCheckingHelper = authCheckingHelper;
-        this.configuration = configuration;
+        this.authConfiguration = authConfiguration;
+        this.locatorConfiguration = locatorConfiguration;
     }
 
     @Operation(tags = {"authentication-principal"})
@@ -53,23 +58,23 @@ public class AuthenticationApi {
                 form.isSessionCreatable(), form.isSignatureCreatable(),
                 form.isSessionUsable(), form.isSignatureUsable(),
                 AuthenticationPrincipal.PrincipalType.PRINCIPAL,
-                configuration.getPasswordHashingStrategy()
+                authConfiguration.getPasswordHashingStrategy()
         );
-        return RestResultPacker.success(authenticationPrincipalService.createPrincipal(toCreatePrincipal).vo());
+        return RestResultPacker.success(authenticationPrincipalService.createPrincipal(toCreatePrincipal).vo(locatorConfiguration));
     }
 
     @Operation(tags = {"authentication-principal"})
     @GetMapping("/principals")
     public RestResultPacker<Page<AuthenticationPrincipal.Vo>> pagingPrincipals(HttpServletRequest request, int page, int size) throws HTTPException {
         authCheckingHelper.systemResources(request, AuthCheckingStatement.checks("iam:GetPrincipal", "iam://principals"));
-        return RestResultPacker.success(authenticationPrincipalService.pagingPrincipals(page, size).map((AuthenticationPrincipal::vo)));
+        return RestResultPacker.success(authenticationPrincipalService.pagingPrincipals(page, size).map(owner -> owner.vo(locatorConfiguration)));
     }
 
     @Operation(tags = {"authentication-principal"})
     @GetMapping("/principals/current")
     public RestResultPacker<AuthenticationPrincipal.Vo> getCurrentPrincipal(HttpServletRequest request) throws HTTPException {
         AuthCheckingContext authCheckingContext = authCheckingHelper.myResources(request, AuthCheckingStatement.checks("iam:GetPrincipal", "iam://users/%s/principal"));
-        return RestResultPacker.success(authCheckingContext.getCurrentSession().getAuthenticationPrincipal().vo());
+        return RestResultPacker.success(authCheckingContext.getCurrentSession().getAuthenticationPrincipal().vo(locatorConfiguration));
     }
 
     @Operation(tags = {"authentication-secret-key"})
@@ -77,7 +82,7 @@ public class AuthenticationApi {
     public RestResultPacker<AuthenticationPrincipalSecretKey.Vo> genSecretKey(HttpServletRequest request, @RequestBody AuthenticationPrincipalSecretKey.GenKeyPairForm form) throws HTTPException {
         AuthCheckingContext authCheckingContext = authCheckingHelper.myResources(request, AuthCheckingStatement.checks("iam:GenerateSecretKey", "iam://users/%s/secret-keys"));
         try {
-            return RestResultPacker.success(authenticationPrincipalSecretKeyService.generateRSA2048KeyPair(authCheckingContext.getCurrentSession().getAuthenticationPrincipal(), form).vo());
+            return RestResultPacker.success(authenticationPrincipalSecretKeyService.generateRSA2048KeyPair(authCheckingContext.getCurrentSession().getAuthenticationPrincipal(), form).vo(locatorConfiguration));
         } catch (SignatureException e) {
             throw new HTTP403Exception(e);
         }
@@ -88,7 +93,7 @@ public class AuthenticationApi {
     public RestResultPacker<Page<AuthenticationPrincipalSecretKey.Vo>> pagingSecretKey(HttpServletRequest request, @RequestParam int page, @RequestParam int size) throws HTTPException {
         AuthCheckingContext authCheckingContext = authCheckingHelper.myResources(request, AuthCheckingStatement.checks("iam:GetSecretKey", "iam://users/%s/secret-keys"));
         Page<AuthenticationPrincipalSecretKey> keyPairPage = authenticationPrincipalSecretKeyService.pagingKeysOfOwner(authCheckingContext.getCurrentSession().getAuthenticationPrincipal(), page, size);
-        return RestResultPacker.success(keyPairPage.map((keyPair) -> keyPair.vo().securePrivateKey()));
+        return RestResultPacker.success(keyPairPage.map((keyPair) -> keyPair.vo(locatorConfiguration).securePrivateKey()));
     }
 
     @Operation(tags = {"authentication-secret-key"})
@@ -117,17 +122,17 @@ public class AuthenticationApi {
                 form.isSessionCreatable(), form.isSignatureCreatable(),
                 form.isSessionUsable(), form.isSignatureUsable(),
                 AuthenticationPrincipal.PrincipalType.PRINCIPAL,
-                configuration.getPasswordHashingStrategy()
+                authConfiguration.getPasswordHashingStrategy()
         );
         toCreatePrincipal.setOwner(authCheckingContext.getResourceOwner());
-        return RestResultPacker.success(authenticationPrincipalService.createPrincipal(toCreatePrincipal).vo());
+        return RestResultPacker.success(authenticationPrincipalService.createPrincipal(toCreatePrincipal).vo(locatorConfiguration));
     }
 
     @Operation(tags = {"authentication-subprincipal"})
     @GetMapping("/principals/current/subprincipals")
     public RestResultPacker<Page<AuthenticationPrincipal.Vo>> pagingSubprincipals(HttpServletRequest request, @RequestParam int page, @RequestParam int size) throws HTTPException {
         AuthCheckingContext authCheckingContext = authCheckingHelper.myResources(request, AuthCheckingStatement.checks("iam:GetSubprincipal", "iam://users/%s/subprincipals"));
-        return RestResultPacker.success(authenticationPrincipalService.pagingSubprincipals(authCheckingContext.getCurrentSession().getAuthenticationPrincipal(), page, size).map((AuthenticationPrincipal::vo)));
+        return RestResultPacker.success(authenticationPrincipalService.pagingSubprincipals(authCheckingContext.getCurrentSession().getAuthenticationPrincipal(), page, size).map(owner -> owner.vo(locatorConfiguration)));
     }
 
     @Operation(tags = {"authentication-subprincipal"})
@@ -161,7 +166,7 @@ public class AuthenticationApi {
             if (subprincipalToFind.getOwner() != null && !subprincipalToFind.getOwner().getId().equals(challenger.getId())) {
                 throw new NotFoundException(String.format("Cannot find subprincipal %s of principal %s.", subprincipalId, challenger.getId()));
             }
-            return RestResultPacker.success(subprincipalToFind.vo());
+            return RestResultPacker.success(subprincipalToFind.vo(locatorConfiguration));
         } catch (NotFoundException e) {
             throw new HTTP404Exception(e);
         }
@@ -173,7 +178,7 @@ public class AuthenticationApi {
         try {
             AuthenticationPrincipal principal = authenticationPrincipalService.findPrincipalById(principalId);
             authCheckingHelper.theirResources(request, AuthCheckingStatement.checks("iam:GetPrincipal", "iam://users/%s/principal"), principal);
-            return RestResultPacker.success(principal.vo());
+            return RestResultPacker.success(principal.vo(locatorConfiguration));
         } catch (NotFoundException e) {
             throw new HTTP404Exception(e);
         }
@@ -201,7 +206,7 @@ public class AuthenticationApi {
     public RestResultPacker<AuthenticationPrincipalSecretKey.Vo> genSecretKey(HttpServletRequest request, @PathVariable Long principalId, @RequestBody AuthenticationPrincipalSecretKey.GenKeyPairForm form) throws HTTPException {
         AuthCheckingContext authCheckingContext = authCheckingHelper.theirResources(request, AuthCheckingStatement.checks("iam:GenerateSecretKey", "iam://users/%s/secret-keys"), principalId);
         try {
-            return RestResultPacker.success(authenticationPrincipalSecretKeyService.generateRSA2048KeyPair(authCheckingContext.getResourceOwner(), form).vo());
+            return RestResultPacker.success(authenticationPrincipalSecretKeyService.generateRSA2048KeyPair(authCheckingContext.getResourceOwner(), form).vo(locatorConfiguration));
         } catch (SignatureException e) {
             throw new HTTP403Exception(e);
         }
@@ -212,7 +217,7 @@ public class AuthenticationApi {
     public RestResultPacker<Page<AuthenticationPrincipalSecretKey.Vo>> pagingSecretKeys(HttpServletRequest request, @PathVariable Long principalId, @RequestParam int page, @RequestParam int size) throws HTTPException {
         AuthCheckingContext authCheckingContext = authCheckingHelper.theirResources(request, AuthCheckingStatement.checks("iam:GetSecretKey", "iam://users/%s/secret-keys"), principalId);
         Page<AuthenticationPrincipalSecretKey> keyPairPage = authenticationPrincipalSecretKeyService.pagingKeysOfOwner(authCheckingContext.getResourceOwner(), page, size);
-        return RestResultPacker.success(keyPairPage.map((keyPair) -> keyPair.vo().securePrivateKey()));
+        return RestResultPacker.success(keyPairPage.map((keyPair) -> keyPair.vo(locatorConfiguration).securePrivateKey()));
     }
 
     @Operation(tags = {"authentication-secret-key"})
@@ -241,17 +246,17 @@ public class AuthenticationApi {
                 form.isSessionCreatable(), form.isSignatureCreatable(),
                 form.isSessionUsable(), form.isSignatureUsable(),
                 AuthenticationPrincipal.PrincipalType.PRINCIPAL,
-                configuration.getPasswordHashingStrategy()
+                authConfiguration.getPasswordHashingStrategy()
         );
         toCreatePrincipal.setOwner(authCheckingContext.getResourceOwner());
-        return RestResultPacker.success(authenticationPrincipalService.createPrincipal(toCreatePrincipal).vo());
+        return RestResultPacker.success(authenticationPrincipalService.createPrincipal(toCreatePrincipal).vo(locatorConfiguration));
     }
 
     @Operation(tags = {"authentication-subprincipal"})
     @GetMapping("/principals/{principalId}/subprincipals")
     public RestResultPacker<Page<AuthenticationPrincipal.Vo>> pagingSubprincipals(HttpServletRequest request, @PathVariable Long principalId, @RequestParam int page, @RequestParam int size) throws HTTPException {
         AuthCheckingContext authCheckingContext = authCheckingHelper.theirResources(request, AuthCheckingStatement.checks("iam:GetSubprincipal", "iam://users/%s/subprincipals"), principalId);
-        return RestResultPacker.success(authenticationPrincipalService.pagingSubprincipals(authCheckingContext.getResourceOwner(), page, size).map((AuthenticationPrincipal::vo)));
+        return RestResultPacker.success(authenticationPrincipalService.pagingSubprincipals(authCheckingContext.getResourceOwner(), page, size).map(owner -> owner.vo(locatorConfiguration)));
     }
 
     @Operation(tags = {"authentication-subprincipal"})
@@ -263,7 +268,7 @@ public class AuthenticationApi {
             if (subprincipalToFind.getOwner() != null && !subprincipalToFind.getOwner().getId().equals(principalId) && subprincipalToFind.typeIs(AuthenticationPrincipal.PrincipalType.PRINCIPAL)) {
                 throw new NotFoundException(String.format("Cannot find subprincipal %s of principal %s.", subprincipalId, principalId));
             }
-            return RestResultPacker.success(subprincipalToFind.vo());
+            return RestResultPacker.success(subprincipalToFind.vo(locatorConfiguration));
         } catch (NotFoundException e) {
             throw new HTTP404Exception(e);
         }
@@ -298,10 +303,10 @@ public class AuthenticationApi {
                 form.getName(), "NO-PASSWORD",
                 false, false, false, false,
                 AuthenticationPrincipal.PrincipalType.PRINCIPAL_GROUP,
-                configuration.getPasswordHashingStrategy()
+                authConfiguration.getPasswordHashingStrategy()
         );
         toCreatePrincipal.setOwner(authCheckingContext.getResourceOwner());
-        return RestResultPacker.success(authenticationPrincipalService.createPrincipal(toCreatePrincipal).vo());
+        return RestResultPacker.success(authenticationPrincipalService.createPrincipal(toCreatePrincipal).vo(locatorConfiguration));
     }
 
     @Operation(tags = {"authentication-principal-group"})
@@ -312,24 +317,24 @@ public class AuthenticationApi {
                 form.getName(), "NO-PASSWORD",
                 false, false, false, false,
                 AuthenticationPrincipal.PrincipalType.PRINCIPAL_GROUP,
-                configuration.getPasswordHashingStrategy()
+                authConfiguration.getPasswordHashingStrategy()
         );
         toCreatePrincipal.setOwner(authCheckingContext.getResourceOwner());
-        return RestResultPacker.success(authenticationPrincipalService.createPrincipal(toCreatePrincipal).vo());
+        return RestResultPacker.success(authenticationPrincipalService.createPrincipal(toCreatePrincipal).vo(locatorConfiguration));
     }
 
     @Operation(tags = {"authentication-principal-group"})
     @GetMapping("/principals/current/principal-groups")
     public RestResultPacker<Page<AuthenticationPrincipal.Vo>> pagingPrincipalGroups(HttpServletRequest request, @RequestParam int page, @RequestParam int size) throws HTTPException {
         AuthCheckingContext authCheckingContext = authCheckingHelper.myResources(request, AuthCheckingStatement.checks("iam:GetPrincipalGroup", "iam://users/%s/principal-groups"));
-        return RestResultPacker.success(authenticationPrincipalService.pagingPrincipalGroups(authCheckingContext.getResourceOwner(), page, size).map((AuthenticationPrincipal::vo)));
+        return RestResultPacker.success(authenticationPrincipalService.pagingPrincipalGroups(authCheckingContext.getResourceOwner(), page, size).map(owner -> owner.vo(locatorConfiguration)));
     }
 
     @Operation(tags = {"authentication-principal-group"})
     @GetMapping("/principals/{principalId}/principal-groups")
     public RestResultPacker<Page<AuthenticationPrincipal.Vo>> pagingPrincipalGroups(HttpServletRequest request, @PathVariable Long principalId, @RequestParam int page, @RequestParam int size) throws HTTPException {
         AuthCheckingContext authCheckingContext = authCheckingHelper.theirResources(request, AuthCheckingStatement.checks("iam:GetPrincipalGroup", "iam://users/%s/principal-groups"), principalId);
-        return RestResultPacker.success(authenticationPrincipalService.pagingPrincipalGroups(authCheckingContext.getResourceOwner(), page, size).map((AuthenticationPrincipal::vo)));
+        return RestResultPacker.success(authenticationPrincipalService.pagingPrincipalGroups(authCheckingContext.getResourceOwner(), page, size).map(owner -> owner.vo(locatorConfiguration)));
     }
 
     @Operation(tags = {"authentication-principal-group"})
@@ -341,7 +346,7 @@ public class AuthenticationApi {
             if (principalGroupToFind.getOwner() != null && !principalGroupToFind.typeIs(AuthenticationPrincipal.PrincipalType.PRINCIPAL_GROUP)) {
                 throw new NotFoundException(String.format("Cannot find principal group %s of principal %s.", principalGroupId, authCheckingContext.getResourceOwner().getId()));
             }
-            return RestResultPacker.success(principalGroupToFind.vo());
+            return RestResultPacker.success(principalGroupToFind.vo(locatorConfiguration));
         } catch (NotFoundException e) {
             throw new HTTP404Exception(e);
         }
@@ -356,7 +361,7 @@ public class AuthenticationApi {
             if (principalGroupToFind.getOwner() != null && !principalGroupToFind.getOwner().getId().equals(principalId) && !principalGroupToFind.typeIs(AuthenticationPrincipal.PrincipalType.PRINCIPAL_GROUP)) {
                 throw new NotFoundException(String.format("Cannot find principal group %s of principal %s.", principalGroupId, principalId));
             }
-            return RestResultPacker.success(principalGroupToFind.vo());
+            return RestResultPacker.success(principalGroupToFind.vo(locatorConfiguration));
         } catch (NotFoundException e) {
             throw new HTTP404Exception(e);
         }
@@ -403,10 +408,10 @@ public class AuthenticationApi {
                 form.getName(), "NO-PASSWORD",
                 false, true, false, true,
                 AuthenticationPrincipal.PrincipalType.APP_DOMAIN,
-                configuration.getPasswordHashingStrategy()
+                authConfiguration.getPasswordHashingStrategy()
         );
         toCreatePrincipal.setOwner(authCheckingContext.getResourceOwner());
-        return RestResultPacker.success(authenticationPrincipalService.createPrincipal(toCreatePrincipal).vo());
+        return RestResultPacker.success(authenticationPrincipalService.createPrincipal(toCreatePrincipal).vo(locatorConfiguration));
     }
 
     @Operation(tags = {"authentication-app-domain"})
@@ -417,24 +422,24 @@ public class AuthenticationApi {
                 form.getName(), "NO-PASSWORD",
                 false, true, false, true,
                 AuthenticationPrincipal.PrincipalType.APP_DOMAIN,
-                configuration.getPasswordHashingStrategy()
+                authConfiguration.getPasswordHashingStrategy()
         );
         toCreatePrincipal.setOwner(authCheckingContext.getResourceOwner());
-        return RestResultPacker.success(authenticationPrincipalService.createPrincipal(toCreatePrincipal).vo());
+        return RestResultPacker.success(authenticationPrincipalService.createPrincipal(toCreatePrincipal).vo(locatorConfiguration));
     }
 
     @Operation(tags = {"authentication-app-domain"})
     @GetMapping("/principals/current/app-domains")
     public RestResultPacker<Page<AuthenticationPrincipal.Vo>> pagingAppDomains(HttpServletRequest request, @RequestParam int page, @RequestParam int size) throws HTTPException {
         AuthCheckingContext authCheckingContext = authCheckingHelper.myResources(request, AuthCheckingStatement.checks("iam:GetAppDomain", "iam://users/%s/app-domains"));
-        return RestResultPacker.success(authenticationPrincipalService.pagingAppDomains(authCheckingContext.getResourceOwner(), page, size).map((AuthenticationPrincipal::vo)));
+        return RestResultPacker.success(authenticationPrincipalService.pagingAppDomains(authCheckingContext.getResourceOwner(), page, size).map(owner -> owner.vo(locatorConfiguration)));
     }
 
     @Operation(tags = {"authentication-app-domain"})
     @GetMapping("/principals/{principalId}/app-domains")
     public RestResultPacker<Page<AuthenticationPrincipal.Vo>> pagingAppDomains(HttpServletRequest request, @PathVariable Long principalId, @RequestParam int page, @RequestParam int size) throws HTTPException {
         AuthCheckingContext authCheckingContext = authCheckingHelper.theirResources(request, AuthCheckingStatement.checks("iam:GetAppDomain", "iam://users/%s/app-domains"), principalId);
-        return RestResultPacker.success(authenticationPrincipalService.pagingAppDomains(authCheckingContext.getResourceOwner(), page, size).map((AuthenticationPrincipal::vo)));
+        return RestResultPacker.success(authenticationPrincipalService.pagingAppDomains(authCheckingContext.getResourceOwner(), page, size).map(owner -> owner.vo(locatorConfiguration)));
     }
 
     @Operation(tags = {"authentication-app-domain"})
@@ -446,7 +451,7 @@ public class AuthenticationApi {
             if (principalGroupToFind.getOwner() != null && !principalGroupToFind.typeIs(AuthenticationPrincipal.PrincipalType.APP_DOMAIN)) {
                 throw new NotFoundException(String.format("Cannot find app domain %s of principal %s.", appDomainId, authCheckingContext.getResourceOwner().getId()));
             }
-            return RestResultPacker.success(principalGroupToFind.vo());
+            return RestResultPacker.success(principalGroupToFind.vo(locatorConfiguration));
         } catch (NotFoundException e) {
             throw new HTTP404Exception(e);
         }
@@ -461,7 +466,7 @@ public class AuthenticationApi {
             if (principalGroupToFind.getOwner() != null && !principalGroupToFind.getOwner().getId().equals(principalId) && !principalGroupToFind.typeIs(AuthenticationPrincipal.PrincipalType.APP_DOMAIN)) {
                 throw new NotFoundException(String.format("Cannot find app domain %s of principal %s.", appDomainId, principalId));
             }
-            return RestResultPacker.success(principalGroupToFind.vo());
+            return RestResultPacker.success(principalGroupToFind.vo(locatorConfiguration));
         } catch (NotFoundException e) {
             throw new HTTP404Exception(e);
         }

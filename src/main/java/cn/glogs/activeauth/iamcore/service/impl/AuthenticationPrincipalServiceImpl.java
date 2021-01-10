@@ -1,10 +1,7 @@
 package cn.glogs.activeauth.iamcore.service.impl;
 
-import cn.glogs.activeauth.iamcore.config.properties.Configuration;
 import cn.glogs.activeauth.iamcore.domain.AuthenticationPrincipal;
-import cn.glogs.activeauth.iamcore.domain.password.PasswordHashingStrategy;
 import cn.glogs.activeauth.iamcore.exception.business.NotFoundException;
-import cn.glogs.activeauth.iamcore.exception.business.PatternException;
 import cn.glogs.activeauth.iamcore.repository.AuthenticationPrincipalRepository;
 import cn.glogs.activeauth.iamcore.service.AuthenticationPrincipalService;
 import org.springframework.data.domain.Page;

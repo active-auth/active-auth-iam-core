@@ -1,5 +1,6 @@
 package cn.glogs.activeauth.iamcore.domain;
 
+import cn.glogs.activeauth.iamcore.config.properties.LocatorConfiguration;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -44,19 +45,19 @@ public class AuthenticationPrincipalSecretKey implements IamResource {
     private Date createTime;
 
     @Override
-    public String resourceLocator() {
-        return String.format("iam://users/%s/secret-keys/%s", principal.getId(), id);
+    public String resourceLocator(LocatorConfiguration locatorConfiguration) {
+        return locatorConfiguration.fullLocator(id.toString(), "secret-key", id.toString());
     }
 
-    public static enum SecretKeyType {
+    public enum SecretKeyType {
         RSA_2048,
         PRIVATE_KEY
     }
 
-    public Vo vo() {
+    public Vo vo(LocatorConfiguration locatorConfiguration) {
         Vo vo = new Vo();
         vo.id = id;
-        vo.locator = resourceLocator();
+        vo.locator = resourceLocator(locatorConfiguration);
         vo.keyCode = keyCode;
         if (StringUtils.isNotBlank(priKey))
             vo.privateKey = new String(base64Encoder.encode(priKey.getBytes()));
@@ -70,7 +71,7 @@ public class AuthenticationPrincipalSecretKey implements IamResource {
     @Schema(name = "AuthenticationPrincipalKeyPair.Vo")
     public static class Vo {
         private Long id;
-        @Schema(defaultValue = "iam://users/3/key-pairs/45")
+//        @Schema(defaultValue = "iam://users/3/key-pairs/45")
         private String locator;
         @Schema(defaultValue = "39125471-2164-4ae6-b41c-7a0f2f28f1ae")
         private String keyCode;

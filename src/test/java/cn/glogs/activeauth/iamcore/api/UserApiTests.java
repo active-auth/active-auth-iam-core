@@ -1,6 +1,6 @@
 package cn.glogs.activeauth.iamcore.api;
 
-import cn.glogs.activeauth.iamcore.config.properties.Configuration;
+import cn.glogs.activeauth.iamcore.config.properties.AuthConfiguration;
 import cn.glogs.activeauth.iamcore.domain.AuthenticationPrincipal;
 import cn.glogs.activeauth.iamcore.domain.AuthenticationSession;
 import org.junit.jupiter.api.BeforeEach;
@@ -21,8 +21,8 @@ class UserApiTests {
     private static final String password = "pony123456";
 
     @Autowired
-    public UserApiTests(MockMvc mockMvc, Configuration configuration) {
-        this.testRequestTool = new TestRequestTool(mockMvc, configuration);
+    public UserApiTests(MockMvc mockMvc, AuthConfiguration authConfiguration) {
+        this.testRequestTool = new TestRequestTool(mockMvc, authConfiguration);
     }
 
     @BeforeEach
