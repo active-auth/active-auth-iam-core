@@ -30,7 +30,7 @@ public class AuthenticationPrincipalServiceImpl implements AuthenticationPrincip
     @Override
     @Transactional
     public AuthenticationPrincipal findPrincipalById(Long id) throws NotFoundException {
-        return authenticationPrincipalRepository.findById(id).orElseThrow(() -> new NotFoundException("Principal not found"));
+        return authenticationPrincipalRepository.findById(id).orElseThrow(() -> new NotFoundException(String.format("Principal %s not found", id)));
     }
 
     @Override

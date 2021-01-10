@@ -21,6 +21,6 @@ public class LocatorConfiguration {
     }
 
     public String myResourcePattern(Long challengerId) {
-        return String.format("^.+:.+:.+:.+:%s:.+$", challengerId);
+        return String.format("^.+:.+:.+:.*:%s:.+$", challengerId);
     }
 }

@@ -238,8 +238,6 @@ public class AuthorizationApi {
         AuthCheckingContext authCheckingContext = authCheckingHelper.myResources(
                 request, AuthCheckingStatement.checks(
                         "iam:DeleteGrant", locatorConfiguration.fullLocator("%s", "grant", grantId.toString())
-                ).and(
-                        "iam:DeleteGrant", locatorConfiguration.fullLocator("%s", "grant", grantId.toString())
                 ));
         deleteGrantOut(authCheckingContext, grantId);
         return RestResultPacker.success("Grant Deleted.");
@@ -250,8 +248,6 @@ public class AuthorizationApi {
     public RestResultPacker<String> deleteGrantOut(HttpServletRequest request, @PathVariable Long principalId, @PathVariable Long grantId) throws HTTPException {
         AuthCheckingContext authCheckingContext = authCheckingHelper.theirResources(
                 request, AuthCheckingStatement.checks(
-                        "iam:DeleteGrant", locatorConfiguration.fullLocator("%s", "grant", grantId.toString())
-                ).and(
                         "iam:DeleteGrant", locatorConfiguration.fullLocator("%s", "grant", grantId.toString())
                 ), principalId);
         deleteGrantOut(authCheckingContext, grantId);
