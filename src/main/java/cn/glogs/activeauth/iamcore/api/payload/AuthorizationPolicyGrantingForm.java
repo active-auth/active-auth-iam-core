@@ -7,8 +7,8 @@ import java.util.List;
 
 @Data
 public class AuthorizationPolicyGrantingForm {
-    @Schema(example = "iam://users/63/principal")
+    @Schema(example = "arn:cloudapp:iam::63:principal")
     private String grantee;
-    @Schema(example = "[\"iam://users/77/authorization-policies/62701\", \"iam://users/77/authorization-policies/65789\"]", type = "array")
+    @Schema(example = "[\"arn:cloudapp:iam::77:policy/62701\", \"arn:cloudapp:iam::77:policy/65789\"]", type = "array")
     private List<String> policies;
 }

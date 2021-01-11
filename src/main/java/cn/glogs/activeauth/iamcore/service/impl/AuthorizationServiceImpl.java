@@ -1,5 +1,6 @@
 package cn.glogs.activeauth.iamcore.service.impl;
 
+import cn.glogs.activeauth.iamcore.config.properties.LocatorConfiguration;
 import cn.glogs.activeauth.iamcore.domain.AuthenticationPrincipal;
 import cn.glogs.activeauth.iamcore.domain.AuthorizationPolicy;
 import cn.glogs.activeauth.iamcore.domain.AuthorizationPolicyGrantRow;
@@ -20,9 +21,11 @@ import static cn.glogs.activeauth.iamcore.domain.AuthorizationPolicy.PolicyEffec
 public class AuthorizationServiceImpl implements AuthorizationService {
 
     private final AuthorizationPolicyGrantRowRepository authorizationPolicyGrantRowRepository;
+    private final LocatorConfiguration locatorConfiguration;
 
-    public AuthorizationServiceImpl(AuthorizationPolicyGrantRowRepository authorizationPolicyGrantRowRepository) {
+    public AuthorizationServiceImpl(AuthorizationPolicyGrantRowRepository authorizationPolicyGrantRowRepository, LocatorConfiguration locatorConfiguration) {
         this.authorizationPolicyGrantRowRepository = authorizationPolicyGrantRowRepository;
+        this.locatorConfiguration = locatorConfiguration;
     }
 
     public List<String> wildcardedActions(String originalAction) {
@@ -56,7 +59,7 @@ public class AuthorizationServiceImpl implements AuthorizationService {
         List<String> deniedMyResourcePolicies = new ArrayList<>();
         List<String> deniedNotMyResourcePolicies = new ArrayList<>();
 
-        String myResourcePattern = String.format("^.+://users/%s/.*$", challenger.getId());
+        String myResourcePattern = locatorConfiguration.myResourcePattern(challenger.getId());
 
         List<String> myResources = new ArrayList<>();
         List<String> notMyResources = new ArrayList<>();
@@ -109,7 +112,7 @@ public class AuthorizationServiceImpl implements AuthorizationService {
             notMyResourcesAllAllowed = !anyPolicyDenied && somePoliciesAllowed;
         }
 
-        log.info("[Auth Challenging: {}] my = {}, notMy = {}, challenger = {}, action = {}, resources = {}", myResourcesAllAllowed && notMyResourcesAllAllowed ? "Allowed" : "Denied", myResourcesAllAllowed, notMyResourcesAllAllowed, challenger.resourceLocator(), action, Arrays.deepToString(resources));
+        log.info("[Auth Challenging: {}] my = {}, notMy = {}, challenger = {}, action = {}, resources = {}", myResourcesAllAllowed && notMyResourcesAllAllowed ? "Allowed" : "Denied", myResourcesAllAllowed, notMyResourcesAllAllowed, challenger.resourceLocator(locatorConfiguration), action, Arrays.deepToString(resources));
         return myResourcesAllAllowed && notMyResourcesAllAllowed;
     }
 }

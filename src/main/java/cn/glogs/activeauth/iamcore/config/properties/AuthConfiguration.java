@@ -6,7 +6,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 
 @Data
 @ConfigurationProperties("cn.glogs.active-auth.iam")
-public class Configuration {
+public class AuthConfiguration {
     private PasswordHashingStrategy passwordHashingStrategy = PasswordHashingStrategy.B_CRYPT;
     private int tokenExpiringSeconds = 6000;
     private int signatureExpiringSeconds = 90;

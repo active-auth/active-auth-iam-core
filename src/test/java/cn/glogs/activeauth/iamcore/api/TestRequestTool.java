@@ -1,10 +1,8 @@
 package cn.glogs.activeauth.iamcore.api;
 
-import cn.glogs.activeauth.iamcore.config.properties.Configuration;
+import cn.glogs.activeauth.iamcore.config.properties.AuthConfiguration;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultMatcher;
@@ -32,11 +30,11 @@ public class TestRequestTool {
     public static final ResultMatcher _403 = MockMvcResultMatchers.status().isForbidden();
 
     private final MockMvc mvc;
-    private final Configuration configuration;
+    private final AuthConfiguration authConfiguration;
 
-    public TestRequestTool(MockMvc mvc, Configuration configuration) {
+    public TestRequestTool(MockMvc mvc, AuthConfiguration authConfiguration) {
         this.mvc = mvc;
-        this.configuration = configuration;
+        this.authConfiguration = authConfiguration;
     }
 
     String get(String url, String token) throws Exception {
@@ -50,7 +48,7 @@ public class TestRequestTool {
                         .contentType(MediaType.APPLICATION_JSON)
                         .accept(MediaType.APPLICATION_JSON);
         if (StringUtils.isNotBlank(token)) {
-            builder = builder.header(configuration.getAuthorizationHeaderName(), token);
+            builder = builder.header(authConfiguration.getAuthorizationHeaderName(), token);
         }
         for (Map.Entry<String, String> mapEntry : headers.entrySet()) {
             builder = builder.header(mapEntry.getKey(), mapEntry.getValue());
@@ -74,7 +72,7 @@ public class TestRequestTool {
                         .content(objectMapper.writeValueAsString(formData))
                         .accept(MediaType.APPLICATION_JSON);
         if (StringUtils.isNotBlank(token)) {
-            builder = builder.header(configuration.getAuthorizationHeaderName(), token);
+            builder = builder.header(authConfiguration.getAuthorizationHeaderName(), token);
         }
         for (Map.Entry<String, String> mapEntry : headers.entrySet()) {
             builder = builder.header(mapEntry.getKey(), mapEntry.getValue());
@@ -93,7 +91,7 @@ public class TestRequestTool {
                         .contentType(MediaType.APPLICATION_JSON)
                         .accept(MediaType.APPLICATION_JSON);
         if (StringUtils.isNotBlank(token)) {
-            builder = builder.header(configuration.getAuthorizationHeaderName(), token);
+            builder = builder.header(authConfiguration.getAuthorizationHeaderName(), token);
         }
         for (Map.Entry<String, String> mapEntry : headers.entrySet()) {
             builder = builder.header(mapEntry.getKey(), mapEntry.getValue());

@@ -1,5 +1,6 @@
 package cn.glogs.activeauth.iamcore.config;
 
+import cn.glogs.activeauth.iamcore.config.properties.AuthConfiguration;
 import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Info;
@@ -15,10 +16,10 @@ public class SpringDoc {
     
     private static final String API_KEY = "apiKey";
 
-    private final cn.glogs.activeauth.iamcore.config.properties.Configuration configuration;
+    private final AuthConfiguration authConfiguration;
 
-    public SpringDoc(cn.glogs.activeauth.iamcore.config.properties.Configuration configuration) {
-        this.configuration = configuration;
+    public SpringDoc(AuthConfiguration authConfiguration) {
+        this.authConfiguration = authConfiguration;
     }
 
     @Bean
@@ -32,7 +33,7 @@ public class SpringDoc {
 
     public SecurityScheme apiKeySecuritySchema() {
         return new SecurityScheme()
-                .name(configuration.getAuthorizationHeaderName()) // authorisation-token Constants.AUTHORISATION_TOKEN
+                .name(authConfiguration.getAuthorizationHeaderName()) // authorisation-token Constants.AUTHORISATION_TOKEN
                 .description("HTTP header for token on any of your request.")
                 .in(SecurityScheme.In.HEADER)
                 .type(SecurityScheme.Type.APIKEY);

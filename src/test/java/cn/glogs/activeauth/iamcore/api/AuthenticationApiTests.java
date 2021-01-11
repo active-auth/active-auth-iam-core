@@ -1,6 +1,6 @@
 package cn.glogs.activeauth.iamcore.api;
 
-import cn.glogs.activeauth.iamcore.config.properties.Configuration;
+import cn.glogs.activeauth.iamcore.config.properties.AuthConfiguration;
 import cn.glogs.activeauth.iamcore.domain.AuthenticationPrincipal;
 import cn.glogs.activeauth.iamcore.domain.AuthenticationSession;
 import cn.glogs.activeauth.iamcore.util.ResponseContentMapper;
@@ -28,8 +28,8 @@ class AuthenticationApiTests {
     private AuthenticationSession.Vo userSession;
 
     @Autowired
-    public AuthenticationApiTests(MockMvc mockMvc, Configuration configuration) {
-        this.testRequestTool = new TestRequestTool(mockMvc, configuration);
+    public AuthenticationApiTests(MockMvc mockMvc, AuthConfiguration authConfiguration) {
+        this.testRequestTool = new TestRequestTool(mockMvc, authConfiguration);
     }
 
     @BeforeEach

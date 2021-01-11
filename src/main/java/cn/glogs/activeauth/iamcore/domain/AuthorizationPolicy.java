@@ -1,5 +1,6 @@
 package cn.glogs.activeauth.iamcore.domain;
 
+import cn.glogs.activeauth.iamcore.config.properties.LocatorConfiguration;
 import cn.glogs.activeauth.iamcore.domain.converter.StringListAttributeConverter;
 import cn.glogs.activeauth.iamcore.domain.validator.ListablePattern;
 import cn.glogs.activeauth.iamcore.exception.business.PatternException;
@@ -40,42 +41,42 @@ public class AuthorizationPolicy implements IamResource {
     private List<String> resources;
 
     @Override
-    public String resourceLocator() {
-        return String.format("iam://users/%s/policies/%s", owner.getId(), id);
+    public String resourceLocator(LocatorConfiguration locatorConfiguration) {
+        return locatorConfiguration.fullLocator(String.valueOf(owner.getId()), "policy", String.valueOf(id));
     }
 
-    private static Long numberFromLocator(String locator, int position) throws PatternException {
-        String pattern = "^iam://users/(\\d+)/policies/(\\d+)/?$";
+    private static Long numberFromLocator(LocatorConfiguration locatorConfiguration, String locator, int position) throws PatternException {
+        String pattern = locatorConfiguration.fullPattern("policy", "(\\d+)");
         Pattern r = Pattern.compile(pattern);
         Matcher m = r.matcher(locator);
         if (m.find()) {
             String principalIdStr = m.group(position);
             return Long.valueOf(principalIdStr);
         } else {
-            throw new PatternException("Principal locator regex not matching for ^iam://users/\\d+/policies/(\\d+)/?$");
+            throw new PatternException("Principal locator regex not matching for " + pattern);
         }
     }
 
-    public static Long idFromLocator(String locator) throws PatternException {
-        return numberFromLocator(locator, 2);
+    public static Long idFromLocator(LocatorConfiguration locatorConfiguration, String locator) throws PatternException {
+        return numberFromLocator(locatorConfiguration, locator, 2);
     }
 
-    public static Long ownerIdFromLocator(String locator) throws PatternException {
-        return numberFromLocator(locator, 1);
+    public static Long ownerIdFromLocator(LocatorConfiguration locatorConfiguration, String locator) throws PatternException {
+        return numberFromLocator(locatorConfiguration, locator, 1);
     }
 
     public enum PolicyEffect {
         ALLOW, DENY;
     }
 
-    public Vo vo() {
+    public Vo vo(LocatorConfiguration locatorConfiguration) {
         Vo vo = new Vo();
         vo.id = id;
         vo.name = name;
         vo.effect = effect;
         vo.actions = actions;
         vo.resources = resources;
-        vo.resourceLocator = resourceLocator();
+        vo.resourceLocator = resourceLocator(locatorConfiguration);
         return vo;
     }
 
@@ -96,8 +97,8 @@ public class AuthorizationPolicy implements IamResource {
         private List<String> actions;
 
         @NotEmpty
-        @ListablePattern(regexp = "^[a-zA-Z0-9/_-]+://users/\\d+/.+$")
-        @Schema(example = "[\"bookshelf://users/31/bought-books\", \"bookshelf://users/31/shopping-cart\"]", type = "array")
+//        @ListablePattern(regexp = "^[a-zA-Z0-9/_-]+://users/\\d+/.+$")
+        @Schema(example = "[\"arn:cloudapp:bookshelf::31:bought-book/*\", \"arn:cloudapp:bookshelf::31:shoppping-cart/*\"]", type = "array")
         private List<String> resources;
     }
 
@@ -110,15 +111,15 @@ public class AuthorizationPolicy implements IamResource {
         @Schema(example = "MyPolicy22")
         private String name;
 
-        @Schema(example = "iam://users/77/authorization-policies/62701")
+        @Schema(example = "arn:cloudapp:iam::77:policy/6632")
         private String resourceLocator;
 
         private AuthorizationPolicy.PolicyEffect effect;
-        @Schema(example = "[\"bookshelf:addBooks\", \"bookshelf:listBooks\"]", type = "array")
 
+        @Schema(example = "[\"bookshelf:addBooks\", \"bookshelf:listBooks\"]", type = "array")
         private List<String> actions;
 
-        @Schema(example = "[\"bookshelf://users/31/bought-books\", \"bookshelf://users/31/shopping-cart\"]", type = "array")
+        @Schema(example = "[\"arn:cloudapp:bookshelf::31:bought-book/*\", \"arn:cloudapp:bookshelf::31:shoppping-cart/*\"]", type = "array")
         private List<String> resources;
     }
 }
