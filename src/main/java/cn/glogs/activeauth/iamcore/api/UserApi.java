@@ -4,11 +4,11 @@ import cn.glogs.activeauth.iamcore.api.helper.AuthCheckingHelper;
 import cn.glogs.activeauth.iamcore.api.payload.AuthCheckingContext;
 import cn.glogs.activeauth.iamcore.api.payload.AuthCheckingStatement;
 import cn.glogs.activeauth.iamcore.api.payload.RestResultPacker;
+import cn.glogs.activeauth.iamcore.config.properties.AuthConfiguration;
 import cn.glogs.activeauth.iamcore.config.properties.LocatorConfiguration;
 import cn.glogs.activeauth.iamcore.domain.AuthenticationPrincipal;
 import cn.glogs.activeauth.iamcore.domain.AuthenticationSession;
 import cn.glogs.activeauth.iamcore.domain.AuthorizationPolicyGrant;
-import cn.glogs.activeauth.iamcore.domain.password.PasswordHashingStrategy;
 import cn.glogs.activeauth.iamcore.exception.HTTP401Exception;
 import cn.glogs.activeauth.iamcore.exception.HTTP404Exception;
 import cn.glogs.activeauth.iamcore.exception.HTTPException;
@@ -29,6 +29,7 @@ public class UserApi {
     private final AuthenticationSessionService authenticationSessionService;
     private final AuthorizationPolicyGrantService authorizationPolicyGrantService;
     private final AuthCheckingHelper authCheckingHelper;
+    private final AuthConfiguration authConfiguration;
     private final LocatorConfiguration locatorConfiguration;
 
     public UserApi(
@@ -36,12 +37,13 @@ public class UserApi {
             AuthenticationSessionService authenticationSessionService,
             AuthorizationPolicyGrantService authorizationPolicyGrantService,
             AuthCheckingHelper authCheckingHelper,
-            LocatorConfiguration locatorConfiguration
+            AuthConfiguration authConfiguration, LocatorConfiguration locatorConfiguration
     ) {
         this.authenticationPrincipalService = authenticationPrincipalService;
         this.authenticationSessionService = authenticationSessionService;
         this.authorizationPolicyGrantService = authorizationPolicyGrantService;
         this.authCheckingHelper = authCheckingHelper;
+        this.authConfiguration = authConfiguration;
         this.locatorConfiguration = locatorConfiguration;
     }
 
@@ -60,9 +62,7 @@ public class UserApi {
     public RestResultPacker<AuthenticationPrincipal.Vo> addPrincipal(@RequestBody @Validated AuthenticationPrincipal.UserRegisterForm form) {
         AuthenticationPrincipal toCreatePrincipal = new AuthenticationPrincipal(
                 form.getName(), form.getPassword(),
-                true, true,
-                true, true,
-                AuthenticationPrincipal.PrincipalType.PRINCIPAL, PasswordHashingStrategy.B_CRYPT
+                AuthenticationPrincipal.PrincipalType.PRINCIPAL, authConfiguration.getPasswordHashingStrategy()
         );
         return RestResultPacker.success(authenticationPrincipalService.createPrincipal(toCreatePrincipal).vo(locatorConfiguration));
     }
