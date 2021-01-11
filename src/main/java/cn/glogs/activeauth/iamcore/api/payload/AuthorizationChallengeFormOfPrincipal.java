@@ -10,13 +10,13 @@ import java.util.List;
 @Data
 public class AuthorizationChallengeFormOfPrincipal {
     @NotBlank
-    @Schema(example = "iam://users/7/principals")
+    @Schema(example = "arn:cloudapp:iam::63:principal")
     private String principal;
     @NotBlank
     @Schema(example = "bookshelf:listBooks")
     private String action;
     @NotEmpty
-    @Schema(example = "[\"bookshelf://users/31/bought-books\", \"bookshelf://users/31/shopping-cart\"]", type = "array")
+    @Schema(example = "[\"arn:cloudapp:bookshelf::31:bought-book/*\", \"arn:cloudapp:bookshelf::31:shoppping-cart/*\"]", type = "array")
     private List<String> resources;
 
     public String[] resourcesArray() {

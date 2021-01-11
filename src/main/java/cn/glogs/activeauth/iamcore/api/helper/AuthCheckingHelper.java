@@ -2,7 +2,7 @@ package cn.glogs.activeauth.iamcore.api.helper;
 
 import cn.glogs.activeauth.iamcore.api.payload.AuthCheckingContext;
 import cn.glogs.activeauth.iamcore.api.payload.AuthCheckingStatement;
-import cn.glogs.activeauth.iamcore.config.properties.Configuration;
+import cn.glogs.activeauth.iamcore.config.properties.AuthConfiguration;
 import cn.glogs.activeauth.iamcore.domain.AuthenticationPrincipal;
 import cn.glogs.activeauth.iamcore.domain.AuthenticationPrincipalSecretKey;
 import cn.glogs.activeauth.iamcore.domain.AuthenticationSession;
@@ -36,36 +36,36 @@ public class AuthCheckingHelper {
     private final AuthenticationPrincipalSecretKeyService authenticationPrincipalSecretKeyService;
     private final AuthenticationPrincipalService authenticationPrincipalService;
     private final AuthorizationService authorizationService;
-    private final Configuration configuration;
+    private final AuthConfiguration authConfiguration;
 
     public AuthCheckingHelper(
             AuthenticationSessionService authenticationSessionService,
             AuthenticationPrincipalSecretKeyService authenticationPrincipalSecretKeyService,
             AuthenticationPrincipalService authenticationPrincipalService,
             AuthorizationService authorizationService,
-            Configuration configuration
+            AuthConfiguration authConfiguration
     ) {
         this.authenticationSessionService = authenticationSessionService;
         this.authenticationPrincipalSecretKeyService = authenticationPrincipalSecretKeyService;
         this.authenticationPrincipalService = authenticationPrincipalService;
         this.authorizationService = authorizationService;
-        this.configuration = configuration;
+        this.authConfiguration = authConfiguration;
     }
 
     private AuthenticationSession auth(HttpServletRequest request) throws HTTP400Exception, HTTP401Exception {
         try {
-            String authorizationHeaderName = configuration.getAuthorizationHeaderName();
+            String authorizationHeaderName = authConfiguration.getAuthorizationHeaderName();
             String authorizationHeaderValue = Optional.ofNullable(request.getHeader(authorizationHeaderName)).orElseThrow(() -> new AuthenticationSession.SessionRequestNotAuthorizedException("Unauthorized."));
-            if (StringUtils.startsWith(authorizationHeaderValue, configuration.getAuthorizationHeaderTokenValuePrefix())) {
+            if (StringUtils.startsWith(authorizationHeaderValue, authConfiguration.getAuthorizationHeaderTokenValuePrefix())) {
                 return authenticationSessionService.getSessionByToken(authorizationHeaderValue);
-            } else if (StringUtils.startsWith(authorizationHeaderValue, configuration.getAuthorizationHeaderSignatureValuePrefix())) {
-                String timestampHeaderName = configuration.getTimestampHeaderName();
+            } else if (StringUtils.startsWith(authorizationHeaderValue, authConfiguration.getAuthorizationHeaderSignatureValuePrefix())) {
+                String timestampHeaderName = authConfiguration.getTimestampHeaderName();
                 String timestampHeaderValue = Optional.ofNullable(request.getHeader(timestampHeaderName)).orElseThrow(() -> new AuthenticationSession.SessionRequestBadHeaderException(String.format("Need timestamp header: %s", timestampHeaderName)));
 
                 long currentTimestamp = Calendar.getInstance().getTimeInMillis() / 1000;
                 long requestingTimestamp = Long.parseLong(timestampHeaderValue);
 
-                if (currentTimestamp > requestingTimestamp + configuration.getSignatureExpiringSeconds()) {
+                if (currentTimestamp > requestingTimestamp + authConfiguration.getSignatureExpiringSeconds()) {
                     throw new HTTP401Exception(String.format("Signature expired, current timestamp: %s, requesting timestamp: %s.", currentTimestamp, requestingTimestamp));
                 }
 
@@ -80,7 +80,7 @@ public class AuthCheckingHelper {
                     throw new HTTP401Exception("Signature not valid, maybe tampered.");
                 }
             } else {
-                throw new AuthenticationSession.SessionRequestBadHeaderException(String.format("Value format of header %s does not accepted.", configuration.getAuthorizationHeaderName()));
+                throw new AuthenticationSession.SessionRequestBadHeaderException(String.format("Value format of header %s does not accepted.", authConfiguration.getAuthorizationHeaderName()));
             }
         } catch (NoSuchAlgorithmException | SignatureException | InvalidKeySpecException | IOException e) {
             e.printStackTrace();

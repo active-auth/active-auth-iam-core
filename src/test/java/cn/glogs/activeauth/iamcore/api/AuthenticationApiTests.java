@@ -1,6 +1,6 @@
 package cn.glogs.activeauth.iamcore.api;
 
-import cn.glogs.activeauth.iamcore.config.properties.Configuration;
+import cn.glogs.activeauth.iamcore.config.properties.AuthConfiguration;
 import cn.glogs.activeauth.iamcore.domain.AuthenticationPrincipal;
 import cn.glogs.activeauth.iamcore.domain.AuthenticationSession;
 import cn.glogs.activeauth.iamcore.util.ResponseContentMapper;
@@ -28,18 +28,18 @@ class AuthenticationApiTests {
     private AuthenticationSession.Vo userSession;
 
     @Autowired
-    public AuthenticationApiTests(MockMvc mockMvc, Configuration configuration) {
-        this.testRequestTool = new TestRequestTool(mockMvc, configuration);
+    public AuthenticationApiTests(MockMvc mockMvc, AuthConfiguration authConfiguration) {
+        this.testRequestTool = new TestRequestTool(mockMvc, authConfiguration);
     }
 
     @BeforeEach
     public void setUp() throws Exception {
         AuthenticationPrincipal.UserRegisterForm registerForm = new AuthenticationPrincipal.UserRegisterForm(username, password);
-        String userRegisterResponseContent = testRequestTool.post("/user-center/register", registerForm, null);
+        String userRegisterResponseContent = testRequestTool.post("/user-center/user/register", registerForm, null);
         this.userPrincipal = ResponseContentMapper.getPackedReturningBody(userRegisterResponseContent, AuthenticationPrincipal.Vo.class);
 
         AuthenticationSession.UserLoginForm loginForm = new AuthenticationSession.UserLoginForm(username, password);
-        String userLoginResponseContent = testRequestTool.post("/user-center/login", loginForm, null);
+        String userLoginResponseContent = testRequestTool.post("/user-center/user/login", loginForm, null);
         this.userSession = ResponseContentMapper.getPackedReturningBody(userLoginResponseContent, AuthenticationSession.Vo.class);
     }
 

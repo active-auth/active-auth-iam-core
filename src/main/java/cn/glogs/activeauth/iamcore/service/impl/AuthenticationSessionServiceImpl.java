@@ -1,6 +1,6 @@
 package cn.glogs.activeauth.iamcore.service.impl;
 
-import cn.glogs.activeauth.iamcore.config.properties.Configuration;
+import cn.glogs.activeauth.iamcore.config.properties.AuthConfiguration;
 import cn.glogs.activeauth.iamcore.domain.AuthenticationPrincipal;
 import cn.glogs.activeauth.iamcore.domain.AuthenticationSession;
 import cn.glogs.activeauth.iamcore.domain.password.PasswordHashingStrategy;
@@ -29,15 +29,15 @@ public class AuthenticationSessionServiceImpl implements AuthenticationSessionSe
 
 
     public AuthenticationSessionServiceImpl(
-            Configuration configuration,
+            AuthConfiguration authConfiguration,
             AuthenticationSessionRepository authenticationSessionRepository,
             AuthenticationPrincipalRepository authenticationPrincipalRepository
     ) {
-        this.tokenExpiringSeconds = configuration.getTokenExpiringSeconds();
-        this.fullTokenPrefix = configuration.fullTokenPrefix();
+        this.tokenExpiringSeconds = authConfiguration.getTokenExpiringSeconds();
+        this.fullTokenPrefix = authConfiguration.fullTokenPrefix();
         this.authenticationSessionRepository = authenticationSessionRepository;
         this.authenticationPrincipalRepository = authenticationPrincipalRepository;
-        this.passwordHashingStrategy = configuration.getPasswordHashingStrategy();
+        this.passwordHashingStrategy = authConfiguration.getPasswordHashingStrategy();
     }
 
     @Override

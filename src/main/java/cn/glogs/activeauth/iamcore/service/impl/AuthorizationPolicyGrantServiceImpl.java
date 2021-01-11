@@ -33,8 +33,6 @@ public class AuthorizationPolicyGrantServiceImpl implements AuthorizationPolicyG
     @Override
     @Transactional
     public List<AuthorizationPolicyGrant> addGrants(AuthenticationPrincipal granter, AuthenticationPrincipal grantee, List<AuthorizationPolicy> policies) {
-        System.out.println("policies.stream()");
-        System.out.println(policies.stream().map(AuthorizationPolicy::resourceLocator).collect(Collectors.toList()));
         List<AuthorizationPolicyGrant> savedGrants = new ArrayList<>();
         policies.forEach(policy -> {
             AuthorizationPolicyGrant toBeSavedGrant = new AuthorizationPolicyGrant();

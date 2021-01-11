@@ -1,10 +1,12 @@
 package cn.glogs.activeauth.iamcore.domain;
 
+import cn.glogs.activeauth.iamcore.config.properties.LocatorConfiguration;
 import cn.glogs.activeauth.iamcore.domain.password.PasswordHashingStrategy;
 import cn.glogs.activeauth.iamcore.exception.business.PatternException;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
@@ -33,13 +35,17 @@ public class AuthenticationPrincipal implements IamResource {
 
     private Date updatedAt;
 
+    private boolean mfaEnable = false;
+
+    private String mfaSecret;
+
     private boolean sessionCreatable;
 
     private boolean sessionUsable;
 
-    private boolean signatureCreatable;
+    private boolean secretKeyCreatable;
 
-    private boolean signatureUsable;
+    private boolean secretKeyUsable;
 
     private PrincipalType principalType;
 
@@ -47,7 +53,7 @@ public class AuthenticationPrincipal implements IamResource {
     private AuthenticationPrincipal owner;
 
     public boolean canCreateSignature() {
-        return signatureCreatable && principalType != PrincipalType.PRINCIPAL_GROUP;
+        return secretKeyCreatable && principalType != PrincipalType.PRINCIPAL_GROUP;
     }
 
     public boolean canCreateSession() {
@@ -55,23 +61,38 @@ public class AuthenticationPrincipal implements IamResource {
     }
 
     @Override
-    public String resourceLocator() {
-        return String.format("%s://users/%s/principal", "iam", id);
+    public String resourceLocator(LocatorConfiguration locatorConfiguration) {
+        return locatorConfiguration.fullLocator(id.toString(), "principal");
     }
 
     public AuthenticationPrincipal(
             String name, String originalPassword,
-            boolean sessionCreatable, boolean signatureCreatable,
-            boolean sessionUsable, boolean signatureUsable,
             PrincipalType principalType,
             PasswordHashingStrategy passwordHashingStrategy
     ) {
         this.name = name;
         this.encryptedPassword = passwordHashingStrategy.getHashing().hashing(originalPassword);
-        this.sessionCreatable = sessionCreatable;
-        this.sessionUsable = sessionUsable;
-        this.signatureCreatable = signatureCreatable;
-        this.signatureUsable = signatureUsable;
+        this.sessionCreatable = principalType.defaultSessionCreatable;
+        this.sessionUsable = principalType.defaultSessionUsable;
+        this.secretKeyCreatable = principalType.defaultSecretKeyCreatable;
+        this.secretKeyUsable = principalType.defaultSecretKeyUsable;
+        this.principalType = principalType;
+        this.createdAt = new Date();
+    }
+
+    public AuthenticationPrincipal(
+            String name, String originalPassword,
+            Boolean sessionCreatable, Boolean secretKeyCreatable,
+            Boolean sessionUsable, Boolean secretKeyUsable,
+            PrincipalType principalType,
+            PasswordHashingStrategy passwordHashingStrategy
+    ) {
+        this.name = name;
+        this.encryptedPassword = passwordHashingStrategy.getHashing().hashing(originalPassword);
+        this.sessionCreatable = sessionCreatable != null ? sessionCreatable : principalType.defaultSessionCreatable;
+        this.sessionUsable = sessionUsable != null ? sessionUsable : principalType.defaultSessionUsable;
+        this.secretKeyCreatable = secretKeyCreatable != null ? secretKeyCreatable : principalType.defaultSecretKeyCreatable;
+        this.secretKeyUsable = secretKeyUsable != null ? secretKeyUsable : principalType.defaultSecretKeyUsable;
         this.principalType = principalType;
         this.createdAt = new Date();
     }
@@ -80,19 +101,29 @@ public class AuthenticationPrincipal implements IamResource {
         return null != principalType && principalType != type;
     }
 
-    public static enum PrincipalType {
-        PRINCIPAL, PRINCIPAL_GROUP, APP_DOMAIN;
+    @Getter
+    @AllArgsConstructor
+    public enum PrincipalType {
+        PRINCIPAL(false, true, true, true, true),
+        PRINCIPAL_GROUP(false, false, false, false, false),
+        APP_DOMAIN(false, false, false, true, true);
+
+        private final boolean childChallenging;
+        private final boolean defaultSessionCreatable;
+        private final boolean defaultSessionUsable;
+        private final boolean defaultSecretKeyCreatable;
+        private final boolean defaultSecretKeyUsable;
     }
 
-    public static Long idFromLocator(String locator) throws PatternException {
-        String pattern = "^iam://users/(\\d+)/principal/?$";
+    public static Long idFromLocator(LocatorConfiguration locatorConfiguration, String locator) throws PatternException {
+        String pattern = locatorConfiguration.fullPattern("principal");
         Pattern r = Pattern.compile(pattern);
         Matcher m = r.matcher(locator);
         if (m.find()) {
             String principalIdStr = m.group(1);
             return Long.valueOf(principalIdStr);
         } else {
-            throw new PatternException("Principal locator regex not matching for ^iam://users/\\d+$/principal/?");
+            throw new PatternException("Principal locator regex not matching for " + pattern);
         }
     }
 
@@ -100,15 +131,15 @@ public class AuthenticationPrincipal implements IamResource {
         return passwordHashingStrategy.getHashing().check(toCheckPassword, encryptedPassword);
     }
 
-    public Vo vo() {
+    public Vo vo(LocatorConfiguration locatorConfiguration) {
         Vo vo = new Vo();
         vo.id = id;
-        vo.resourceLocator = this.resourceLocator();
+        vo.resourceLocator = this.resourceLocator(locatorConfiguration);
         vo.name = name;
         vo.description = description;
         vo.createAt = createdAt;
         vo.sessionCreatable = sessionCreatable;
-        vo.signatureCreatable = signatureCreatable;
+        vo.secretKeyCreatable = secretKeyCreatable;
         vo.principalType = principalType;
         return vo;
     }
@@ -117,17 +148,21 @@ public class AuthenticationPrincipal implements IamResource {
     @Schema(name = "AuthenticationPrincipal.Vo")
     public static class Vo {
         private Long id;
-        @Schema(defaultValue = "iam://users/116/principal")
+        @Schema(example = "arn:cloudapp:iam::116:principal")
         private String resourceLocator;
         @Schema(defaultValue = "pony")
         private String name;
         @Schema(defaultValue = "pony")
         private String description;
         private Date createAt;
-        @Schema(defaultValue = "false", type = "boolean")
+        @Schema(defaultValue = "true", type = "boolean")
         private boolean sessionCreatable;
-        @Schema(defaultValue = "false", type = "boolean")
-        private boolean signatureCreatable;
+        @Schema(defaultValue = "true", type = "boolean")
+        private boolean sessionUsable;
+        @Schema(defaultValue = "true", type = "boolean")
+        private boolean secretKeyCreatable;
+        @Schema(defaultValue = "true", type = "boolean")
+        private boolean secretKeyUsable;
         private PrincipalType principalType;
     }
 
@@ -145,13 +180,13 @@ public class AuthenticationPrincipal implements IamResource {
         @Schema(defaultValue = "P0ny_1980")
         private String password;
 
-        private boolean sessionCreatable;
+        private Boolean sessionCreatable;
 
-        private boolean sessionUsable;
+        private Boolean sessionUsable;
 
-        private boolean signatureCreatable;
+        private Boolean secretKeyCreatable;
 
-        private boolean signatureUsable;
+        private Boolean secretKeyUsable;
     }
 
     @Data
