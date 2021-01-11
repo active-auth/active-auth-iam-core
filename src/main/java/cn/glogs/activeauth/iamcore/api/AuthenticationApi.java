@@ -55,8 +55,8 @@ public class AuthenticationApi {
         authCheckingHelper.systemResources(request, AuthCheckingStatement.checks("iam:CreatePrincipal", locatorConfiguration.fullLocator("", "principals")));
         AuthenticationPrincipal toCreatePrincipal = new AuthenticationPrincipal(
                 form.getName(), form.getPassword(),
-                form.isSessionCreatable(), form.isSignatureCreatable(),
-                form.isSessionUsable(), form.isSignatureUsable(),
+                form.getSessionCreatable(), form.getSecretKeyCreatable(),
+                form.getSessionUsable(), form.getSecretKeyUsable(),
                 AuthenticationPrincipal.PrincipalType.PRINCIPAL,
                 authConfiguration.getPasswordHashingStrategy()
         );
@@ -122,8 +122,8 @@ public class AuthenticationApi {
         AuthCheckingContext authCheckingContext = authCheckingHelper.myResources(request, AuthCheckingStatement.checks("iam:AddSubprincipal", locatorConfiguration.fullLocator("%s", "subprincipal")));
         AuthenticationPrincipal toCreatePrincipal = new AuthenticationPrincipal(
                 form.getName(), form.getPassword(),
-                form.isSessionCreatable(), form.isSignatureCreatable(),
-                form.isSessionUsable(), form.isSignatureUsable(),
+                form.getSessionCreatable(), form.getSecretKeyCreatable(),
+                form.getSessionUsable(), form.getSecretKeyUsable(),
                 AuthenticationPrincipal.PrincipalType.PRINCIPAL,
                 authConfiguration.getPasswordHashingStrategy()
         );
@@ -246,8 +246,8 @@ public class AuthenticationApi {
         AuthCheckingContext authCheckingContext = authCheckingHelper.theirResources(request, AuthCheckingStatement.checks("iam:AddSubprincipal", locatorConfiguration.fullLocator("%s", "subprincipal")), principalId);
         AuthenticationPrincipal toCreatePrincipal = new AuthenticationPrincipal(
                 form.getName(), form.getPassword(),
-                form.isSessionCreatable(), form.isSignatureCreatable(),
-                form.isSessionUsable(), form.isSignatureUsable(),
+                form.getSessionCreatable(), form.getSecretKeyCreatable(),
+                form.getSessionUsable(), form.getSecretKeyUsable(),
                 AuthenticationPrincipal.PrincipalType.PRINCIPAL,
                 authConfiguration.getPasswordHashingStrategy()
         );
