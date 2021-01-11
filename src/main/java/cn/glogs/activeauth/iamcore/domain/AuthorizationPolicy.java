@@ -42,7 +42,7 @@ public class AuthorizationPolicy implements IamResource {
 
     @Override
     public String resourceLocator(LocatorConfiguration locatorConfiguration) {
-        return locatorConfiguration.fullLocator(id.toString(), "policy", id.toString());
+        return locatorConfiguration.fullLocator(String.valueOf(owner.getId()), "policy", String.valueOf(id));
     }
 
     private static Long numberFromLocator(LocatorConfiguration locatorConfiguration, String locator, int position) throws PatternException {
@@ -111,7 +111,7 @@ public class AuthorizationPolicy implements IamResource {
         @Schema(example = "MyPolicy22")
         private String name;
 
-//        @Schema(example = "iam://users/77/authorization-policies/62701")
+        //        @Schema(example = "iam://users/77/authorization-policies/62701")
         private String resourceLocator;
 
         private AuthorizationPolicy.PolicyEffect effect;
@@ -119,7 +119,7 @@ public class AuthorizationPolicy implements IamResource {
         @Schema(example = "[\"bookshelf:addBooks\", \"bookshelf:listBooks\"]", type = "array")
         private List<String> actions;
 
-//        @Schema(example = "[\"bookshelf://users/31/bought-books\", \"bookshelf://users/31/shopping-cart\"]", type = "array")
+        //        @Schema(example = "[\"bookshelf://users/31/bought-books\", \"bookshelf://users/31/shopping-cart\"]", type = "array")
         private List<String> resources;
     }
 }

@@ -46,7 +46,7 @@ public class AuthenticationPrincipalSecretKey implements IamResource {
 
     @Override
     public String resourceLocator(LocatorConfiguration locatorConfiguration) {
-        return locatorConfiguration.fullLocator(id.toString(), "secret-key", id.toString());
+        return locatorConfiguration.fullLocator(String.valueOf(principal.getId()), "secret-key", String.valueOf(id));
     }
 
     public enum SecretKeyType {
@@ -71,7 +71,7 @@ public class AuthenticationPrincipalSecretKey implements IamResource {
     @Schema(name = "AuthenticationPrincipalKeyPair.Vo")
     public static class Vo {
         private Long id;
-//        @Schema(defaultValue = "iam://users/3/key-pairs/45")
+        //        @Schema(defaultValue = "iam://users/3/key-pairs/45")
         private String locator;
         @Schema(defaultValue = "39125471-2164-4ae6-b41c-7a0f2f28f1ae")
         private String keyCode;

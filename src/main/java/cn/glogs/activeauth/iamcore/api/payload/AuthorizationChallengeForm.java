@@ -18,8 +18,8 @@ public class AuthorizationChallengeForm {
     private String action;
 
     @NotEmpty
-    @ListablePattern(regexp = "^[a-zA-Z0-9/_-]+://users/\\d+/.+$")
-    @Schema(example = "[\"bookshelf://users/31/bought-books\", \"bookshelf://users/31/shopping-cart\"]", type = "array")
+//    @ListablePattern(regexp = "^[a-zA-Z0-9/_-]+://users/\\d+/.+$")
+//    @Schema(example = "[\"bookshelf://users/31/bought-books\", \"bookshelf://users/31/shopping-cart\"]", type = "array")
     private List<String> resources;
 
     public String[] resourcesArray() {
