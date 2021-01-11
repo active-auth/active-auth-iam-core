@@ -1,8 +1,8 @@
 package cn.glogs.activeauth.iamcore.api;
 
 import cn.glogs.activeauth.iamcore.api.helper.AuthCheckingHelper;
-import cn.glogs.activeauth.iamcore.api.payload.AuthCheckingStatement;
 import cn.glogs.activeauth.iamcore.api.payload.AuthCheckingContext;
+import cn.glogs.activeauth.iamcore.api.payload.AuthCheckingStatement;
 import cn.glogs.activeauth.iamcore.api.payload.RestResultPacker;
 import cn.glogs.activeauth.iamcore.config.properties.AuthConfiguration;
 import cn.glogs.activeauth.iamcore.config.properties.LocatorConfiguration;

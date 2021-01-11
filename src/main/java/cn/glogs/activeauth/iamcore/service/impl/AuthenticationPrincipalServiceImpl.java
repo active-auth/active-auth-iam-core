@@ -34,6 +34,12 @@ public class AuthenticationPrincipalServiceImpl implements AuthenticationPrincip
     }
 
     @Override
+    public void updatePrincipal(Long id, AuthenticationPrincipal principal) {
+        principal.setId(id);
+        authenticationPrincipalRepository.save(principal);
+    }
+
+    @Override
     @Transactional
     public Page<AuthenticationPrincipal> pagingPrincipals(int page, int size) {
         PageRequest pageRequest = PageRequest.of(page, size);

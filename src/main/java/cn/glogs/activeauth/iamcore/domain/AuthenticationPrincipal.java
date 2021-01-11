@@ -35,6 +35,10 @@ public class AuthenticationPrincipal implements IamResource {
 
     private Date updatedAt;
 
+    private boolean mfaEnable = false;
+
+    private String mfaSecret;
+
     private boolean sessionCreatable;
 
     private boolean sessionUsable;

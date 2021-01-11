@@ -11,6 +11,8 @@ public interface AuthenticationPrincipalService {
 
     AuthenticationPrincipal findPrincipalById(Long id) throws NotFoundException;
 
+    void updatePrincipal(Long id, AuthenticationPrincipal principal);
+
     Page<AuthenticationPrincipal> pagingPrincipals(int page, int size);
 
     void deletePrincipalById(Long principalId);

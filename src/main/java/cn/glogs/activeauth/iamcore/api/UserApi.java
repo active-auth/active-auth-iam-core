@@ -13,9 +13,11 @@ import cn.glogs.activeauth.iamcore.exception.HTTP401Exception;
 import cn.glogs.activeauth.iamcore.exception.HTTP404Exception;
 import cn.glogs.activeauth.iamcore.exception.HTTPException;
 import cn.glogs.activeauth.iamcore.exception.business.NotFoundException;
+import cn.glogs.activeauth.iamcore.service.AuthenticationMfaService;
 import cn.glogs.activeauth.iamcore.service.AuthenticationPrincipalService;
 import cn.glogs.activeauth.iamcore.service.AuthenticationSessionService;
 import cn.glogs.activeauth.iamcore.service.AuthorizationPolicyGrantService;
+import io.swagger.v3.oas.annotations.Operation;
 import org.springframework.data.domain.Page;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -27,6 +29,7 @@ import javax.servlet.http.HttpServletRequest;
 public class UserApi {
     private final AuthenticationPrincipalService authenticationPrincipalService;
     private final AuthenticationSessionService authenticationSessionService;
+    private final AuthenticationMfaService authenticationMfaService;
     private final AuthorizationPolicyGrantService authorizationPolicyGrantService;
     private final AuthCheckingHelper authCheckingHelper;
     private final AuthConfiguration authConfiguration;
@@ -35,12 +38,14 @@ public class UserApi {
     public UserApi(
             AuthenticationPrincipalService authenticationPrincipalService,
             AuthenticationSessionService authenticationSessionService,
+            AuthenticationMfaService authenticationMfaService,
             AuthorizationPolicyGrantService authorizationPolicyGrantService,
             AuthCheckingHelper authCheckingHelper,
             AuthConfiguration authConfiguration, LocatorConfiguration locatorConfiguration
     ) {
         this.authenticationPrincipalService = authenticationPrincipalService;
         this.authenticationSessionService = authenticationSessionService;
+        this.authenticationMfaService = authenticationMfaService;
         this.authorizationPolicyGrantService = authorizationPolicyGrantService;
         this.authCheckingHelper = authCheckingHelper;
         this.authConfiguration = authConfiguration;
@@ -72,6 +77,32 @@ public class UserApi {
         AuthCheckingContext authCheckingContext = authCheckingHelper.myResources(request, AuthCheckingStatement.checks("iam:GetGrant", locatorConfiguration.fullLocator("%s", "grants-in")));
         Page<AuthorizationPolicyGrant> grantsPage = authorizationPolicyGrantService.pagingGrantsTo(authCheckingContext.getCurrentSession().getAuthenticationPrincipal(), page, size);
         return RestResultPacker.success(grantsPage.map(owner -> owner.vo(locatorConfiguration)));
+    }
+
+    @PostMapping("/mfa/status")
+    public RestResultPacker<String> getMfaQrCode(HttpServletRequest request, @RequestParam boolean mfaEnable) throws HTTPException {
+        AuthCheckingContext authCheckingContext = authCheckingHelper.myResources(
+                request, AuthCheckingStatement.checks(
+                        "iam:GenerateMfa", locatorConfiguration.fullLocator("%s", "mfa")
+                ));
+        try {
+            return RestResultPacker.success(authenticationMfaService.setMfa(authCheckingContext.getResourceOwner().getId(), mfaEnable));
+        } catch (NotFoundException e) {
+            throw new HTTP404Exception(e);
+        }
+    }
+
+    @PostMapping("/mfa/verify")
+    public RestResultPacker<String> verifyMfaQrCode(HttpServletRequest request, @RequestParam String verificationCode) throws HTTPException {
+        AuthCheckingContext authCheckingContext = authCheckingHelper.myResources(
+                request, AuthCheckingStatement.checks(
+                        "iam:VerifyMfa", locatorConfiguration.fullLocator("%s", "mfa")
+                ));
+        if (authenticationMfaService.verify(authCheckingContext.getResourceOwner(), verificationCode)) {
+            return RestResultPacker.failure("Invalid verification code.");
+        } else {
+            return RestResultPacker.success("OK");
+        }
     }
 
 }
