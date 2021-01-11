@@ -92,13 +92,13 @@ public class AuthorizationPolicy implements IamResource {
         private AuthorizationPolicy.PolicyEffect effect;
 
         @NotEmpty
-//        @ListablePattern(regexp = "^[a-zA-Z0-9_-]+:[a-zA-Z0-9]+$")
-//        @Schema(example = "[\"bookshelf:addBooks\", \"bookshelf:listBooks\"]", type = "array")
+        @ListablePattern(regexp = "^[a-zA-Z0-9_-]+:[a-zA-Z0-9]+$")
+        @Schema(example = "[\"bookshelf:addBooks\", \"bookshelf:listBooks\"]", type = "array")
         private List<String> actions;
 
         @NotEmpty
 //        @ListablePattern(regexp = "^[a-zA-Z0-9/_-]+://users/\\d+/.+$")
-//        @Schema(example = "[\"bookshelf://users/31/bought-books\", \"bookshelf://users/31/shopping-cart\"]", type = "array")
+        @Schema(example = "[\"arn:cloudapp:bookshelf::31:bought-book/*\", \"arn:cloudapp:bookshelf::31:shoppping-cart/*\"]", type = "array")
         private List<String> resources;
     }
 
@@ -111,7 +111,7 @@ public class AuthorizationPolicy implements IamResource {
         @Schema(example = "MyPolicy22")
         private String name;
 
-        //        @Schema(example = "iam://users/77/authorization-policies/62701")
+        @Schema(example = "arn:cloudapp:iam::77:policy/6632")
         private String resourceLocator;
 
         private AuthorizationPolicy.PolicyEffect effect;
@@ -119,7 +119,7 @@ public class AuthorizationPolicy implements IamResource {
         @Schema(example = "[\"bookshelf:addBooks\", \"bookshelf:listBooks\"]", type = "array")
         private List<String> actions;
 
-        //        @Schema(example = "[\"bookshelf://users/31/bought-books\", \"bookshelf://users/31/shopping-cart\"]", type = "array")
+        @Schema(example = "[\"arn:cloudapp:bookshelf::31:bought-book/*\", \"arn:cloudapp:bookshelf::31:shoppping-cart/*\"]", type = "array")
         private List<String> resources;
     }
 }

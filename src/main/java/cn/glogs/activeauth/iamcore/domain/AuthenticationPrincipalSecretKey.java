@@ -71,7 +71,7 @@ public class AuthenticationPrincipalSecretKey implements IamResource {
     @Schema(name = "AuthenticationPrincipalKeyPair.Vo")
     public static class Vo {
         private Long id;
-        //        @Schema(defaultValue = "iam://users/3/key-pairs/45")
+        @Schema(example = "arn:cloudapp:iam::72:key-pair/45")
         private String locator;
         @Schema(defaultValue = "39125471-2164-4ae6-b41c-7a0f2f28f1ae")
         private String keyCode;

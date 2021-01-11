@@ -118,7 +118,7 @@ public class AuthenticationPrincipal implements IamResource {
     @Schema(name = "AuthenticationPrincipal.Vo")
     public static class Vo {
         private Long id;
-//        @Schema(defaultValue = "iam://users/116/principal")
+        @Schema(example = "arn:cloudapp:iam::116:principal")
         private String resourceLocator;
         @Schema(defaultValue = "pony")
         private String name;

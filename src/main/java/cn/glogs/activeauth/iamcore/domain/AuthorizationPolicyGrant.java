@@ -34,7 +34,7 @@ public class AuthorizationPolicyGrant implements IamResource {
 
     @Override
     public String resourceLocator(LocatorConfiguration locatorConfiguration) {
-        return locatorConfiguration.fullLocator(String.valueOf(granter.getId()), "policy", String.valueOf(granter.getId()), "grant", String.valueOf(id));
+        return locatorConfiguration.fullLocator(String.valueOf(granter.getId()), "policy", String.valueOf(policy.getId()), "grant", String.valueOf(id));
     }
 
     public Vo vo(LocatorConfiguration locatorConfiguration) {
@@ -56,11 +56,11 @@ public class AuthorizationPolicyGrant implements IamResource {
     @Schema(name = "AuthorizationPolicyGrant.Vo")
     public static class Vo {
         private Long id;
-        //        @Schema(example = "iam://users/12/grants/765")
+        @Schema(example = "arn:cloudapp:iam::12:policy/36/grant/115")
         private String resourceLocator;
-        //        @Schema(defaultValue = "iam://users/12/principal")
+        @Schema(example = "arn:cloudapp:iam::12:principal")
         private String granter;
-        //        @Schema(defaultValue = "iam://users/63/principal")
+        @Schema(example = "arn:cloudapp:iam::63:principal")
         private String grantee;
         private AuthorizationPolicy.Vo policy;
         private Date createdAt;
