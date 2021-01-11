@@ -35,11 +35,11 @@ class AuthenticationApiTests {
     @BeforeEach
     public void setUp() throws Exception {
         AuthenticationPrincipal.UserRegisterForm registerForm = new AuthenticationPrincipal.UserRegisterForm(username, password);
-        String userRegisterResponseContent = testRequestTool.post("/user-center/register", registerForm, null);
+        String userRegisterResponseContent = testRequestTool.post("/user-center/user/register", registerForm, null);
         this.userPrincipal = ResponseContentMapper.getPackedReturningBody(userRegisterResponseContent, AuthenticationPrincipal.Vo.class);
 
         AuthenticationSession.UserLoginForm loginForm = new AuthenticationSession.UserLoginForm(username, password);
-        String userLoginResponseContent = testRequestTool.post("/user-center/login", loginForm, null);
+        String userLoginResponseContent = testRequestTool.post("/user-center/user/login", loginForm, null);
         this.userSession = ResponseContentMapper.getPackedReturningBody(userLoginResponseContent, AuthenticationSession.Vo.class);
     }
 

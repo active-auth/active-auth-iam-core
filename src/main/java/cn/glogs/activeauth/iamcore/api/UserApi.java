@@ -52,7 +52,7 @@ public class UserApi {
         this.locatorConfiguration = locatorConfiguration;
     }
 
-    @PostMapping("/login")
+    @PostMapping("/user/login")
     public RestResultPacker<AuthenticationSession.Vo> login(@RequestBody @Validated AuthenticationSession.UserLoginForm form) throws HTTPException {
         try {
             return RestResultPacker.success(authenticationSessionService.login(form).vo());
@@ -63,7 +63,7 @@ public class UserApi {
         }
     }
 
-    @PostMapping("/register")
+    @PostMapping("/user/register")
     public RestResultPacker<AuthenticationPrincipal.Vo> addPrincipal(@RequestBody @Validated AuthenticationPrincipal.UserRegisterForm form) {
         AuthenticationPrincipal toCreatePrincipal = new AuthenticationPrincipal(
                 form.getName(), form.getPassword(),
