@@ -1,6 +1,7 @@
 package cn.glogs.activeauth.iamcore.config;
 
 import cn.glogs.activeauth.iamcore.config.properties.AuthConfiguration;
+import cn.glogs.activeauth.iamcore.config.properties.MfaConfiguration;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
 import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;
@@ -11,6 +12,7 @@ import io.swagger.v3.oas.models.parameters.Parameter;
 import io.swagger.v3.oas.models.security.SecurityRequirement;
 import io.swagger.v3.oas.models.security.SecurityScheme;
 import org.springdoc.core.customizers.OpenApiCustomiser;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -56,13 +58,14 @@ public class SpringDoc {
      * https://swagger.io/blog/api-strategy/difference-between-swagger-and-openapi/
      * https://stackoverflow.com/questions/59291371/migrating-from-springfox-swagger2-to-springdoc-openapi
      *
+     * @param mfaConfiguration bean:MfaConfiguration
      * @return bean:OpenAPI
      * @author Okeyja Teung
      * @since 2021-01-11 20:08 +08:00
      */
     @Bean
-    public OpenAPI customOpenAPI() {
-        Parameter parameter = new HeaderParameter().name("X-MFA-Token").in(ParameterIn.HEADER.toString()).schema(new StringSchema());
+    public OpenAPI customOpenAPI(MfaConfiguration mfaConfiguration) {
+        Parameter parameter = new HeaderParameter().name(mfaConfiguration.getMfaTokenHeader()).in(ParameterIn.HEADER.toString()).schema(new StringSchema());
         return new OpenAPI()
                 .components(new Components()
                         .addParameters(VERIFICATION_TOKEN_$REF, parameter)
