@@ -17,7 +17,6 @@ import cn.glogs.activeauth.iamcore.service.AuthenticationMfaService;
 import cn.glogs.activeauth.iamcore.service.AuthenticationPrincipalService;
 import cn.glogs.activeauth.iamcore.service.AuthenticationSessionService;
 import cn.glogs.activeauth.iamcore.service.AuthorizationPolicyGrantService;
-import io.swagger.v3.oas.annotations.Operation;
 import org.springframework.data.domain.Page;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
