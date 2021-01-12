@@ -1,28 +1,34 @@
 package cn.glogs.activeauth.iamcore.api;
 
 import cn.glogs.activeauth.iamcore.api.helper.AuthCheckingHelper;
+import cn.glogs.activeauth.iamcore.api.helper.SafetyVerifyingHelper;
 import cn.glogs.activeauth.iamcore.api.payload.AuthCheckingContext;
 import cn.glogs.activeauth.iamcore.api.payload.AuthCheckingStatement;
 import cn.glogs.activeauth.iamcore.api.payload.RestResultPacker;
 import cn.glogs.activeauth.iamcore.config.properties.AuthConfiguration;
 import cn.glogs.activeauth.iamcore.config.properties.LocatorConfiguration;
+import cn.glogs.activeauth.iamcore.config.properties.MfaConfiguration;
+import cn.glogs.activeauth.iamcore.domain.AuthenticationDisposableSession;
 import cn.glogs.activeauth.iamcore.domain.AuthenticationPrincipal;
 import cn.glogs.activeauth.iamcore.domain.AuthenticationSession;
 import cn.glogs.activeauth.iamcore.domain.AuthorizationPolicyGrant;
 import cn.glogs.activeauth.iamcore.exception.HTTP401Exception;
+import cn.glogs.activeauth.iamcore.exception.HTTP403Exception;
 import cn.glogs.activeauth.iamcore.exception.HTTP404Exception;
 import cn.glogs.activeauth.iamcore.exception.HTTPException;
 import cn.glogs.activeauth.iamcore.exception.business.NotFoundException;
-import cn.glogs.activeauth.iamcore.service.AuthenticationMfaService;
-import cn.glogs.activeauth.iamcore.service.AuthenticationPrincipalService;
-import cn.glogs.activeauth.iamcore.service.AuthenticationSessionService;
-import cn.glogs.activeauth.iamcore.service.AuthorizationPolicyGrantService;
+import cn.glogs.activeauth.iamcore.service.*;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import org.springframework.data.domain.Page;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
+
+import java.util.Optional;
+
+import static cn.glogs.activeauth.iamcore.config.SpringDoc.VERIFICATION_TOKEN_ID_$REF;
 
 @RequestMapping("/user-center")
 @RestController
@@ -30,31 +36,46 @@ public class UserApi {
     private final AuthenticationPrincipalService authenticationPrincipalService;
     private final AuthenticationSessionService authenticationSessionService;
     private final AuthenticationMfaService authenticationMfaService;
+    private final AuthenticationDisposableSessionService authenticationDisposableSessionService;
     private final AuthorizationPolicyGrantService authorizationPolicyGrantService;
     private final AuthCheckingHelper authCheckingHelper;
+    private final SafetyVerifyingHelper safetyVerifyingHelper;
     private final AuthConfiguration authConfiguration;
     private final LocatorConfiguration locatorConfiguration;
+    private final MfaConfiguration mfaConfiguration;
 
     public UserApi(
             AuthenticationPrincipalService authenticationPrincipalService,
             AuthenticationSessionService authenticationSessionService,
             AuthenticationMfaService authenticationMfaService,
+            AuthenticationDisposableSessionService authenticationDisposableSessionService,
             AuthorizationPolicyGrantService authorizationPolicyGrantService,
             AuthCheckingHelper authCheckingHelper,
-            AuthConfiguration authConfiguration, LocatorConfiguration locatorConfiguration
-    ) {
+            SafetyVerifyingHelper safetyVerifyingHelper,
+            AuthConfiguration authConfiguration,
+            LocatorConfiguration locatorConfiguration,
+            MfaConfiguration mfaConfiguration) {
         this.authenticationPrincipalService = authenticationPrincipalService;
         this.authenticationSessionService = authenticationSessionService;
         this.authenticationMfaService = authenticationMfaService;
+        this.authenticationDisposableSessionService = authenticationDisposableSessionService;
         this.authorizationPolicyGrantService = authorizationPolicyGrantService;
         this.authCheckingHelper = authCheckingHelper;
+        this.safetyVerifyingHelper = safetyVerifyingHelper;
         this.authConfiguration = authConfiguration;
         this.locatorConfiguration = locatorConfiguration;
+        this.mfaConfiguration = mfaConfiguration;
     }
 
     @PostMapping("/user/login")
-    public RestResultPacker<AuthenticationSession.Vo> login(@RequestBody @Validated AuthenticationSession.UserLoginForm form) throws HTTPException {
+    public RestResultPacker<AuthenticationSession.Vo> login(HttpServletRequest request, @RequestBody @Validated AuthenticationSession.UserLoginForm form) throws HTTPException {
         try {
+            AuthenticationPrincipal principal = authenticationPrincipalService.findPrincipalByName(form.getName());
+            safetyVerifyingHelper.reinforce(
+                    request, true, principal,
+                    AuthCheckingStatement.checks(
+                            "iam:login", locatorConfiguration.fullLocator("%s", "login")
+                    ), principal.getId());
             return RestResultPacker.success(authenticationSessionService.login(form).vo());
         } catch (NotFoundException e) {
             throw new HTTP404Exception(e);
@@ -80,29 +101,51 @@ public class UserApi {
     }
 
     @PostMapping("/mfa/status")
-    public RestResultPacker<String> getMfaQrCode(HttpServletRequest request, @RequestParam boolean mfaEnable) throws HTTPException {
+    public RestResultPacker<String> switchMfaStatus(HttpServletRequest request, @RequestParam boolean mfaEnable, @RequestParam String verificationCode) throws HTTPException {
         AuthCheckingContext authCheckingContext = authCheckingHelper.myResources(
                 request, AuthCheckingStatement.checks(
                         "iam:GenerateMfa", locatorConfiguration.fullLocator("%s", "mfa")
                 ));
         try {
+            // When disabling MFA, verify it first.
+            if (!mfaEnable && !authenticationMfaService.verify(authCheckingContext.getResourceOwner(), verificationCode)) {
+                throw new HTTP403Exception("Wrong MFA code.");
+            }
             return RestResultPacker.success(authenticationMfaService.setMfa(authCheckingContext.getResourceOwner().getId(), mfaEnable));
         } catch (NotFoundException e) {
             throw new HTTP404Exception(e);
         }
     }
 
+    @Operation(parameters = {
+            @Parameter(ref = VERIFICATION_TOKEN_ID_$REF)
+    })
     @PostMapping("/mfa/verify")
-    public RestResultPacker<String> verifyMfaQrCode(HttpServletRequest request, @RequestParam String verificationCode) throws HTTPException {
-        AuthCheckingContext authCheckingContext = authCheckingHelper.myResources(
-                request, AuthCheckingStatement.checks(
-                        "iam:VerifyMfa", locatorConfiguration.fullLocator("%s", "mfa")
-                ));
-        if (authenticationMfaService.verify(authCheckingContext.getResourceOwner(), verificationCode)) {
-            return RestResultPacker.failure("Invalid verification code.");
+    public RestResultPacker<Object> verifyMfaPassword(HttpServletRequest request, @RequestParam String verificationCode) throws HTTPException {
+        String idHeader = mfaConfiguration.getVerificationTokenIdHeader();
+        Optional<String> vTokenOpt = Optional.ofNullable(request.getHeader(idHeader));
+        if (vTokenOpt.isPresent()) {
+            try {
+                AuthenticationDisposableSession disposableSession = authenticationDisposableSessionService.getByTokenId(vTokenOpt.get());
+                disposableSession.unseal();
+                if (authenticationMfaService.verify(disposableSession.getPrincipal(), verificationCode)) {
+                    return RestResultPacker.success(authenticationDisposableSessionService.update(disposableSession.getId(), disposableSession).vo());
+                } else {
+                    return RestResultPacker.failure("Invalid verification code.");
+                }
+            } catch (NotFoundException e) {
+                throw new HTTP401Exception(e);
+            }
         } else {
-            return RestResultPacker.success("OK");
+            AuthCheckingContext authCheckingContext = authCheckingHelper.myResources(
+                    request, AuthCheckingStatement.checks(
+                            "iam:VerifyMfa", locatorConfiguration.fullLocator("%s", "mfa")
+                    ));
+            if (authenticationMfaService.verify(authCheckingContext.getResourceOwner(), verificationCode)) {
+                return RestResultPacker.success("OK");
+            } else {
+                return RestResultPacker.failure("Invalid verification code.");
+            }
         }
     }
-
 }

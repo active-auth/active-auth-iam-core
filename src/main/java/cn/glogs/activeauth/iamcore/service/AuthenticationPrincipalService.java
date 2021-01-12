@@ -7,6 +7,8 @@ import org.springframework.data.domain.Page;
 
 public interface AuthenticationPrincipalService {
 
+    AuthenticationPrincipal findPrincipalByName(String name) throws NotFoundException;
+
     AuthenticationPrincipal createPrincipal(AuthenticationPrincipal toCreatePrincipal);
 
     AuthenticationPrincipal findPrincipalById(Long id) throws NotFoundException;
