@@ -1,7 +1,9 @@
 package cn.glogs.activeauth.iamcore.domain;
 
 import cn.glogs.activeauth.iamcore.domain.converter.StringListAttributeConverter;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.apache.commons.lang3.RandomStringUtils;
 
 import javax.persistence.*;
@@ -18,32 +20,45 @@ public class AuthenticationDisposableSession {
     @ManyToOne
     private AuthenticationPrincipal principal;
 
+    @Column(unique = true)
     private String token;
 
-    private String action;
+    @Convert(converter = StringListAttributeConverter.class)
+    private List<String> actions;
 
     @Convert(converter = StringListAttributeConverter.class)
     private List<String> resources;
 
-    private boolean expired;
+    private boolean ruined;
 
     private Date createdAt;
 
-    private Date expiredAt;
+    private Date ruinedAt;
 
-    public static AuthenticationDisposableSession generate(AuthenticationPrincipal principal, String action, List<String> resources) {
+    public static AuthenticationDisposableSession generate(AuthenticationPrincipal principal, List<String> actions, List<String> resources) {
         AuthenticationDisposableSession disposableSession = new AuthenticationDisposableSession();
         disposableSession.principal = principal;
         disposableSession.token = RandomStringUtils.randomAlphanumeric(72);
-        disposableSession.action = action;
+        disposableSession.actions = actions;
         disposableSession.resources = resources;
-        disposableSession.expired = false;
+        disposableSession.ruined = false;
         disposableSession.createdAt = new Date();
         return disposableSession;
     }
 
     public void ruin() {
-        expired = true;
-        expiredAt = new Date();
+        ruined = true;
+        ruinedAt = new Date();
+    }
+
+    public Vo vo() {
+        return new Vo(token);
+    }
+
+    @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class Vo {
+        private String token;
     }
 }
