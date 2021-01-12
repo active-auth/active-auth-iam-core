@@ -40,11 +40,20 @@ public class AuthenticationDisposableSessionServiceImpl implements Authenticatio
 
     @Override
     @Transactional
+    public AuthenticationDisposableSession unseal(String tokenId) throws NotFoundException {
+        AuthenticationDisposableSession disposableSession = authenticationDisposableSessionRepository.findByTokenId(tokenId).orElseThrow(() -> new NotFoundException(String.format("Verification %s not found.", tokenId)));
+        disposableSession.unseal();
+        authenticationDisposableSessionRepository.save(disposableSession);
+        return disposableSession;
+    }
+
+    @Override
+    @Transactional
     public boolean consume(String token) {
         Optional<AuthenticationDisposableSession> disposableSessionOpt = authenticationDisposableSessionRepository.findByToken(token);
         if (disposableSessionOpt.isPresent()) {
             AuthenticationDisposableSession disposableSession = disposableSessionOpt.get();
-            if (disposableSession.isRuined()) {
+            if (disposableSession.isRuined() || disposableSession.isUnsealed()) {
                 return false;
             } else {
                 disposableSession.ruin();

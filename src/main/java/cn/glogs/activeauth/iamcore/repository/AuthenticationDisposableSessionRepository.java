@@ -7,4 +7,6 @@ import java.util.Optional;
 
 public interface AuthenticationDisposableSessionRepository extends JpaRepository<AuthenticationDisposableSession, Long> {
     Optional<AuthenticationDisposableSession> findByToken(String token);
+
+    Optional<AuthenticationDisposableSession> findByTokenId(String tokenId);
 }

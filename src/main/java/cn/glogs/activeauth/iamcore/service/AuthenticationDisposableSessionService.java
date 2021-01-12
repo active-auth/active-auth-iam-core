@@ -11,5 +11,7 @@ public interface AuthenticationDisposableSessionService {
 
     AuthenticationDisposableSession create(AuthenticationPrincipal principal, List<String> actions, List<String> resources);
 
+    AuthenticationDisposableSession unseal(String tokenId) throws NotFoundException;
+
     boolean consume(String token);
 }
