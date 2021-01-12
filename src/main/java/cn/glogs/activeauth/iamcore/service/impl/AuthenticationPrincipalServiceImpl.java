@@ -22,6 +22,11 @@ public class AuthenticationPrincipalServiceImpl implements AuthenticationPrincip
     }
 
     @Override
+    public AuthenticationPrincipal findPrincipalByName(String name) throws NotFoundException {
+        return authenticationPrincipalRepository.findByName(name).orElseThrow(() -> new NotFoundException(String.format("Principal name:%s not found", name)));
+    }
+
+    @Override
     public AuthenticationPrincipal createPrincipal(AuthenticationPrincipal toCreatePrincipal) {
         authenticationPrincipalRepository.save(toCreatePrincipal);
         return toCreatePrincipal;
@@ -30,7 +35,7 @@ public class AuthenticationPrincipalServiceImpl implements AuthenticationPrincip
     @Override
     @Transactional
     public AuthenticationPrincipal findPrincipalById(Long id) throws NotFoundException {
-        return authenticationPrincipalRepository.findById(id).orElseThrow(() -> new NotFoundException(String.format("Principal %s not found", id)));
+        return authenticationPrincipalRepository.findById(id).orElseThrow(() -> new NotFoundException(String.format("Principal id:%s not found", id)));
     }
 
     @Override

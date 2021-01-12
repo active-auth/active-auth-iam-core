@@ -27,8 +27,9 @@ import java.util.Collections;
 @Configuration
 public class SpringDoc {
 
-    private static final String API_KEY = "apiKey";
-    private static final String VERIFICATION_TOKEN_$REF = "mfa_token";
+    public static final String API_KEY = "apiKey";
+    public static final String VERIFICATION_TOKEN_$REF = "v_token";
+    public static final String VERIFICATION_TOKEN_ID_$REF = "v_id";
 
     private final AuthConfiguration authConfiguration;
 
@@ -64,10 +65,12 @@ public class SpringDoc {
      */
     @Bean
     public OpenAPI customOpenAPI(MfaConfiguration mfaConfiguration) {
-        Parameter parameter = new HeaderParameter().name(mfaConfiguration.getMfaTokenHeader()).in(ParameterIn.HEADER.toString()).schema(new StringSchema());
+        Parameter vTokenIdHeader = new HeaderParameter().name(mfaConfiguration.getVerificationTokenIdHeader()).in(ParameterIn.HEADER.toString()).schema(new StringSchema());
+        Parameter vTokenHeader = new HeaderParameter().name(mfaConfiguration.getVerificationTokenHeader()).in(ParameterIn.HEADER.toString()).schema(new StringSchema());
         return new OpenAPI()
                 .components(new Components()
-                        .addParameters(VERIFICATION_TOKEN_$REF, parameter)
+                        .addParameters(VERIFICATION_TOKEN_ID_$REF, vTokenIdHeader)
+                        .addParameters(VERIFICATION_TOKEN_$REF, vTokenHeader)
                         .addSecuritySchemes(API_KEY, apiKeySecuritySchema()) // define the apiKey SecuritySchema
                 )
                 .info(new Info().title("Active Auth IAM Core").description("Identity and Access Management Center of a Managed Microservice System."))

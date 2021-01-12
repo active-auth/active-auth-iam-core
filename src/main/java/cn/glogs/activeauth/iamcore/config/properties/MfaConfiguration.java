@@ -6,5 +6,6 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 @Data
 @ConfigurationProperties("cn.glogs.active-auth.iam.mfa")
 public class MfaConfiguration {
-    private String mfaTokenHeader = "X-MFA-Token";
+    private String verificationTokenIdHeader = "X-Verification-Token-ID";
+    private String verificationTokenHeader = "X-Verification-Token";
 }

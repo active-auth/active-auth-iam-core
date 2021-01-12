@@ -15,20 +15,10 @@ import java.util.Optional;
 @Service
 public class AuthenticationDisposableSessionServiceImpl implements AuthenticationDisposableSessionService {
 
-    private final AuthenticationPrincipalRepository authenticationPrincipalRepository;
     private final AuthenticationDisposableSessionRepository authenticationDisposableSessionRepository;
 
-    public AuthenticationDisposableSessionServiceImpl(AuthenticationPrincipalRepository authenticationPrincipalRepository, AuthenticationDisposableSessionRepository authenticationDisposableSessionRepository) {
-        this.authenticationPrincipalRepository = authenticationPrincipalRepository;
+    public AuthenticationDisposableSessionServiceImpl(AuthenticationDisposableSessionRepository authenticationDisposableSessionRepository) {
         this.authenticationDisposableSessionRepository = authenticationDisposableSessionRepository;
-    }
-
-    @Override
-    @Transactional
-    public AuthenticationDisposableSession create(Long principalId, List<String> actions, List<String> resources) throws NotFoundException {
-        AuthenticationPrincipal principal = authenticationPrincipalRepository.findById(principalId).orElseThrow(() -> new NotFoundException(String.format("Principal %s not found.", principalId)));
-        AuthenticationDisposableSession toSave = AuthenticationDisposableSession.generate(principal, actions, resources);
-        return authenticationDisposableSessionRepository.save(toSave);
     }
 
     @Override
@@ -40,28 +30,18 @@ public class AuthenticationDisposableSessionServiceImpl implements Authenticatio
 
     @Override
     @Transactional
-    public AuthenticationDisposableSession unseal(String tokenId) throws NotFoundException {
-        AuthenticationDisposableSession disposableSession = authenticationDisposableSessionRepository.findByTokenId(tokenId).orElseThrow(() -> new NotFoundException(String.format("Verification %s not found.", tokenId)));
-        disposableSession.unseal();
-        authenticationDisposableSessionRepository.save(disposableSession);
-        return disposableSession;
+    public AuthenticationDisposableSession update(Long id, AuthenticationDisposableSession toUpdate) {
+        toUpdate.setId(id);
+        return authenticationDisposableSessionRepository.save(toUpdate);
     }
 
     @Override
-    @Transactional
-    public boolean consume(String token) {
-        Optional<AuthenticationDisposableSession> disposableSessionOpt = authenticationDisposableSessionRepository.findByToken(token);
-        if (disposableSessionOpt.isPresent()) {
-            AuthenticationDisposableSession disposableSession = disposableSessionOpt.get();
-            if (disposableSession.isRuined() || disposableSession.isUnsealed()) {
-                return false;
-            } else {
-                disposableSession.ruin();
-                authenticationDisposableSessionRepository.save(disposableSession);
-                return true;
-            }
-        } else {
-            return false;
-        }
+    public AuthenticationDisposableSession getByTokenId(String tokenId) throws NotFoundException {
+        return authenticationDisposableSessionRepository.findByTokenId(tokenId).orElseThrow(() -> new NotFoundException(String.format("Verification token v_id:%s not found.", tokenId)));
+    }
+
+    @Override
+    public AuthenticationDisposableSession getByToken(String token) throws NotFoundException {
+        return authenticationDisposableSessionRepository.findByToken(token).orElseThrow(() -> new NotFoundException(String.format("Verification token v_token:%s not found.", token)));
     }
 }

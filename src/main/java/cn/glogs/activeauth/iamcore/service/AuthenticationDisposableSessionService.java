@@ -7,11 +7,11 @@ import cn.glogs.activeauth.iamcore.exception.business.NotFoundException;
 import java.util.List;
 
 public interface AuthenticationDisposableSessionService {
-    AuthenticationDisposableSession create(Long principalId, List<String> actions, List<String> resources) throws NotFoundException;
-
     AuthenticationDisposableSession create(AuthenticationPrincipal principal, List<String> actions, List<String> resources);
 
-    AuthenticationDisposableSession unseal(String tokenId) throws NotFoundException;
+    AuthenticationDisposableSession update(Long id, AuthenticationDisposableSession toUpdate);
 
-    boolean consume(String token);
+    AuthenticationDisposableSession getByTokenId(String tokenId) throws NotFoundException;
+
+    AuthenticationDisposableSession getByToken(String token) throws NotFoundException;
 }

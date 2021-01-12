@@ -55,13 +55,21 @@ public class RestResultPacker<T> {
     public static <T> RestResultPacker<T> success(T data, String message) {
         RestResultPacker<T> packer = new RestResultPacker<>();
         packer.data = data;
-        packer.meta = Meta.success();
+        packer.meta = Meta.success(message);
         return packer;
     }
 
     public static <T> RestResultPacker<T> failure() {
         RestResultPacker<T> packer = new RestResultPacker<>();
         packer.meta = Meta.failure();
+        return packer;
+    }
+
+
+    public static <T> RestResultPacker<T> failure(T data, String message) {
+        RestResultPacker<T> packer = new RestResultPacker<>();
+        packer.data = data;
+        packer.meta = Meta.failure(message);
         return packer;
     }
 
