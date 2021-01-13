@@ -51,6 +51,8 @@ dependencies {
 
     // https://mvnrepository.com/artifact/org.jboss.aerogear/aerogear-otp-java
     compile group: 'org.jboss.aerogear', name: 'aerogear-otp-java', version: '1.0.0'
+
+    implementation 'com.password4j:password4j:1.4.0'
 }
 
 test {
