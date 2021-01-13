@@ -12,6 +12,7 @@ import cn.glogs.activeauth.iamcore.domain.AuthenticationDisposableSession;
 import cn.glogs.activeauth.iamcore.domain.AuthenticationPrincipal;
 import cn.glogs.activeauth.iamcore.domain.AuthenticationSession;
 import cn.glogs.activeauth.iamcore.domain.AuthorizationPolicyGrant;
+import cn.glogs.activeauth.iamcore.domain.environment.ClientEnvironment;
 import cn.glogs.activeauth.iamcore.exception.HTTP401Exception;
 import cn.glogs.activeauth.iamcore.exception.HTTP403Exception;
 import cn.glogs.activeauth.iamcore.exception.HTTP404Exception;
@@ -20,6 +21,7 @@ import cn.glogs.activeauth.iamcore.exception.business.NotFoundException;
 import cn.glogs.activeauth.iamcore.service.*;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.data.domain.Page;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -76,7 +78,7 @@ public class UserApi {
                     AuthCheckingStatement.checks(
                             "iam:login", locatorConfiguration.fullLocator("%s", "login")
                     ), principal.getId());
-            return RestResultPacker.success(authenticationSessionService.login(form).vo());
+            return RestResultPacker.success(authenticationSessionService.login(form, new ClientEnvironment(request.getRemoteAddr(), request.getHeader("User-Agent"))).vo());
         } catch (NotFoundException e) {
             throw new HTTP404Exception(e);
         } catch (AuthenticationPrincipal.PasswordNotMatchException | AuthenticationPrincipal.PrincipalTypeDoesNotAllowedToLoginException e) {
@@ -101,20 +103,23 @@ public class UserApi {
     }
 
     @PostMapping("/mfa/status")
-    public RestResultPacker<String> switchMfaStatus(HttpServletRequest request, @RequestParam boolean mfaEnable, @RequestParam String verificationCode) throws HTTPException {
+    public RestResultPacker<String> switchMfaStatus(HttpServletRequest request, @RequestParam boolean mfaEnable, @RequestParam(required = false) String verificationCode) throws HTTPException {
         AuthCheckingContext authCheckingContext = authCheckingHelper.myResources(
                 request, AuthCheckingStatement.checks(
-                        "iam:GenerateMfa", locatorConfiguration.fullLocator("%s", "mfa")
+                        "iam:SwitchMfa", locatorConfiguration.fullLocator("%s", "mfa")
                 ));
-        try {
+        if (mfaEnable) {
+            // When changing MFA, verify it first.
+            if (authCheckingContext.getResourceOwner().isMfaEnable() && !authenticationMfaService.verify(authCheckingContext.getResourceOwner(), verificationCode))
+                throw new HTTP403Exception("Wrong MFA code on changing MFA verification.");
+        } else {
             // When disabling MFA, verify it first.
-            if (!mfaEnable && !authenticationMfaService.verify(authCheckingContext.getResourceOwner(), verificationCode)) {
-                throw new HTTP403Exception("Wrong MFA code.");
-            }
-            return RestResultPacker.success(authenticationMfaService.setMfa(authCheckingContext.getResourceOwner().getId(), mfaEnable));
-        } catch (NotFoundException e) {
-            throw new HTTP404Exception(e);
+            if (StringUtils.isBlank(verificationCode))
+                throw new HTTP403Exception("MFA code is required when disabling MFA verification.");
+            if (!authenticationMfaService.verify(authCheckingContext.getResourceOwner(), verificationCode))
+                throw new HTTP403Exception("Wrong MFA code on disabling MFA verification.");
         }
+        return RestResultPacker.success(authenticationMfaService.setMfa(authCheckingContext.getResourceOwner(), mfaEnable));
     }
 
     @Operation(parameters = {
