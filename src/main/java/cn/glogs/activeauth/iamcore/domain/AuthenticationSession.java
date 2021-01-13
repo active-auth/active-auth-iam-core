@@ -1,5 +1,7 @@
 package cn.glogs.activeauth.iamcore.domain;
 
+import cn.glogs.activeauth.iamcore.domain.converter.ClientEnvironmentAttributeConverter;
+import cn.glogs.activeauth.iamcore.domain.environment.ClientEnvironment;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -27,7 +29,10 @@ public class AuthenticationSession {
 
     private Date expiredAt;
 
-    public static AuthenticationSession newSession(int expireSeconds, String tokenPrefix, AuthenticationPrincipal authenticationPrincipal) {
+    @Convert(converter = ClientEnvironmentAttributeConverter.class)
+    private ClientEnvironment environment;
+
+    public static AuthenticationSession newSession(int expireSeconds, String tokenPrefix, AuthenticationPrincipal authenticationPrincipal, ClientEnvironment environment) {
         Date now = new Date();
         Calendar calendar = Calendar.getInstance();
         calendar.setTime(now);
@@ -37,6 +42,7 @@ public class AuthenticationSession {
         result.createdAt = now;
         result.expiredAt = calendar.getTime();
         result.authenticationPrincipal = authenticationPrincipal;
+        result.environment = environment;
         return result;
     }
 
