@@ -52,7 +52,7 @@ public enum PasswordHashingStrategy {
         });
         passwordHashingMap.put(PBKDF2, new PasswordHashing() {
 
-            private String salt;
+            private String salt = "default salt of PBKDF2";
 
             @Override
             public void setSalt(String salt) {
