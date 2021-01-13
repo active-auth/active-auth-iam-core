@@ -2,7 +2,6 @@ package cn.glogs.activeauth.iamcore.service.impl;
 
 import cn.glogs.activeauth.iamcore.config.properties.LocatorConfiguration;
 import cn.glogs.activeauth.iamcore.domain.AuthenticationPrincipal;
-import cn.glogs.activeauth.iamcore.exception.business.NotFoundException;
 import cn.glogs.activeauth.iamcore.repository.AuthenticationPrincipalRepository;
 import cn.glogs.activeauth.iamcore.service.AuthenticationMfaService;
 import org.jboss.aerogear.security.otp.Totp;
@@ -40,8 +39,7 @@ public class AuthenticationMfaServiceImpl implements AuthenticationMfaService {
 
     @Override
     @Transactional
-    public String setMfa(Long principalId, boolean mfaEnable) throws NotFoundException {
-        AuthenticationPrincipal principal = authenticationPrincipalRepository.findById(principalId).orElseThrow(() -> new NotFoundException(String.format("Principal %s not found.", principalId)));
+    public String setMfa(AuthenticationPrincipal principal, boolean mfaEnable) {
         principal.setMfaEnable(mfaEnable);
         if (mfaEnable) {
             String secret = Base32.random();
