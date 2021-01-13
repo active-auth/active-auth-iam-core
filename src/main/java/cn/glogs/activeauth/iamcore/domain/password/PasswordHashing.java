@@ -2,7 +2,9 @@ package cn.glogs.activeauth.iamcore.domain.password;
 
 public interface PasswordHashing {
 
-    String hashing(String password);
+    void setSalt(String salt);
 
-    boolean check(String password, String hashed);
+    String hashing(CharSequence password);
+
+    boolean check(CharSequence password, String hashed);
 }
