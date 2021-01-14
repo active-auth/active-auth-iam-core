@@ -9,6 +9,7 @@ import cn.glogs.activeauth.iamcore.repository.AuthorizationPolicyGrantRepository
 import cn.glogs.activeauth.iamcore.repository.AuthorizationPolicyGrantRowRepository;
 import cn.glogs.activeauth.iamcore.repository.AuthorizationPolicyRepository;
 import cn.glogs.activeauth.iamcore.service.AuthorizationPolicyService;
+import org.dozer.DozerBeanMapper;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.domain.Specification;
@@ -25,22 +26,20 @@ public class AuthorizationPolicyServiceImpl implements AuthorizationPolicyServic
     private final AuthorizationPolicyRepository authorizationPolicyRepository;
     private final AuthorizationPolicyGrantRepository authorizationPolicyGrantRepository;
     private final AuthorizationPolicyGrantRowRepository authorizationPolicyGrantRowRepository;
+    private final DozerBeanMapper dozerBeanMapper;
 
-    public AuthorizationPolicyServiceImpl(AuthorizationPolicyRepository authorizationPolicyRepository, AuthorizationPolicyGrantRepository authorizationPolicyGrantRepository, AuthorizationPolicyGrantRowRepository authorizationPolicyGrantRowRepository) {
+    public AuthorizationPolicyServiceImpl(AuthorizationPolicyRepository authorizationPolicyRepository, AuthorizationPolicyGrantRepository authorizationPolicyGrantRepository, AuthorizationPolicyGrantRowRepository authorizationPolicyGrantRowRepository, DozerBeanMapper dozerBeanMapper) {
         this.authorizationPolicyRepository = authorizationPolicyRepository;
         this.authorizationPolicyGrantRepository = authorizationPolicyGrantRepository;
         this.authorizationPolicyGrantRowRepository = authorizationPolicyGrantRowRepository;
+        this.dozerBeanMapper = dozerBeanMapper;
     }
 
     @Override
     @Transactional
     public AuthorizationPolicy addPolicy(AuthenticationPrincipal owner, AuthorizationPolicy.Form form) {
-        AuthorizationPolicy policyToBeSaved = new AuthorizationPolicy();
+        AuthorizationPolicy policyToBeSaved = dozerBeanMapper.map(form, AuthorizationPolicy.class);
         policyToBeSaved.setOwner(owner);
-        policyToBeSaved.setName(form.getName());
-        policyToBeSaved.setEffect(form.getEffect());
-        policyToBeSaved.setActions(form.getActions());
-        policyToBeSaved.setResources(form.getResources());
         return authorizationPolicyRepository.save(policyToBeSaved);
     }
 

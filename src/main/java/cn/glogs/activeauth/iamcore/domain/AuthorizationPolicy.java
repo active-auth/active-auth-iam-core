@@ -81,6 +81,8 @@ public class AuthorizationPolicy implements IamResource {
     }
 
     @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
     @Schema(name = "AuthorizationPolicy.Form")
     public static class Form {
 
