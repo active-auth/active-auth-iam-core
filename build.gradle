@@ -55,6 +55,11 @@ dependencies {
     // https://mvnrepository.com/artifact/net.sf.dozer/dozer
     compile group: 'net.sf.dozer', name: 'dozer', version: '5.5.1'
 
+    // https://mvnrepository.com/artifact/org.mapstruct/mapstruct
+    compile group: 'org.mapstruct', name: 'mapstruct', version: '1.4.1.Final'
+    annotationProcessor 'org.mapstruct:mapstruct-processor:1.4.1.Final'
+    testAnnotationProcessor 'org.mapstruct:mapstruct-processor:1.4.1.Final'
+
     implementation('com.password4j:password4j:1.4.0') {
         exclude group: 'org.slf4j'
     }

@@ -4,12 +4,14 @@ import cn.glogs.activeauth.iamcore.domain.AuthenticationPrincipal;
 import cn.glogs.activeauth.iamcore.domain.AuthorizationPolicy;
 import cn.glogs.activeauth.iamcore.domain.AuthorizationPolicyGrant;
 import cn.glogs.activeauth.iamcore.domain.AuthorizationPolicyGrantRow;
+import cn.glogs.activeauth.iamcore.domain.mapper.AuthorizationPolicy$Form_AuthorizationPolicy_Mapper;
 import cn.glogs.activeauth.iamcore.exception.business.NotFoundException;
 import cn.glogs.activeauth.iamcore.repository.AuthorizationPolicyGrantRepository;
 import cn.glogs.activeauth.iamcore.repository.AuthorizationPolicyGrantRowRepository;
 import cn.glogs.activeauth.iamcore.repository.AuthorizationPolicyRepository;
 import cn.glogs.activeauth.iamcore.service.AuthorizationPolicyService;
 import org.dozer.DozerBeanMapper;
+import org.mapstruct.factory.Mappers;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.domain.Specification;
@@ -26,19 +28,18 @@ public class AuthorizationPolicyServiceImpl implements AuthorizationPolicyServic
     private final AuthorizationPolicyRepository authorizationPolicyRepository;
     private final AuthorizationPolicyGrantRepository authorizationPolicyGrantRepository;
     private final AuthorizationPolicyGrantRowRepository authorizationPolicyGrantRowRepository;
-    private final DozerBeanMapper dozerBeanMapper;
+    private final AuthorizationPolicy$Form_AuthorizationPolicy_Mapper mapper = Mappers.getMapper(AuthorizationPolicy$Form_AuthorizationPolicy_Mapper.class);
 
-    public AuthorizationPolicyServiceImpl(AuthorizationPolicyRepository authorizationPolicyRepository, AuthorizationPolicyGrantRepository authorizationPolicyGrantRepository, AuthorizationPolicyGrantRowRepository authorizationPolicyGrantRowRepository, DozerBeanMapper dozerBeanMapper) {
+    public AuthorizationPolicyServiceImpl(AuthorizationPolicyRepository authorizationPolicyRepository, AuthorizationPolicyGrantRepository authorizationPolicyGrantRepository, AuthorizationPolicyGrantRowRepository authorizationPolicyGrantRowRepository) {
         this.authorizationPolicyRepository = authorizationPolicyRepository;
         this.authorizationPolicyGrantRepository = authorizationPolicyGrantRepository;
         this.authorizationPolicyGrantRowRepository = authorizationPolicyGrantRowRepository;
-        this.dozerBeanMapper = dozerBeanMapper;
     }
 
     @Override
     @Transactional
     public AuthorizationPolicy addPolicy(AuthenticationPrincipal owner, AuthorizationPolicy.Form form) {
-        AuthorizationPolicy policyToBeSaved = dozerBeanMapper.map(form, AuthorizationPolicy.class);
+        AuthorizationPolicy policyToBeSaved = mapper.sourceToDestination(form);
         policyToBeSaved.setOwner(owner);
         return authorizationPolicyRepository.save(policyToBeSaved);
     }
