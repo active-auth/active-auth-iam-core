@@ -8,6 +8,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.apache.commons.lang3.StringUtils;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotBlank;
@@ -43,6 +44,16 @@ public class AuthorizationPolicy implements IamResource {
     @Override
     public String resourceLocator(LocatorConfiguration locatorConfiguration) {
         return locatorConfiguration.fullLocator(String.valueOf(owner.getId()), "policy", String.valueOf(id));
+    }
+
+    public AuthorizationPolicy editWithNotNullFields(AuthorizationPolicy newPolicy) {
+        if (null != newPolicy.id) id = newPolicy.id;
+        if (StringUtils.isNotBlank(newPolicy.name)) name = newPolicy.name;
+        if (null != newPolicy.owner && null != newPolicy.owner.getId()) owner = newPolicy.owner;
+        if (null != newPolicy.effect) effect = newPolicy.effect;
+        if (null != newPolicy.actions && newPolicy.actions.size() > 0) actions = newPolicy.actions;
+        if (null != newPolicy.resources && newPolicy.resources.size() > 0) resources = newPolicy.resources;
+        return this;
     }
 
     private static Long numberFromLocator(LocatorConfiguration locatorConfiguration, String locator, int position) throws PatternException {
