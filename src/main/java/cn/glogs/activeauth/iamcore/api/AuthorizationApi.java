@@ -53,7 +53,7 @@ public class AuthorizationApi {
                 request, AuthCheckingStatement.checks(
                         "iam:AddPolicy", locatorConfiguration.fullLocator("%s", "policy")
                 ));
-        AuthorizationPolicy authorizationPolicy = authorizationPolicyService.addPolicy(authCheckingContext.getResourceOwner(), form);
+        AuthorizationPolicy authorizationPolicy = authorizationPolicyService.addPolicy(form, authCheckingContext.getResourceOwner());
         return RestResultPacker.success(authorizationPolicy.vo(locatorConfiguration));
     }
 
@@ -64,8 +64,23 @@ public class AuthorizationApi {
                 request, AuthCheckingStatement.checks(
                         "iam:AddPolicy", locatorConfiguration.fullLocator("%s", "policy")
                 ), principalId);
-        AuthorizationPolicy authorizationPolicy = authorizationPolicyService.addPolicy(authCheckingContext.getResourceOwner(), form);
+        AuthorizationPolicy authorizationPolicy = authorizationPolicyService.addPolicy(form, authCheckingContext.getResourceOwner());
         return RestResultPacker.success(authorizationPolicy.vo(locatorConfiguration));
+    }
+
+    @Operation(tags = {"authorization-policy"})
+    @PutMapping("/principals/{principalId}/policies/{policyId}")
+    public RestResultPacker<AuthorizationPolicy.Vo> editPolicy(HttpServletRequest request, @PathVariable Long principalId, @PathVariable Long policyId, @RequestBody @Validated AuthorizationPolicy.Form form) throws HTTPException {
+        AuthCheckingContext authCheckingContext = authCheckingHelper.theirResources(
+                request, AuthCheckingStatement.checks(
+                        "iam:EditPolicy", locatorConfiguration.fullLocator("%s", "policy/" + policyId)
+                ), principalId);
+        try {
+            AuthorizationPolicy authorizationPolicy = authorizationPolicyService.editPolicy(policyId, form, authCheckingContext.getResourceOwner());
+            return RestResultPacker.success(authorizationPolicy.vo(locatorConfiguration));
+        } catch (NotFoundException e) {
+            throw new HTTP404Exception(e);
+        }
     }
 
     @Operation(tags = {"authorization-policy"})
@@ -76,6 +91,21 @@ public class AuthorizationApi {
                         "iam:GetPolicy", locatorConfiguration.fullLocator("%s", "policy")
                 ));
         return RestResultPacker.success(authorizationPolicyService.pagingPolicies(authCheckingContext.getResourceOwner(), page, size).map(owner -> owner.vo(locatorConfiguration)));
+    }
+
+    @Operation(tags = {"authorization-policy"})
+    @PutMapping("/principals/current/policies/{policyId}")
+    public RestResultPacker<AuthorizationPolicy.Vo> editPolicy(HttpServletRequest request, @PathVariable Long policyId, @RequestBody @Validated AuthorizationPolicy.Form form) throws HTTPException {
+        AuthCheckingContext authCheckingContext = authCheckingHelper.myResources(
+                request, AuthCheckingStatement.checks(
+                        "iam:EditPolicy", locatorConfiguration.fullLocator("%s", "policy/" + policyId)
+                ));
+        try {
+            AuthorizationPolicy authorizationPolicy = authorizationPolicyService.editPolicy(policyId, form, authCheckingContext.getResourceOwner());
+            return RestResultPacker.success(authorizationPolicy.vo(locatorConfiguration));
+        } catch (NotFoundException e) {
+            throw new HTTP404Exception(e);
+        }
     }
 
     @Operation(tags = {"authorization-policy"})

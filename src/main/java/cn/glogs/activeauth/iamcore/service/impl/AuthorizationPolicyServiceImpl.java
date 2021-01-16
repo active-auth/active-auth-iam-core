@@ -38,10 +38,18 @@ public class AuthorizationPolicyServiceImpl implements AuthorizationPolicyServic
 
     @Override
     @Transactional
-    public AuthorizationPolicy addPolicy(AuthenticationPrincipal owner, AuthorizationPolicy.Form form) {
+    public AuthorizationPolicy addPolicy(AuthorizationPolicy.Form form, AuthenticationPrincipal owner) {
         AuthorizationPolicy policyToBeSaved = mapper.sourceToDestination(form);
         policyToBeSaved.setOwner(owner);
         return authorizationPolicyRepository.save(policyToBeSaved);
+    }
+
+    @Override
+    @Transactional
+    public AuthorizationPolicy editPolicy(Long policyId, AuthorizationPolicy.Form form, AuthenticationPrincipal owner) throws NotFoundException {
+        AuthorizationPolicy toChangePolicy = authorizationPolicyRepository.findByIdAndOwner(policyId, owner).orElseThrow(() -> new NotFoundException("Policy id:%s not found.", policyId));
+        toChangePolicy.editWithNotNullFields(mapper.sourceToDestination(form));
+        return authorizationPolicyRepository.save(toChangePolicy);
     }
 
     @Override
