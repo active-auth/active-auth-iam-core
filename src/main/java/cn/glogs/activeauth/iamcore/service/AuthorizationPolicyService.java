@@ -10,7 +10,9 @@ import org.springframework.data.domain.Page;
 import java.util.List;
 
 public interface AuthorizationPolicyService {
-    AuthorizationPolicy addPolicy(AuthenticationPrincipal owner, AuthorizationPolicy.Form form);
+    AuthorizationPolicy addPolicy(AuthorizationPolicy.Form form, AuthenticationPrincipal owner);
+
+    AuthorizationPolicy editPolicy(Long policyId, AuthorizationPolicy.Form form, AuthenticationPrincipal owner) throws NotFoundException;
 
     AuthorizationPolicy getPolicyById(Long id) throws NotFoundException;
 
