@@ -101,11 +101,15 @@ public class AuthenticationPrincipal implements IamResource {
         return null != principalType && principalType != type;
     }
 
+    public boolean childChallenging() {
+        return principalType != null && principalType.childChallenging;
+    }
+
     @Getter
     @AllArgsConstructor
     public enum PrincipalType {
         PRINCIPAL(false, true, true, true, true),
-        PRINCIPAL_GROUP(false, false, false, false, false),
+        PRINCIPAL_GROUP(true, false, false, false, false),
         APP_DOMAIN(false, false, false, true, true);
 
         private final boolean childChallenging;
