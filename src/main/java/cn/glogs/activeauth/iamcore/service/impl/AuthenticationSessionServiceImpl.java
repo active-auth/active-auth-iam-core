@@ -45,13 +45,19 @@ public class AuthenticationSessionServiceImpl implements AuthenticationSessionSe
     @Transactional
     public AuthenticationSession login(AuthenticationSession.UserLoginForm form, ClientEnvironment environment) throws NotFoundException, AuthenticationPrincipal.PasswordNotMatchException, AuthenticationPrincipal.PrincipalTypeDoesNotAllowedToLoginException {
         AuthenticationPrincipal authenticationPrincipal = authenticationPrincipalRepository.findByName(form.getName()).orElseThrow(() -> new NotFoundException("Principal Not Found."));
-        if (!authenticationPrincipal.canCreateSession()) {
-            throw new AuthenticationPrincipal.PrincipalTypeDoesNotAllowedToLoginException("Principal does not allowed to login!");
-        }
         if (!authenticationPrincipal.passwordVerify(form.getSecret(), passwordHashingStrategy))
             throw new AuthenticationPrincipal.PasswordNotMatchException("Name and password not match!");
-        authenticationClientEnvironmentRepository.save(new AuthenticationClientEnvironment(authenticationPrincipal, environment));
-        AuthenticationSession authenticationSession = AuthenticationSession.newSession(tokenExpiringSeconds, fullTokenPrefix, authenticationPrincipal, environment);
+        return login(authenticationPrincipal, environment);
+    }
+
+    @Override
+    @Transactional
+    public AuthenticationSession login(AuthenticationPrincipal principal, ClientEnvironment environment) throws AuthenticationPrincipal.PrincipalTypeDoesNotAllowedToLoginException {
+        if (!principal.canCreateSession()) {
+            throw new AuthenticationPrincipal.PrincipalTypeDoesNotAllowedToLoginException("Principal does not allowed to login!");
+        }
+        authenticationClientEnvironmentRepository.save(new AuthenticationClientEnvironment(principal, environment));
+        AuthenticationSession authenticationSession = AuthenticationSession.newSession(tokenExpiringSeconds, fullTokenPrefix, principal, environment);
         authenticationSessionRepository.save(authenticationSession);
         return authenticationSession;
     }

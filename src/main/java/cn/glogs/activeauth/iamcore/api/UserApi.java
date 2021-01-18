@@ -13,10 +13,7 @@ import cn.glogs.activeauth.iamcore.domain.AuthenticationPrincipal;
 import cn.glogs.activeauth.iamcore.domain.AuthenticationSession;
 import cn.glogs.activeauth.iamcore.domain.AuthorizationPolicyGrant;
 import cn.glogs.activeauth.iamcore.domain.environment.ClientEnvironment;
-import cn.glogs.activeauth.iamcore.exception.HTTP401Exception;
-import cn.glogs.activeauth.iamcore.exception.HTTP403Exception;
-import cn.glogs.activeauth.iamcore.exception.HTTP404Exception;
-import cn.glogs.activeauth.iamcore.exception.HTTPException;
+import cn.glogs.activeauth.iamcore.exception.*;
 import cn.glogs.activeauth.iamcore.exception.business.NotFoundException;
 import cn.glogs.activeauth.iamcore.service.*;
 import io.swagger.v3.oas.annotations.Operation;
@@ -76,12 +73,26 @@ public class UserApi {
             safetyVerifyingHelper.reinforce(
                     request, true, principal,
                     AuthCheckingStatement.checks(
-                            "iam:login", locatorConfiguration.fullLocator("%s", "login")
+                            "iam:Login", locatorConfiguration.fullLocator("%s", "login")
                     ), principal.getId());
             return RestResultPacker.success(authenticationSessionService.login(form, new ClientEnvironment(request.getRemoteAddr(), request.getHeader("User-Agent"))).vo());
         } catch (NotFoundException e) {
             throw new HTTP404Exception(e);
         } catch (AuthenticationPrincipal.PasswordNotMatchException | AuthenticationPrincipal.PrincipalTypeDoesNotAllowedToLoginException e) {
+            throw new HTTP401Exception(e);
+        }
+    }
+
+    @GetMapping("/user/login")
+    public RestResultPacker<AuthenticationSession.Vo> login(HttpServletRequest request) throws HTTPException {
+        try {
+            String tokenHeader = mfaConfiguration.getVerificationTokenHeader();
+            Optional<String> vTokenOpt = Optional.ofNullable(request.getHeader(tokenHeader));
+            AuthenticationDisposableSession disposableSession = authenticationDisposableSessionService.getByToken(vTokenOpt.orElseThrow(() -> new HTTP400Exception("Verification header not provided.")));
+            return RestResultPacker.success(authenticationSessionService.login(disposableSession.getPrincipal(), new ClientEnvironment(request.getRemoteAddr(), request.getHeader("User-Agent"))).vo());
+        } catch (NotFoundException e) {
+            throw new HTTP404Exception(e);
+        } catch (AuthenticationPrincipal.PrincipalTypeDoesNotAllowedToLoginException e) {
             throw new HTTP401Exception(e);
         }
     }
