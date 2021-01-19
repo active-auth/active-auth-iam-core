@@ -115,4 +115,12 @@ public class AuthorizationServiceImpl implements AuthorizationService {
         log.info("[Auth Challenging: {}] my = {}, notMy = {}, challenger = {}, action = {}, resources = {}", myResourcesAllAllowed && notMyResourcesAllAllowed ? "Allowed" : "Denied", myResourcesAllAllowed, notMyResourcesAllAllowed, challenger.resourceLocator(locatorConfiguration), action, Arrays.deepToString(resources));
         return myResourcesAllAllowed && notMyResourcesAllAllowed;
     }
+
+    @Override
+    public boolean challengeFather(AuthenticationPrincipal authenticationPrincipal, String action, String... resources) {
+        if (authenticationPrincipal.getOwner() == null)
+            return false;
+        AuthenticationPrincipal father = authenticationPrincipal.getOwner();
+        return father.childChallenging() && challenge(father, action, resources);
+    }
 }

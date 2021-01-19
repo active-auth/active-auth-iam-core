@@ -2,6 +2,7 @@ package cn.glogs.activeauth.iamcore.api.helper;
 
 import cn.glogs.activeauth.iamcore.api.payload.AuthCheckingContext;
 import cn.glogs.activeauth.iamcore.api.payload.AuthCheckingStatement;
+import cn.glogs.activeauth.iamcore.api.payload.RestResultPacker;
 import cn.glogs.activeauth.iamcore.config.properties.AuthConfiguration;
 import cn.glogs.activeauth.iamcore.domain.AuthenticationPrincipal;
 import cn.glogs.activeauth.iamcore.domain.AuthenticationPrincipalSecretKey;
@@ -134,7 +135,8 @@ public class AuthCheckingHelper {
     ) throws HTTP403Exception {
         for (AuthCheckingStatement.Statement payloadEntity : authCheckingStatement.getStatements()) {
             boolean access = authorizationService.challenge(currentSession.getAuthenticationPrincipal(), payloadEntity.getAction(), payloadEntity.resourceLocators(resourceOwnerPrincipal.getId()));
-            if (!access) {
+            boolean fatherAccessible = authorizationService.challengeFather(currentSession.getAuthenticationPrincipal(), payloadEntity.getAction(), payloadEntity.resourceLocators(resourceOwnerPrincipal.getId()));
+            if (!access && !fatherAccessible) {
                 throw new HTTP403Exception("Not allowed.");
             }
         }
@@ -155,7 +157,8 @@ public class AuthCheckingHelper {
     ) throws HTTP403Exception {
         for (AuthCheckingStatement.Statement payloadEntity : authCheckingStatement.getStatements()) {
             boolean access = authorizationService.challenge(currentSession.getAuthenticationPrincipal(), payloadEntity.getAction(), payloadEntity.resourceLocators(currentSession.getAuthenticationPrincipal().getId()));
-            if (!access) {
+            boolean fatherAccessible = authorizationService.challengeFather(currentSession.getAuthenticationPrincipal(), payloadEntity.getAction(), payloadEntity.resourceLocators(currentSession.getAuthenticationPrincipal().getId()));
+            if (!access && !fatherAccessible) {
                 throw new HTTP403Exception("Not allowed.");
             }
         }
@@ -169,7 +172,8 @@ public class AuthCheckingHelper {
         AuthenticationSession currentSession = auth(request);
         for (AuthCheckingStatement.Statement payloadEntity : authCheckingStatement.getStatements()) {
             boolean access = authorizationService.challenge(currentSession.getAuthenticationPrincipal(), payloadEntity.getAction(), payloadEntity.resourceLocators());
-            if (!access) {
+            boolean fatherAccessible = authorizationService.challengeFather(currentSession.getAuthenticationPrincipal(), payloadEntity.getAction(), payloadEntity.resourceLocators(currentSession.getAuthenticationPrincipal().getId()));
+            if (!access && !fatherAccessible) {
                 throw new HTTP403Exception("Not allowed.");
             }
         }

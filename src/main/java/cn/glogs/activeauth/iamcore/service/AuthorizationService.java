@@ -4,4 +4,6 @@ import cn.glogs.activeauth.iamcore.domain.AuthenticationPrincipal;
 
 public interface AuthorizationService {
     boolean challenge(AuthenticationPrincipal challenger, String action, String... resources);
+
+    boolean challengeFather(AuthenticationPrincipal authenticationPrincipal, String action, String... resources);
 }

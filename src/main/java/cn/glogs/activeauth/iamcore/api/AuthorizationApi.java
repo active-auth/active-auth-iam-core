@@ -314,10 +314,11 @@ public class AuthorizationApi {
                         "iam:ChallengeAuth", locatorConfiguration.fullLocator("%s", "auth-challenging")
                 ));
         boolean accessible = authorizationService.challenge(authCheckingContext.getCurrentSession().getAuthenticationPrincipal(), form.getAction(), form.resourcesArray());
-        if (!accessible) {
-            throw new HTTP403Exception("Inaccessible!");
+        boolean fatherAccessible = authorizationService.challengeFather(authCheckingContext.getCurrentSession().getAuthenticationPrincipal(), form.getAction(), form.resourcesArray());
+        if (accessible || fatherAccessible) {
+            return RestResultPacker.success(form, "Accessible!");
         }
-        return RestResultPacker.success(form, "Accessible!");
+        throw new HTTP403Exception("Inaccessible!");
     }
 
     @Operation(tags = {"authorization-challenging"})
@@ -328,10 +329,11 @@ public class AuthorizationApi {
                         "iam:ChallengeAuth", locatorConfiguration.fullLocator("%s", "auth-challenging")
                 ), principalId);
         boolean accessible = authorizationService.challenge(authCheckingContext.getCurrentSession().getAuthenticationPrincipal(), form.getAction(), form.resourcesArray());
-        if (!accessible) {
-            throw new HTTP403Exception("Inaccessible!");
+        boolean fatherAccessible = authorizationService.challengeFather(authCheckingContext.getCurrentSession().getAuthenticationPrincipal(), form.getAction(), form.resourcesArray());
+        if (accessible || fatherAccessible) {
+            return RestResultPacker.success(form, "Accessible!");
         }
-        return RestResultPacker.success(form, "Accessible!");
+        throw new HTTP403Exception("Inaccessible!");
     }
 
     @Operation(tags = {"authorization-challenging"})
