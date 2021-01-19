@@ -18,7 +18,7 @@ Here is an example:
 
 > arn:activecloud-cn:ecs:cn-north-3:7611:volume/vol-8678eY3109N946oVsq
 
-More Details Ref: [01 Locating Resources](documents/en/01-Locating-Resources.md)
+More Details Ref: [01 Locating Resources](01-Locating-Resources.md)
 
 ## Maintainers
 
