@@ -1,16 +1,12 @@
-# Active Auth
+# 定位资源
 
-一个开源的 PBAC 云平台认证&授权中心。
+与 RBAC 风格的传统认证框架（如 Spring Security 或者 Shiro）不同，一个 PBAC 认证中心并不清楚地维护一个资源的从属关系，
+因此资源定位器通常用于在没有维护资源从属关系的认证中心中描述一个唯一的资源。
 
-[English](README.md) | [简体中文](README-zh_Hans.md)
+本项目采用的资源定位器是一个拥有丰富字段内容的字符串，使用冒号`:`分隔，可以清晰地描述资源所属的系统、子系统、微服务、数据中心和所属用户，
+亦可以表示一些简单的目录风格的资源层级关系。
 
-## 功能
-
-（README.md 文档和 wiki 页面将随第一个版本发布，尽请期待。）
-
-### 定位资源
-
-#### 定位器风格
+## 资源定位器
 
 一个资源定位器形如
 
@@ -29,18 +25,10 @@
 | account-id | 7611 | 主体 ID。 例子展示的是资源属于用户 `7611`。|
 | resource/paths/and/id | volume/vol-8678eY3109N946oVsq | 资源路径和资源 ID。 <br> 例子展示的是这个资源是一个存储卷 `volume`, ID 是：`vol-8678eY3109N946oVsq`。|
 
-#### 定位器中合法的空字段
+## 定位器中合法的空字段
 
 字段 `region` 和 `account-id` 允许为空，这是一个合法案例：
 
 > arn:activecloud-cn:oss:::my-website-static-media
 
 一个存储桶全局名字空间内的命名唯一，或者系统资源拥有者不能显式包含在定位器中，这样一来您可以保留字段 `region` 和 `account-id` 为空来描述一个资源。
-
-## 维护者
-
-[Okeyja Teung](https://github.com/Okeyja)
-
-## 赞助者
-
-没有赞助者。

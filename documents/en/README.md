@@ -2,7 +2,7 @@
 
 An open-sourced cloud platform PBAC Authentication & Authorization Center.
 
-[English](documents/en/README.md) | [简体中文](documents/zh-Hans/README.md)
+[English](README.md) | [简体中文](../zh-Hans/README.md)
 
 ## Features
 
