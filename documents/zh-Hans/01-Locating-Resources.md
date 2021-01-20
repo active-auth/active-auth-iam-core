@@ -32,3 +32,38 @@
 > arn:activecloud-cn:oss:::my-website-static-media
 
 一个存储桶全局名字空间内的命名唯一，或者系统资源拥有者不能显式包含在定位器中，这样一来您可以保留字段 `region` 和 `account-id` 为空来描述一个资源。
+
+## 定位器中合法的通配符
+
+通配符只能在限定范围内使用，您只能用在 `resource/path/and/id` 字段的最后一级目录的整个匹配，
+通配符不可以匹配部分字符串，不可以用在中间级别的目录，更不可以使用在其他字段。
+
+这是合法案例：
+
+> arn:activecloud-cn:oss:::\*
+>
+> arn:activecloud-cn:oss:::my-website-static-media/\*
+>
+> arn:activecloud-cn:oss:::my-website-static-media/some-dir/\*
+
+下面的都是不合法的案例：
+
+> × 通配符用于部分字符串的匹配
+>
+> arn:activecloud-cn:oss:::my-website-\*
+>
+> arn:activecloud-cn:oss:::*media
+>
+> arn:activecloud-cn:oss:::my*media
+>
+> × 通配符用在了中间级别的目录
+>
+> arn:activecloud-cn:oss:::my-website-static-media/\*/a-sub-dir
+>
+> × 通配符重复
+>
+> arn:activecloud-cn:oss:::my-website-static-media/**
+>
+> × 通配符出现在了其他不允许的字段
+>
+> arn:activecloud-cn:*:::my-website-static-media
