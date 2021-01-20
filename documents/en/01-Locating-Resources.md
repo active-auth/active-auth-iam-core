@@ -33,3 +33,38 @@ Field `region` and `account-id` is allowed to be empty. Here is a legal example:
 
 A storage bucket is named uniquely in a global namespace, or any other system resource owner of whom can't be included in
 the locator, in that case you can keep field `region` and `account-id` empty to describe a resource.
+
+## Legal Wildcard in Locator
+
+Wildcards can only be used within a limited range. You can only use them in the entire match of the last level of the directory in the `resource/path/and/id` field.
+Wildcards cannot match partial strings, be used in intermediate-level directories, or be used in other fields.
+
+These are legal cases:
+
+> arn:activecloud-cn:oss:::\*
+>
+> arn:activecloud-cn:oss:::my-website-static-media/\*
+>
+> arn:activecloud-cn:oss:::my-website-static-media/some-dir/\*
+
+The following are illegal cases:
+
+> × Wildcards are used to match partial strings
+>
+> arn:activecloud-cn:oss:::my-website-\*
+>
+> arn:activecloud-cn:oss:::*media
+>
+> arn:activecloud-cn:oss:::my*media
+>
+> × Wildcards are used in middle-level directories
+>
+> arn:activecloud-cn:oss:::my-website-static-media/\*/a-sub-dir
+>
+> × Repeating wildcards
+>
+> arn:activecloud-cn:oss:::my-website-static-media/**
+>
+> × Wildcards appears in other fields that aren't allowed.
+>
+> arn:activecloud-cn:*:::my-website-static-media
