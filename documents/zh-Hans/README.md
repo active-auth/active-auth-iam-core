@@ -4,6 +4,12 @@
 
 [English](../en/README.md) | [简体中文](README.md)
 
+## 纪念哔哩哔哩 UP 主 [墨茶official (zh_Hans)](https://space.bilibili.com/212535360)
+
+@盛夏盛夏夏天：有些人活着，已经死了，可有人死了，才开始活了。
+
+[生平 (zh_Hans)](https://www.bilibili.com/read/cv9396207?from=github.com/Okeyja/active-auth-iam-core)
+
 ## 功能
 
 （README.md 文档和 wiki 页面将随第一个版本发布，尽请期待。）

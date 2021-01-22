@@ -4,6 +4,12 @@ An open-sourced cloud platform PBAC Authentication & Authorization Center.
 
 [English](documents/en/README.md) | [简体中文](documents/zh-Hans/README.md)
 
+## In Memory of Uploader [墨茶official (zh_Hans)](https://space.bilibili.com/212535360) on BiliBili
+
+@盛夏盛夏夏天: Some people are dead when they are alive, but some people start to live when they die.
+
+[All His Life (zh_Hans)](https://www.bilibili.com/read/cv9396207?from=github.com/Okeyja/active-auth-iam-core)
+
 ## Features
 
 (README.md document and wikipages will publish on release of first version, please wait.)
