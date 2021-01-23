@@ -1,6 +1,7 @@
 plugins {
     id 'org.springframework.boot' version '2.4.1'
     id 'io.spring.dependency-management' version '1.0.10.RELEASE'
+    id 'maven-publish'
     id 'java'
 }
 
@@ -15,9 +16,24 @@ configurations {
 }
 
 repositories {
-    mavenLocal()
     maven {
         url "http://maven.aliyun.com/nexus/content/groups/public"
+    }
+}
+
+// https://docs.gradle.org/current/userguide/publishing_maven.html
+// https://docs.spring.io/spring-boot/docs/current/gradle-plugin/reference/htmlsingle/#publishing-your-application-maven
+// PublishToMavenLocal
+publishing {
+    publications {
+        bootJava(MavenPublication) {
+            artifact bootJar
+        }
+    }
+    repositories {
+        maven {
+            mavenLocal()
+        }
     }
 }
 
