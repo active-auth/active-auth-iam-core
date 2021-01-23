@@ -15,6 +15,7 @@ configurations {
 }
 
 repositories {
+    mavenLocal()
     maven {
         url "http://maven.aliyun.com/nexus/content/groups/public"
     }
@@ -31,6 +32,9 @@ dependencies {
     runtimeOnly 'org.springdoc:springdoc-openapi-ui'
     annotationProcessor 'org.projectlombok:lombok'
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
+
+    // https://mvnrepository.com/artifact/com.gitee.starblues/springboot-plugin-framework
+    implementation group: 'com.gitee.starblues', name: 'springboot-plugin-framework', version: '2.3-RELEASE'
 
     // https://mvnrepository.com/artifact/org.springdoc/springdoc-openapi-ui
     compile group: 'org.springdoc', name: 'springdoc-openapi-ui', version: '1.5.2'
