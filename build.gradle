@@ -17,6 +17,7 @@ configurations {
 
 repositories {
     maven {
+        mavenLocal()
         url "http://maven.aliyun.com/nexus/content/groups/public"
     }
 }
@@ -28,6 +29,7 @@ publishing {
     publications {
         bootJava(MavenPublication) {
             artifact bootJar
+            from components.java
         }
     }
     repositories {
@@ -50,7 +52,7 @@ dependencies {
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
 
     // https://mvnrepository.com/artifact/com.gitee.starblues/springboot-plugin-framework
-    implementation group: 'com.gitee.starblues', name: 'springboot-plugin-framework', version: '2.3-RELEASE'
+    implementation group: 'com.gitee.starblues', name: 'springboot-plugin-framework', version: '2.4.0-RELEASE'
 
     // https://mvnrepository.com/artifact/org.springdoc/springdoc-openapi-ui
     compile group: 'org.springdoc', name: 'springdoc-openapi-ui', version: '1.5.2'
