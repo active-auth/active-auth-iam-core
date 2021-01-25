@@ -22,13 +22,19 @@ repositories {
     }
 }
 
+// Fix: remove BOOT-INF in Jarfile
+// https://www.pianshen.com/article/68562022849/
+jar {
+    enabled = true
+}
+
 // https://docs.gradle.org/current/userguide/publishing_maven.html
 // https://docs.spring.io/spring-boot/docs/current/gradle-plugin/reference/htmlsingle/#publishing-your-application-maven
 // PublishToMavenLocal
 publishing {
     publications {
         bootJava(MavenPublication) {
-            artifact bootJar
+//            artifact bootJar
             from components.java
         }
     }

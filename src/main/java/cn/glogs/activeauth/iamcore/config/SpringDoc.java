@@ -11,6 +11,7 @@ import io.swagger.v3.oas.models.parameters.HeaderParameter;
 import io.swagger.v3.oas.models.parameters.Parameter;
 import io.swagger.v3.oas.models.security.SecurityRequirement;
 import io.swagger.v3.oas.models.security.SecurityScheme;
+import org.springdoc.core.GroupedOpenApi;
 import org.springdoc.core.customizers.OpenApiCustomiser;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -75,6 +76,18 @@ public class SpringDoc {
                 )
                 .info(new Info().title("Active Auth IAM Core").description("Identity and Access Management Center of a Managed Microservice System."))
                 .security(Collections.singletonList(new SecurityRequirement().addList(API_KEY))); // then apply it. If you don't apply it will not be added to the header in cURL
+    }
+
+    @Bean
+    public GroupedOpenApi userOpenApi() {
+        String paths[] = {"/user-center/**"};
+        return GroupedOpenApi.builder().group("user-center").pathsToMatch(paths).build();
+    }
+
+    @Bean
+    public GroupedOpenApi allSpecOpenApi() {
+        String paths[] = {"/**"};
+        return GroupedOpenApi.builder().group("all").pathsToMatch(paths).build();
     }
 
     /**
