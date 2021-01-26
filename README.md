@@ -47,7 +47,7 @@ The following policy description is an example:
   ],
   "resources": [
     "arn:cloudapp:bookshelf::31:bought-book/*",
-    "arn:cloudapp:bookshelf::31:shoppping-cart/*"
+    "arn:cloudapp:bookshelf::31:shopping-cart/*"
   ]
 }
 ```
