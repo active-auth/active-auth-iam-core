@@ -52,7 +52,7 @@ The following policy description is an example:
 }
 ```
 
-More Details Ref: 02 Describing Authority Policies (Writing)
+More Details Ref: [02 Describing Authority Policies](documents/en/02-Describing-Authority-Policies.md)
 
 ## Maintainers
 
