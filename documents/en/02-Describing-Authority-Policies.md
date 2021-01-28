@@ -1,30 +1,11 @@
 # Describing Authority Policies
 
-Authorization strategy is the core concept of PBAC model certification framework or certification center. Permission
+Authorization Policy is the core concept of PBAC model certification framework or certification center. Permission
 policy is usually similar to the predicate-object phrase in natural language, which describes: "ALLOW or DENY **certain
 OPERATIONS** on **certain RESOURCES**."
 
 The creator of the permission policy grants it to others, and the entire PBAC becomes complete, which is described
 as: "**SOMEONE** allows or denies **SOMEONE** to perform **OPERATIONS** on **certain RESOURCES**".
-
-## Example
-
-The following policy description is an example:
-
-```json
-{
-  "name": "Allowing43ToListAndDeleteMyBooks",
-  "effect": "ALLOW",
-  "actions": [
-    "bookshelf:ListBooks",
-    "bookshelf:DeleteBooks"
-  ],
-  "resources": [
-    "arn:cloudapp:bookshelf::31:bought-book/*",
-    "arn:cloudapp:bookshelf::31:shopping-cart/*"
-  ]
-}
-```
 
 ## Granting Policies
 
@@ -41,7 +22,7 @@ Generally, the resource owner's challenge to perform any operation on his own re
 is **unconditionally allowed**, unless prohibited by the superior user or prohibited by
 the globally added policy.
 
-## Strategies Are Also Resources
+## Policies Are Also Resources
 
 A policy created by a logged-in user (Principal) is also a resource, and it follows the
 resource naming rules. For example, after the permission policy created above is successfully
@@ -51,3 +32,36 @@ created, the resource locator obtained is:
 
 If there are other users (Principal) who want to operate this policy (modify, delete, chain authorization),
 they all need the relevant operation permission of the original owner.
+
+
+## Example
+
+### Common Access Granting
+
+Suppose that User-A (UID:31) creates a strategy like this:
+
+```json
+{
+  "name": "Allowing43ToListAndDeleteMyBooks",
+  "effect": "ALLOW",
+  "actions": [
+    "bookshelf:ListBooks",
+    "bookshelf:DeleteBooks"
+  ],
+  "resources": [
+    "arn:cloudapp:bookshelf::31:bought-book/*",
+    "arn:cloudapp:bookshelf::31:shopping-cart/*"
+  ]
+}
+```
+
+Locator:
+
+> arn:cloudapp:iam::31:policy/62099
+
+In the above example, User-B (UID:98) authorized by this policy will have the authority to list bought books,
+shopping cart books, or delete bought books, shopping cart books.
+
+### Chain Granting
+
+(Writing...)
