@@ -1,6 +1,7 @@
 plugins {
     id 'org.springframework.boot' version '2.4.1'
     id 'io.spring.dependency-management' version '1.0.10.RELEASE'
+    id 'maven-publish'
     id 'java'
 }
 
@@ -16,7 +17,31 @@ configurations {
 
 repositories {
     maven {
+        mavenLocal()
         url "http://maven.aliyun.com/nexus/content/groups/public"
+    }
+}
+
+// Fix: remove BOOT-INF in Jarfile
+// https://www.pianshen.com/article/68562022849/
+jar {
+    enabled = true
+}
+
+// https://docs.gradle.org/current/userguide/publishing_maven.html
+// https://docs.spring.io/spring-boot/docs/current/gradle-plugin/reference/htmlsingle/#publishing-your-application-maven
+// PublishToMavenLocal
+publishing {
+    publications {
+        bootJava(MavenPublication) {
+//            artifact bootJar
+            from components.java
+        }
+    }
+    repositories {
+        maven {
+            mavenLocal()
+        }
     }
 }
 
@@ -31,6 +56,9 @@ dependencies {
     runtimeOnly 'org.springdoc:springdoc-openapi-ui'
     annotationProcessor 'org.projectlombok:lombok'
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
+
+    // https://mvnrepository.com/artifact/com.gitee.starblues/springboot-plugin-framework
+    implementation group: 'com.gitee.starblues', name: 'springboot-plugin-framework', version: '2.4.0-RELEASE'
 
     // https://mvnrepository.com/artifact/org.springdoc/springdoc-openapi-ui
     compile group: 'org.springdoc', name: 'springdoc-openapi-ui', version: '1.5.2'

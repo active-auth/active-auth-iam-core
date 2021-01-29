@@ -41,12 +41,12 @@ The following policy description is an example:
   ],
   "resources": [
     "arn:cloudapp:bookshelf::31:bought-book/*",
-    "arn:cloudapp:bookshelf::31:shoppping-cart/*"
+    "arn:cloudapp:bookshelf::31:shopping-cart/*"
   ]
 }
 ```
 
-More Details Ref: 02 Describing Authority Policies (Writing)
+More Details Ref: [02 Describing Authority Policies](02-Describing-Authority-Policies.md)
 
 ## Maintainers
 

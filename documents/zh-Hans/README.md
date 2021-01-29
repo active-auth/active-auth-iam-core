@@ -42,12 +42,12 @@
   ],
   "resources": [
     "arn:cloudapp:bookshelf::31:bought-book/*",
-    "arn:cloudapp:bookshelf::31:shoppping-cart/*"
+    "arn:cloudapp:bookshelf::31:shopping-cart/*"
   ]
 }
 ```
 
-更多请参考：02 Describing Authority Policies（撰写中）
+更多请参考：[02 Describing Authority Policies](02-Describing-Authority-Policies.md)
 
 ## 维护者
 
