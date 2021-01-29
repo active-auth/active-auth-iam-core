@@ -64,4 +64,42 @@ shopping cart books, or delete bought books, shopping cart books.
 
 ### Chain Granting
 
-(Writing...)
+Each policy will be traced back to its resource owner, who has experienced the chain authorization of users at the A-F level.
+When user F (UID: 271) challenges the following:
+
+Action:
+> bookshelf:DeleteBooks
+
+Resource:
+> arn:cloudapp:bookshelf::31:shopping-cart/sci-fi/liucixin/three-body-3-v2020k2
+
+The stack paging process of chain challenge check is as follows:
+
+> F Challenging, Asking if F has authority
+>
+> F is granted by E, Asking if E has authority
+>
+> E is granted by D, Asking if D has authority
+>
+> D is granted by C, Asking if C has authority
+>
+> C is granted by B, Asking if B has authority
+>
+> B is granted by A, Asking if A has authority
+>
+> Resource is owned by A, A has authority, allowing to each level, pop the paging stack
+
+Once an intermediate link is not authorized, the stack is interrupted, and the entire authorization will be denied:
+
+> F Challenging, Asking if F has authority
+>
+> F is granted by E, Asking if E has authority
+>
+> E is granted by D, Asking if D has authority
+>
+> D is not allowed, and resource is not owned by D, denying to each level, pop the paging stack
+
+### Revoking
+
+In the above example, user A (UID: 31), the ultimate owner of the resource, has revoked all permissions for user B (UID: 98),
+and user C (UID: 102) and subsequent chain authorization will also be invalid.
