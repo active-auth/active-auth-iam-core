@@ -6,6 +6,7 @@ import cn.glogs.activeauth.iamcore.domain.AuthorizationPolicy;
 import cn.glogs.activeauth.iamcore.domain.AuthorizationPolicyGrantRow;
 import cn.glogs.activeauth.iamcore.repository.AuthorizationPolicyGrantRowRepository;
 import cn.glogs.activeauth.iamcore.service.AuthorizationService;
+import cn.glogs.activeauth.iamcore.util.ResourceUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -59,7 +60,7 @@ public class AuthorizationServiceImpl implements AuthorizationService {
         List<String> deniedMyResourcePolicies = new ArrayList<>();
         List<String> deniedNotMyResourcePolicies = new ArrayList<>();
 
-        String myResourcePattern = locatorConfiguration.myResourcePattern(challenger.getId());
+        String myResourcePattern = ResourceUtil.myResourcePattern(challenger.getId());
 
         List<String> myResources = new ArrayList<>();
         List<String> notMyResources = new ArrayList<>();
@@ -79,6 +80,11 @@ public class AuthorizationServiceImpl implements AuthorizationService {
         rows.forEach(row -> {
             AuthorizationPolicy.PolicyEffect policyEffect = row.getPolicy().getEffect();
             String policyRowResource = row.getPolicyResource();
+            // TODO: When granter is not resource owner.
+            // TODO: Chain challenging my denied resources.
+            // TODO: Chain challenging their allowed and denied resources.
+            AuthenticationPrincipal granter = row.getGranter();
+            boolean granterIsChallenger = granter.same(challenger);
             if (Pattern.matches(myResourcePattern, policyRowResource)) {
                 if (policyEffect == ALLOW) {
                     allowedMyResourcePolicies.add(policyRowResource);

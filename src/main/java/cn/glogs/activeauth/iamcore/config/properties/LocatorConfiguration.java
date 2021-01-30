@@ -19,8 +19,4 @@ public class LocatorConfiguration {
         String resourcePath = String.join("/", resourcePaths);
         return "^" + String.join(":", prefix, partition, service, "", "(\\d+)", resourcePath) + "$";
     }
-
-    public String myResourcePattern(Long challengerId) {
-        return String.format("^.+:.+:.+:.*:%s:.+$", challengerId);
-    }
 }
