@@ -15,7 +15,7 @@ public class ResourceUtil {
         if (m.find()) {
             return Long.valueOf(m.group(1));
         } else {
-            throw new RuntimeException("Resource Locator %s is illegal.");
+            return 0L;
         }
     }
 }

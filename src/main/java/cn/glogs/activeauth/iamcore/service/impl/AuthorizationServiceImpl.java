@@ -84,18 +84,22 @@ public class AuthorizationServiceImpl implements AuthorizationService {
             // TODO: Chain challenging my denied resources.
             // TODO: Chain challenging their allowed and denied resources.
             AuthenticationPrincipal granter = row.getGranter();
-            boolean granterIsChallenger = granter.same(challenger);
-            if (Pattern.matches(myResourcePattern, policyRowResource)) {
-                if (policyEffect == ALLOW) {
-                    allowedMyResourcePolicies.add(policyRowResource);
+            // granter is resource owner, or granter has access to the resource.
+            Long resourceOwnerId = ResourceUtil.resourceOwnerId(row.getPolicyResource());
+            boolean granterIsResourceOwner = granter.me(resourceOwnerId);
+            if (granterIsResourceOwner || challenge(challenger, action, row.getPolicyResource())) {
+                if (Pattern.matches(myResourcePattern, policyRowResource)) {
+                    if (policyEffect == ALLOW) {
+                        allowedMyResourcePolicies.add(policyRowResource);
+                    } else {
+                        deniedMyResourcePolicies.add(policyRowResource);
+                    }
                 } else {
-                    deniedMyResourcePolicies.add(policyRowResource);
-                }
-            } else {
-                if (policyEffect == ALLOW) {
-                    allowedNotMyResourcePolicies.add(policyRowResource);
-                } else {
-                    deniedNotMyResourcePolicies.add(policyRowResource);
+                    if (policyEffect == ALLOW) {
+                        allowedNotMyResourcePolicies.add(policyRowResource);
+                    } else {
+                        deniedNotMyResourcePolicies.add(policyRowResource);
+                    }
                 }
             }
         });
