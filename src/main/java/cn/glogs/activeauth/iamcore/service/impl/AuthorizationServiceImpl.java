@@ -15,6 +15,7 @@ import java.util.*;
 import java.util.regex.Pattern;
 
 import static cn.glogs.activeauth.iamcore.domain.AuthorizationPolicy.PolicyEffect.ALLOW;
+import static cn.glogs.activeauth.iamcore.domain.AuthorizationPolicy.PolicyEffect.ALLOW_FOR_CHAIN;
 
 
 @Service
@@ -55,6 +56,21 @@ public class AuthorizationServiceImpl implements AuthorizationService {
     @Override
     @Transactional
     public boolean challenge(AuthenticationPrincipal challenger, String action, String... resources) {
+        return challenge(false, challenger, action, resources);
+    }
+
+    /**
+     * Challenging
+     *
+     * @param checkForChain true: check ALLOWED_FOR_CHAIN policies, false: check ALLOWED policies.
+     * @param challenger    challenger
+     * @param action        action
+     * @param resources     resources[]
+     * @return isAllAllowed
+     */
+    @Override
+    @Transactional
+    public boolean challenge(boolean checkForChain, AuthenticationPrincipal challenger, String action, String... resources) {
         List<String> allowedMyResourcePolicies = new ArrayList<>();
         List<String> allowedNotMyResourcePolicies = new ArrayList<>();
         List<String> deniedMyResourcePolicies = new ArrayList<>();
@@ -80,22 +96,23 @@ public class AuthorizationServiceImpl implements AuthorizationService {
         rows.forEach(row -> {
             AuthorizationPolicy.PolicyEffect policyEffect = row.getPolicy().getEffect();
             String policyRowResource = row.getPolicyResource();
-            // TODO: When granter is not resource owner.
-            // TODO: Chain challenging my denied resources.
-            // TODO: Chain challenging their allowed and denied resources.
             AuthenticationPrincipal granter = row.getGranter();
-            // granter is resource owner, or granter has access to the resource.
+            // When granter is not resource owner.
+            // Chain challenging my denied resources.
+            // Chain challenging their allowed and denied resources.
+
+            // Granter is resource owner, or granter has access to the resource.
             Long resourceOwnerId = ResourceUtil.resourceOwnerId(row.getPolicyResource());
             boolean granterIsResourceOwner = granter.me(resourceOwnerId);
             if (granterIsResourceOwner || challenge(challenger, action, row.getPolicyResource())) {
                 if (Pattern.matches(myResourcePattern, policyRowResource)) {
-                    if (policyEffect == ALLOW) {
+                    if (policyEffect == ALLOW_FOR_CHAIN || (!checkForChain && policyEffect == ALLOW)) {
                         allowedMyResourcePolicies.add(policyRowResource);
                     } else {
                         deniedMyResourcePolicies.add(policyRowResource);
                     }
                 } else {
-                    if (policyEffect == ALLOW) {
+                    if (policyEffect == ALLOW_FOR_CHAIN || (!checkForChain && policyEffect == ALLOW)) {
                         allowedNotMyResourcePolicies.add(policyRowResource);
                     } else {
                         deniedNotMyResourcePolicies.add(policyRowResource);
