@@ -64,6 +64,43 @@ shopping cart books, or delete bought books, shopping cart books.
 
 ### Chain Granting
 
+If user B (UID: 98) goes to "delete user A (UID: 31) shopping cart books" action is authorized to user C (UID: 102)
+
+User B (UID: 98) needs to be granted the following policy permissions by user A (UID: 31):
+
+```json
+{
+  "name": "AllowingToDeleteMyBooksInCart",
+  "effect": "ALLOW_FOR_CHAIN",
+  "actions": [
+    "bookshelf:DeleteBooks"
+  ],
+  "resources": [
+    "arn:cloudapp:bookshelf::31:shopping-cart/*"
+  ]
+}
+```
+
+Locator:
+
+> arn:cloudapp:iam::31:policy/72170
+
+At this time, according to the rules of resource wildcards, user B (UID:98) can allocate the following resources infinitely.
+
+Action:
+> bookshelf:DeleteBooks
+
+Resources:
+> arn:cloudapp:bookshelf::31:shopping-cart/*
+>
+> arn:cloudapp:bookshelf::31:shopping-cart/sci-fi/*
+>
+> arn:cloudapp:bookshelf::31:shopping-cart/old/12801
+>
+> ......
+
+### Chain Challenging
+
 Each policy will be traced back to its resource owner, who has experienced the chain authorization of users at the A-F level.
 When user F (UID: 271) challenges the following:
 
