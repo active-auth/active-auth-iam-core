@@ -60,6 +60,14 @@ public class AuthenticationPrincipal implements IamResource {
         return sessionCreatable && principalType == PrincipalType.PRINCIPAL;
     }
 
+    public boolean same(AuthenticationPrincipal targetPrincipal) {
+        return id != null && targetPrincipal.id != null && id.equals(targetPrincipal.id);
+    }
+
+    public boolean me(Long resourceOwnerId) {
+        return id != null && id.equals(resourceOwnerId);
+    }
+
     @Override
     public String resourceLocator(LocatorConfiguration locatorConfiguration) {
         return locatorConfiguration.fullLocator(id.toString(), "principal");

@@ -51,6 +51,8 @@ Locator:
 
 ### 链式授权
 
+TODO: Allowing chain granting along with granting rather than with policy effect.
+
 如果用户 B（UID:98）要将“删除用户A（UID:31）的购物车书籍”的动作授权给用户C（UID:102）
 
 用户 B（UID:98）需要被用户 A（UID:31）授予下面策略的权限：

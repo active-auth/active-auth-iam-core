@@ -77,7 +77,7 @@ public class AuthorizationPolicy implements IamResource {
     }
 
     public enum PolicyEffect {
-        ALLOW, DENY;
+        ALLOW, ALLOW_FOR_CHAIN, DENY;
     }
 
     public Vo vo(LocatorConfiguration locatorConfiguration) {

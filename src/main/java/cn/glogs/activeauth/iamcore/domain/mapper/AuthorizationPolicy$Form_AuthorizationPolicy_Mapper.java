@@ -4,8 +4,9 @@ import cn.glogs.activeauth.iamcore.domain.AuthorizationPolicy;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Mappings;
+import org.mapstruct.ReportingPolicy;
 
-@Mapper(componentModel = "spring")
+@Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.IGNORE)
 public interface AuthorizationPolicy$Form_AuthorizationPolicy_Mapper {
     @Mappings({
             @Mapping(target = "name", source = "source.name"),
