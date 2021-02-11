@@ -29,8 +29,8 @@ import java.util.Optional;
 
 import static cn.glogs.activeauth.iamcore.config.SpringDoc.VERIFICATION_TOKEN_ID_$REF;
 
-@RequestMapping("/user-center")
-@RestController
+// @RequestMapping("/user-center")
+// @RestController
 public class UserApi {
     private final AuthenticationPrincipalService authenticationPrincipalService;
     private final AuthenticationSessionService authenticationSessionService;
